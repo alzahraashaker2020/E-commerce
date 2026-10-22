@@ -1,0 +1,11 @@
+# Build output
+bin/
+obj/
+
+# Rider / VS
+.vs/
+.idea/
+
+# Node (Angular client, added later)
+node_modules/
+dist/

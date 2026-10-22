@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.20">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <!-- Latest available 7.0.x patch for this provider (7.0.20 is not published;
+         never 8.x, which requires the absent .NET 8 runtime). -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.18" />
+    <!-- 12.x only - 13 removes the DI extension used by AddAutoMapper(Type) -->
+    <PackageReference Include="AutoMapper" Version="12.0.0" />
+    <!-- 12.x only - 13 removes the DI extension used by AddAutoMapper(Type) -->
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.20" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shop.BLL\Shop.BLL.csproj" />
+    <ProjectReference Include="..\Shop.SL\Shop.SL.csproj" />
+    <ProjectReference Include="..\Shop.DAL\Shop.DAL.csproj" />
+  </ItemGroup>
+
+</Project>

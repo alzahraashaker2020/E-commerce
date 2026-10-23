@@ -67,4 +67,44 @@ public class TokenService : ITokenService
             Expires = expires
         };
     }
+
+    /// <inheritdoc />
+    public TokenVM GenerateCustomerToken(Customer customer)
+    {
+        // Same signing settings as the admin token; only the claim set differs.
+        string secretKey = _configuration["Jwt:SecretKey"]!;
+        string issuer = _configuration["Jwt:Issuer"]!;
+        string audience = _configuration["Jwt:Audience"]!;
+        int expiryMinutes = int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "120");
+
+        DateTime expires = DateTime.UtcNow.AddMinutes(expiryMinutes);
+
+        // Sub = customer id, Email claim for convenience, Role = "Customer" so
+        // customer tokens never satisfy admin-only [Authorize] checks.
+        var claims = new List<Claim>
+        {
+            new(JwtRegisteredClaimNames.Sub, customer.Id.ToString()),
+            new(JwtRegisteredClaimNames.Email, customer.Email),
+            new(ClaimTypes.Role, "Customer"),
+            new(JwtRegisteredClaimNames.NameId, customer.Id.ToString())
+        };
+
+        var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+        var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: issuer,
+            audience: audience,
+            claims: claims,
+            expires: expires,
+            signingCredentials: credentials);
+
+        string encoded = new JwtSecurityTokenHandler().WriteToken(token);
+
+        return new TokenVM
+        {
+            Token = encoded,
+            Expires = expires
+        };
+    }
 }

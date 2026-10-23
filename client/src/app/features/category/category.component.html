@@ -1,0 +1,30 @@
+<!-- Subcategory drill-down for a top-level category (e.g. "Sofa Styling"). -->
+<nav class="breadcrumb">
+  <a routerLink="/catalog">Home</a>
+  <span>›</span>
+  <span>{{ category?.name }}</span>
+</nav>
+
+<div class="loading" *ngIf="loading">Loading…</div>
+<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+<section *ngIf="category && !loading">
+  <h1 class="cat-title">{{ category.name }}</h1>
+  <p class="cat-desc muted" *ngIf="category.description">{{ category.description }}</p>
+
+  <!-- Subcategory cards -->
+  <div class="sub-grid" *ngIf="category.children.length">
+    <button class="sub-card" *ngFor="let sub of category.children" (click)="openSubcategory(sub)">
+      <div class="sub-media">
+        <img *ngIf="sub.imageUrl" [src]="sub.imageUrl" [alt]="sub.name" loading="lazy" />
+      </div>
+      <div class="sub-label">{{ sub.name }}</div>
+    </button>
+  </div>
+
+  <p class="muted" *ngIf="!category.children.length">No subcategories yet.</p>
+
+  <div class="shop-all-row">
+    <button class="btn btn-primary" (click)="shopAll()">Shop all {{ category.name }}</button>
+  </div>
+</section>

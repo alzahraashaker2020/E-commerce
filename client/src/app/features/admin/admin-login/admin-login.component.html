@@ -1,0 +1,21 @@
+<div class="login-wrap">
+  <form class="login-card card" (ngSubmit)="login()">
+    <h1>Admin sign in</h1>
+    <p class="muted small">Demo credentials: <strong>admin</strong> / <strong>Admin&#64;12345</strong></p>
+
+    <div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+    <div class="field">
+      <label for="username">Username</label>
+      <input id="username" name="username" [(ngModel)]="username" required autocomplete="username" />
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" [(ngModel)]="password" required autocomplete="current-password" />
+    </div>
+
+    <button class="btn btn-primary full" type="submit" [disabled]="submitting">
+      {{ submitting ? 'Signing in…' : 'Sign in' }}
+    </button>
+  </form>
+</div>

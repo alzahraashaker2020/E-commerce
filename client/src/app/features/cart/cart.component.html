@@ -1,0 +1,38 @@
+<h1 class="page-title">Your Cart</h1>
+
+<div class="loading" *ngIf="loading">Pricing your cart…</div>
+<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+<!-- Empty state -->
+<div class="empty-cart card" *ngIf="isEmpty">
+  <p>Your cart is empty.</p>
+  <a class="btn btn-primary" routerLink="/catalog">Continue shopping</a>
+</div>
+
+<!-- Cart contents -->
+<div class="cart-layout" *ngIf="!isEmpty && cart">
+  <div class="cart-lines">
+    <div class="cart-line" *ngFor="let line of cart.lines">
+      <div class="line-info">
+        <span class="line-name">{{ line.productName }}</span>
+        <span class="muted">{{ line.unitPrice | storeCurrency }} each</span>
+      </div>
+      <div class="qty">
+        <button (click)="changeQty(line.productId, line.variantId, line.quantity - 1)">−</button>
+        <span>{{ line.quantity }}</span>
+        <button (click)="changeQty(line.productId, line.variantId, line.quantity + 1)">+</button>
+      </div>
+      <span class="line-total price">{{ line.lineTotal | storeCurrency }}</span>
+      <button class="btn btn-danger btn-sm" (click)="remove(line.productId, line.variantId)">Remove</button>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <aside class="cart-summary card">
+    <h3>Summary</h3>
+    <div class="spread"><span>Subtotal</span><span class="price">{{ cart.subtotal | storeCurrency }}</span></div>
+    <p class="muted small">Shipping and discounts are calculated at checkout.</p>
+    <button class="btn btn-primary full" (click)="checkout()">Proceed to checkout</button>
+    <a class="btn btn-outline full" routerLink="/catalog">Continue shopping</a>
+  </aside>
+</div>

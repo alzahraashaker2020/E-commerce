@@ -1,0 +1,23 @@
+<h1 class="admin-title">Inventory Alerts</h1>
+<p class="muted">Items at or below their low-stock threshold.</p>
+
+<div class="loading" *ngIf="loading">Loading…</div>
+<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+<div class="card" *ngIf="!loading">
+  <table class="data" *ngIf="items.length">
+    <thead>
+      <tr><th>Product</th><th>Variant</th><th>On hand</th><th>Threshold</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let i of items">
+        <td>{{ i.productName }}</td>
+        <td>{{ i.variantLabel || '—' }}</td>
+        <td>{{ i.quantityOnHand }}</td>
+        <td>{{ i.lowStockThreshold }}</td>
+        <td><span class="badge badge-warn">Reorder</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted ok-msg" *ngIf="!items.length">All stock levels are healthy. 🎉</p>
+</div>

@@ -29,7 +29,14 @@ public class ProductRepo : GenericRepo<Product>, IProductRepo
 
         if (categoryId.HasValue)
         {
-            query = query.Where(p => p.CategoryId == categoryId.Value);
+            // Match products on the category itself OR on any of its
+            // subcategories. Products are attached to leaf (sub)categories, so
+            // filtering by a top-level category ("Sofa Styling") must include
+            // everything under its children too; filtering by a leaf category
+            // matches only that leaf.
+            query = query.Where(p =>
+                p.CategoryId == categoryId.Value ||
+                p.Category!.ParentCategoryId == categoryId.Value);
         }
 
         // Capture the total count BEFORE Skip/Take. Returning TotalCount is what

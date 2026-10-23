@@ -1,0 +1,13 @@
+/* Admin discounts styling. */
+.admin-title { font-size: 1.4rem; margin-bottom: 1.2rem; }
+.form-card { margin-bottom: 1.2rem; }
+.form-card h3 { margin-bottom: 0.9rem; }
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+@media (max-width: 760px) {
+  .form-grid { grid-template-columns: 1fr 1fr; }
+}

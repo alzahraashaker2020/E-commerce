@@ -1,0 +1,34 @@
+<div class="loading" *ngIf="loading">Loading…</div>
+<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+<div *ngIf="!loading && !error">
+  <div class="empty card" *ngIf="!orders.length">
+    <p class="muted">You haven't placed any orders yet.</p>
+    <a class="btn btn-primary" routerLink="/catalog">Start shopping</a>
+  </div>
+
+  <div class="order card" *ngFor="let o of orders">
+    <div class="order-head spread">
+      <div>
+        <strong class="order-no">{{ o.orderNumber }}</strong>
+        <span class="muted small">Placed {{ o.placedAt | date: 'mediumDate' }}</span>
+      </div>
+      <span class="badge" [ngClass]="statusClass(o.status)">{{ o.status }}</span>
+    </div>
+
+    <table class="data">
+      <tbody>
+        <tr *ngFor="let item of o.items">
+          <td>{{ item.productNameSnapshot }}</td>
+          <td class="muted">×{{ item.quantity }}</td>
+          <td class="right">{{ item.lineTotal | storeCurrency }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="spread order-total">
+      <span>Total</span>
+      <span class="price">{{ o.total | storeCurrency }}</span>
+    </div>
+  </div>
+</div>

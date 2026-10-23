@@ -1,0 +1,43 @@
+<div class="confirm card">
+  <div class="check">✓</div>
+  <h1>Thank you for your order!</h1>
+  <p class="muted">Your order has been placed. Keep your order number to track it.</p>
+
+  <div class="order-number">
+    <span class="muted small">Order number</span>
+    <strong>{{ orderNumber }}</strong>
+  </div>
+
+  <div class="alert alert-info" *ngIf="message">{{ message }}</div>
+
+  <div class="order-details" *ngIf="confirmation">
+    <div class="spread">
+      <span class="muted small">Total</span>
+      <strong>{{ confirmation.total | storeCurrency }}</strong>
+    </div>
+    <div class="spread">
+      <span class="muted small">Payment</span>
+      <span>{{ confirmation.paymentMethod }} ({{ confirmation.paymentStatus }})</span>
+    </div>
+    <div class="spread">
+      <span class="muted small">Currency</span>
+      <span>{{ confirmation.currencyCode }}</span>
+    </div>
+
+    <div class="address">
+      <span class="muted small">Shipping to</span>
+      <p>
+        {{ confirmation.addressLine1 }}<br />
+        <ng-container *ngIf="confirmation.addressLine2">{{ confirmation.addressLine2 }}<br /></ng-container>
+        {{ confirmation.city }}, {{ confirmation.stateRegion }} {{ confirmation.postalCode }}<br />
+        {{ confirmation.country }}<br />
+        {{ confirmation.contactPhone }}
+      </p>
+    </div>
+  </div>
+
+  <div class="confirm-actions">
+    <button class="btn btn-primary" (click)="track()">Track this order</button>
+    <a class="btn btn-outline" routerLink="/catalog">Continue shopping</a>
+  </div>
+</div>

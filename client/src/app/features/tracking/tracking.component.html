@@ -1,0 +1,79 @@
+<h1 class="page-title">Track your order</h1>
+
+<p class="muted small">
+  Track with your order number or the email you used at checkout.
+</p>
+
+<div class="track-mode">
+  <button
+    type="button"
+    class="chip"
+    [class.active]="mode === 'number'"
+    (click)="setMode('number')"
+  >
+    By order number
+  </button>
+  <button
+    type="button"
+    class="chip"
+    [class.active]="mode === 'email'"
+    (click)="setMode('email')"
+  >
+    By email
+  </button>
+</div>
+
+<form class="track-form" (ngSubmit)="submit()">
+  <input
+    *ngIf="mode === 'number'"
+    name="orderNumber"
+    [(ngModel)]="orderNumber"
+    placeholder="Enter your order number (e.g. ORD-20240210-A1B2C3)"
+    aria-label="Order number"
+  />
+  <input
+    *ngIf="mode === 'email'"
+    name="email"
+    type="email"
+    [(ngModel)]="email"
+    placeholder="Enter the email used at checkout"
+    aria-label="Order email"
+  />
+  <button class="btn btn-primary" type="submit" [disabled]="loading">
+    {{ loading ? 'Searching…' : 'Track' }}
+  </button>
+</form>
+
+<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+<!-- Result -->
+<div class="track-result card" *ngIf="order">
+  <div class="spread">
+    <div>
+      <span class="muted small">Order</span>
+      <h2 class="order-no">{{ order.orderNumber }}</h2>
+    </div>
+    <span class="badge" [ngClass]="statusClass(order.status)">{{ order.status }}</span>
+  </div>
+
+  <p class="muted small">Placed on {{ order.placedAt | date: 'medium' }}</p>
+
+  <table class="data">
+    <thead>
+      <tr><th>Item</th><th>Unit</th><th>Qty</th><th class="right">Total</th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of order.items">
+        <td>{{ item.productNameSnapshot }}</td>
+        <td>{{ item.unitPrice | storeCurrency }}</td>
+        <td>{{ item.quantity }}</td>
+        <td class="right">{{ item.lineTotal | storeCurrency }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="spread grand-total">
+    <span>Total</span>
+    <span class="price">{{ order.total | storeCurrency }}</span>
+  </div>
+</div>

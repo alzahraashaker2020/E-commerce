@@ -23,6 +23,39 @@ public class AdminOrderListItemVM
     /// <summary>Grand total.</summary>
     public decimal Total { get; set; }
 
+    /// <summary>Chosen payment method (e.g. Cash or Card).</summary>
+    public string PaymentMethod { get; set; } = string.Empty;
+
+    /// <summary>Settlement state of the payment (e.g. Pending, Paid, CashOnDelivery).</summary>
+    public string PaymentStatus { get; set; } = string.Empty;
+
+    /// <summary>ISO currency code the order was priced in.</summary>
+    public string CurrencyCode { get; set; } = string.Empty;
+
+    /// <summary>Guest email when the order has no customer.</summary>
+    public string? GuestEmail { get; set; }
+
+    /// <summary>Primary shipping address line.</summary>
+    public string AddressLine1 { get; set; } = string.Empty;
+
+    /// <summary>Optional secondary shipping address line.</summary>
+    public string? AddressLine2 { get; set; }
+
+    /// <summary>Shipping city.</summary>
+    public string City { get; set; } = string.Empty;
+
+    /// <summary>Shipping state, region, or governorate.</summary>
+    public string StateRegion { get; set; } = string.Empty;
+
+    /// <summary>Shipping postal/ZIP code.</summary>
+    public string PostalCode { get; set; } = string.Empty;
+
+    /// <summary>Shipping country.</summary>
+    public string Country { get; set; } = string.Empty;
+
+    /// <summary>Contact phone number for the delivery.</summary>
+    public string ContactPhone { get; set; } = string.Empty;
+
     /// <summary>UTC placement timestamp.</summary>
     public DateTime PlacedAt { get; set; }
 }

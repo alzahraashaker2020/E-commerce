@@ -143,6 +143,10 @@ namespace Shop.DAL.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
                     b.Property<bool>("IsDemoData")
                         .HasColumnType("boolean");
 
@@ -151,12 +155,17 @@ namespace Shop.DAL.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<int?>("ParentCategoryId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ParentCategoryId");
 
                     b.HasIndex("Slug")
                         .IsUnique();
@@ -167,34 +176,128 @@ namespace Shop.DAL.Migrations
                         new
                         {
                             Id = 1,
-                            Description = "Clothing and wearables.",
+                            Description = "Covers, throws, and cushions for your sofa.",
+                            ImageUrl = "assets/images/categories/sofa.webp",
                             IsDemoData = true,
-                            Name = "Apparel",
-                            Slug = "apparel"
+                            Name = "Sofa Styling",
+                            Slug = "sofa-styling"
                         },
                         new
                         {
                             Id = 2,
-                            Description = "Shoes and sandals.",
+                            Description = "Macramé, hangings, and wall décor.",
+                            ImageUrl = "assets/images/categories/wall.webp",
                             IsDemoData = true,
-                            Name = "Footwear",
-                            Slug = "footwear"
+                            Name = "Wall Styling",
+                            Slug = "wall-styling"
                         },
                         new
                         {
                             Id = 3,
-                            Description = "Bags, belts, and more.",
+                            Description = "Rugs, runners, and floor accents.",
+                            ImageUrl = "assets/images/categories/floor.webp",
                             IsDemoData = true,
-                            Name = "Accessories",
-                            Slug = "accessories"
+                            Name = "Floor Styling",
+                            Slug = "floor-styling"
                         },
                         new
                         {
                             Id = 4,
-                            Description = "Gadgets and devices.",
+                            Description = "The latest additions to the collection.",
+                            ImageUrl = "assets/images/categories/newarrivals.webp",
                             IsDemoData = true,
-                            Name = "Electronics",
-                            Slug = "electronics"
+                            Name = "New Arrivals",
+                            Slug = "new-arrivals"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Description = "Protective, elegant sofa covers.",
+                            ImageUrl = "assets/images/sofa/sofa-covers.webp",
+                            IsDemoData = true,
+                            Name = "Sofa covers",
+                            ParentCategoryId = 1,
+                            Slug = "sofa-covers"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Description = "Soft throws and blankets.",
+                            ImageUrl = "assets/images/sofa/blanket-throw.webp",
+                            IsDemoData = true,
+                            Name = "Blanket / throw out",
+                            ParentCategoryId = 1,
+                            Slug = "blanket-throw"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Description = "Handcrafted cushion and cover sets.",
+                            ImageUrl = "assets/images/sofa/handmade-sets.webp",
+                            IsDemoData = true,
+                            Name = "Hand made sets",
+                            ParentCategoryId = 1,
+                            Slug = "hand-made-sets"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Description = "Patterned, printed cushion sets.",
+                            ImageUrl = "assets/images/sofa/printed-sets.webp",
+                            IsDemoData = true,
+                            Name = "Printed sets",
+                            ParentCategoryId = 1,
+                            Slug = "printed-sets"
+                        },
+                        new
+                        {
+                            Id = 21,
+                            Description = "Woven macramé wall hangings.",
+                            ImageUrl = "assets/images/categories/wall.webp",
+                            IsDemoData = true,
+                            Name = "Macramé hangings",
+                            ParentCategoryId = 2,
+                            Slug = "macrame-hangings"
+                        },
+                        new
+                        {
+                            Id = 22,
+                            Description = "Decorative wall frames.",
+                            ImageUrl = "assets/images/categories/wall.webp",
+                            IsDemoData = true,
+                            Name = "Wall frames",
+                            ParentCategoryId = 2,
+                            Slug = "wall-frames"
+                        },
+                        new
+                        {
+                            Id = 31,
+                            Description = "Soft area rugs.",
+                            ImageUrl = "assets/images/categories/floor.webp",
+                            IsDemoData = true,
+                            Name = "Area rugs",
+                            ParentCategoryId = 3,
+                            Slug = "area-rugs"
+                        },
+                        new
+                        {
+                            Id = 32,
+                            Description = "Hallway and kitchen runners.",
+                            ImageUrl = "assets/images/categories/floor.webp",
+                            IsDemoData = true,
+                            Name = "Runners",
+                            ParentCategoryId = 3,
+                            Slug = "runners"
+                        },
+                        new
+                        {
+                            Id = 41,
+                            Description = "Freshly added items.",
+                            ImageUrl = "assets/images/categories/newarrivals.webp",
+                            IsDemoData = true,
+                            Name = "Latest picks",
+                            ParentCategoryId = 4,
+                            Slug = "latest-picks"
                         });
                 });
 
@@ -206,10 +309,21 @@ namespace Shop.DAL.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.Property<string>("ExternalId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("ExternalProvider")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -219,13 +333,22 @@ namespace Shop.DAL.Migrations
                     b.Property<bool>("IsDemoData")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsRegistered")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("MarketingConsent")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("text");
 
                     b.Property<string>("Phone")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
 
                     b.ToTable("Customers");
 
@@ -233,18 +356,23 @@ namespace Shop.DAL.Migrations
                         new
                         {
                             Id = 1,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "jordan@demo.local",
                             FullName = "Jordan Rivera",
                             IsDemoData = true,
+                            IsRegistered = true,
                             MarketingConsent = true,
+                            PasswordHash = "AQAAAAIAAYagAAAAEEFXRDAJVQm+ewFvN7Vr34QeNosx0FUZdw1WUhmkykFNRkcH5bjLM/2rbTxsBQ5hFw==",
                             Phone = "+1-555-0100"
                         },
                         new
                         {
                             Id = 2,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "sam@demo.local",
                             FullName = "Sam Taylor",
                             IsDemoData = true,
+                            IsRegistered = false,
                             MarketingConsent = false,
                             Phone = "+1-555-0101"
                         });
@@ -350,7 +478,7 @@ namespace Shop.DAL.Migrations
                             IsDemoData = true,
                             LowStockThreshold = 5,
                             ProductId = 101,
-                            QuantityOnHand = 50,
+                            QuantityOnHand = 40,
                             VariantId = 1001
                         },
                         new
@@ -368,7 +496,7 @@ namespace Shop.DAL.Migrations
                             IsDemoData = true,
                             LowStockThreshold = 5,
                             ProductId = 101,
-                            QuantityOnHand = 40,
+                            QuantityOnHand = 18,
                             VariantId = 1003
                         },
                         new
@@ -377,7 +505,7 @@ namespace Shop.DAL.Migrations
                             IsDemoData = true,
                             LowStockThreshold = 5,
                             ProductId = 102,
-                            QuantityOnHand = 20,
+                            QuantityOnHand = 22,
                             VariantId = 1004
                         },
                         new
@@ -393,9 +521,9 @@ namespace Shop.DAL.Migrations
                         {
                             Id = 3006,
                             IsDemoData = true,
-                            LowStockThreshold = 4,
+                            LowStockThreshold = 6,
                             ProductId = 103,
-                            QuantityOnHand = 15
+                            QuantityOnHand = 55
                         },
                         new
                         {
@@ -403,94 +531,93 @@ namespace Shop.DAL.Migrations
                             IsDemoData = true,
                             LowStockThreshold = 5,
                             ProductId = 104,
-                            QuantityOnHand = 25,
-                            VariantId = 1006
+                            QuantityOnHand = 30
                         },
                         new
                         {
                             Id = 3008,
                             IsDemoData = true,
-                            LowStockThreshold = 5,
-                            ProductId = 104,
-                            QuantityOnHand = 30,
-                            VariantId = 1007
+                            LowStockThreshold = 4,
+                            ProductId = 105,
+                            QuantityOnHand = 14,
+                            VariantId = 1006
                         },
                         new
                         {
                             Id = 3009,
                             IsDemoData = true,
-                            LowStockThreshold = 5,
-                            ProductId = 104,
-                            QuantityOnHand = 5,
-                            VariantId = 1008
+                            LowStockThreshold = 4,
+                            ProductId = 105,
+                            QuantityOnHand = 4,
+                            VariantId = 1007
                         },
                         new
                         {
                             Id = 3010,
                             IsDemoData = true,
-                            LowStockThreshold = 3,
-                            ProductId = 105,
-                            QuantityOnHand = 12,
-                            VariantId = 1009
+                            LowStockThreshold = 4,
+                            ProductId = 106,
+                            QuantityOnHand = 16
                         },
                         new
                         {
                             Id = 3011,
                             IsDemoData = true,
-                            LowStockThreshold = 3,
-                            ProductId = 105,
-                            QuantityOnHand = 8,
-                            VariantId = 1010
+                            LowStockThreshold = 5,
+                            ProductId = 107,
+                            QuantityOnHand = 26,
+                            VariantId = 1008
                         },
                         new
                         {
                             Id = 3012,
                             IsDemoData = true,
-                            LowStockThreshold = 6,
-                            ProductId = 106,
-                            QuantityOnHand = 60
+                            LowStockThreshold = 5,
+                            ProductId = 107,
+                            QuantityOnHand = 20,
+                            VariantId = 1009
                         },
                         new
                         {
                             Id = 3013,
                             IsDemoData = true,
                             LowStockThreshold = 5,
-                            ProductId = 107,
-                            QuantityOnHand = 45
+                            ProductId = 108,
+                            QuantityOnHand = 38
                         },
                         new
                         {
                             Id = 3014,
                             IsDemoData = true,
-                            LowStockThreshold = 6,
-                            ProductId = 108,
-                            QuantityOnHand = 70
+                            LowStockThreshold = 4,
+                            ProductId = 109,
+                            QuantityOnHand = 12
                         },
                         new
                         {
                             Id = 3015,
                             IsDemoData = true,
                             LowStockThreshold = 5,
-                            ProductId = 109,
+                            ProductId = 110,
                             QuantityOnHand = 4
                         },
                         new
                         {
                             Id = 3016,
                             IsDemoData = true,
-                            LowStockThreshold = 5,
-                            ProductId = 110,
-                            QuantityOnHand = 35,
-                            VariantId = 1011
+                            LowStockThreshold = 4,
+                            ProductId = 111,
+                            QuantityOnHand = 15,
+                            VariantId = 1010
                         },
                         new
                         {
                             Id = 3017,
                             IsDemoData = true,
-                            LowStockThreshold = 5,
-                            ProductId = 110,
-                            QuantityOnHand = 22,
-                            VariantId = 1012
+                            LowStockThreshold = 4,
+                            ProductId = 111,
+                            QuantityOnHand = 9,
+                            VariantId = 1011
                         },
                         new
                         {
@@ -498,15 +625,24 @@ namespace Shop.DAL.Migrations
                             IsDemoData = true,
                             LowStockThreshold = 4,
                             ProductId = 111,
-                            QuantityOnHand = 18
+                            QuantityOnHand = 6,
+                            VariantId = 1012
                         },
                         new
                         {
                             Id = 3019,
                             IsDemoData = true,
-                            LowStockThreshold = 6,
+                            LowStockThreshold = 5,
                             ProductId = 112,
-                            QuantityOnHand = 50
+                            QuantityOnHand = 28
+                        },
+                        new
+                        {
+                            Id = 3020,
+                            IsDemoData = true,
+                            LowStockThreshold = 5,
+                            ProductId = 113,
+                            QuantityOnHand = 33
                         });
                 });
 
@@ -575,15 +711,15 @@ namespace Shop.DAL.Migrations
                         {
                             Id = 5001,
                             CustomerId = 1,
-                            DiscountTotal = 6.50m,
+                            DiscountTotal = 12.50m,
                             IsDemoData = true,
                             OrderNumber = "ORD-20240210-A1B2C3",
                             PlacedAt = new DateTime(2024, 2, 10, 9, 30, 0, 0, DateTimeKind.Utc),
                             ShippingTotal = 0m,
                             Status = 1,
-                            Subtotal = 64.98m,
+                            Subtotal = 124.98m,
                             Tax = 0m,
-                            Total = 58.48m
+                            Total = 112.48m
                         },
                         new
                         {
@@ -596,9 +732,9 @@ namespace Shop.DAL.Migrations
                             PlacedAt = new DateTime(2024, 2, 15, 14, 0, 0, 0, DateTimeKind.Utc),
                             ShippingTotal = 7.50m,
                             Status = 4,
-                            Subtotal = 89.99m,
+                            Subtotal = 159.99m,
                             Tax = 0m,
-                            Total = 97.49m
+                            Total = 167.49m
                         },
                         new
                         {
@@ -610,9 +746,9 @@ namespace Shop.DAL.Migrations
                             PlacedAt = new DateTime(2024, 3, 1, 11, 15, 0, 0, DateTimeKind.Utc),
                             ShippingTotal = 5.00m,
                             Status = 0,
-                            Subtotal = 39.99m,
+                            Subtotal = 49.99m,
                             Tax = 0m,
-                            Total = 44.99m
+                            Total = 54.99m
                         });
                 });
 
@@ -667,47 +803,48 @@ namespace Shop.DAL.Migrations
                         {
                             Id = 6001,
                             IsDemoData = true,
-                            LineTotal = 39.98m,
+                            LineTotal = 69.99m,
                             OrderId = 5001,
                             ProductId = 101,
-                            ProductNameSnapshot = "Classic Tee",
-                            Quantity = 2,
-                            UnitPrice = 19.99m,
+                            ProductNameSnapshot = "Woven Sofa Cover (Size: 3-Seater)",
+                            Quantity = 1,
+                            UnitPrice = 69.99m,
                             VariantId = 1002
                         },
                         new
                         {
                             Id = 6002,
                             IsDemoData = true,
-                            LineTotal = 24.99m,
+                            LineTotal = 54.99m,
                             OrderId = 5001,
-                            ProductId = 108,
-                            ProductNameSnapshot = "Tote Bag",
+                            ProductId = 107,
+                            ProductNameSnapshot = "Printed Cushion Set (Pattern: Floral)",
                             Quantity = 1,
-                            UnitPrice = 24.99m
+                            UnitPrice = 54.99m,
+                            VariantId = 1008
                         },
                         new
                         {
                             Id = 6003,
                             IsDemoData = true,
-                            LineTotal = 89.99m,
+                            LineTotal = 159.99m,
                             OrderId = 5002,
-                            ProductId = 104,
-                            ProductNameSnapshot = "Running Shoes",
+                            ProductId = 111,
+                            ProductNameSnapshot = "Textured Area Rug (Size: 160x230)",
                             Quantity = 1,
-                            UnitPrice = 89.99m,
-                            VariantId = 1008
+                            UnitPrice = 159.99m,
+                            VariantId = 1011
                         },
                         new
                         {
                             Id = 6004,
                             IsDemoData = true,
-                            LineTotal = 39.99m,
+                            LineTotal = 49.99m,
                             OrderId = 5003,
-                            ProductId = 112,
-                            ProductNameSnapshot = "Portable Charger",
+                            ProductId = 109,
+                            ProductNameSnapshot = "Macramé Wall Hanging",
                             Quantity = 1,
-                            UnitPrice = 39.99m
+                            UnitPrice = 49.99m
                         });
                 });
 
@@ -764,158 +901,171 @@ namespace Shop.DAL.Migrations
                         new
                         {
                             Id = 101,
-                            BasePrice = 19.99m,
-                            Brand = "Everyday",
-                            CategoryId = 1,
+                            BasePrice = 59.99m,
+                            Brand = "Makani",
+                            CategoryId = 11,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DescriptionHtml = "<p>Soft cotton T-shirt.</p>",
+                            DescriptionHtml = "<p>Soft woven cover that drapes any sofa in elegance.</p>",
                             IsActive = true,
                             IsDemoData = true,
-                            Name = "Classic Tee",
-                            Slug = "classic-tee"
+                            Name = "Woven Sofa Cover",
+                            Slug = "woven-sofa-cover"
                         },
                         new
                         {
                             Id = 102,
-                            BasePrice = 44.99m,
-                            Brand = "Everyday",
-                            CategoryId = 1,
+                            BasePrice = 74.99m,
+                            Brand = "Makani",
+                            CategoryId = 11,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DescriptionHtml = "<p>Cozy fleece hoodie.</p>",
+                            DescriptionHtml = "<p>Form-fitting stretch slipcover for a tailored look.</p>",
                             IsActive = true,
                             IsDemoData = true,
-                            Name = "Hooded Sweatshirt",
-                            Slug = "hooded-sweatshirt"
+                            Name = "Stretch Slipcover",
+                            Slug = "stretch-slipcover"
                         },
                         new
                         {
                             Id = 103,
-                            BasePrice = 79.99m,
-                            Brand = "BlueLine",
-                            CategoryId = 1,
+                            BasePrice = 39.99m,
+                            Brand = "Makani",
+                            CategoryId = 12,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DescriptionHtml = "<p>Rugged denim jacket.</p>",
+                            DescriptionHtml = "<p>Cozy tasseled throw in warm neutral tones.</p>",
                             IsActive = true,
                             IsDemoData = true,
-                            Name = "Denim Jacket",
-                            Slug = "denim-jacket"
+                            Name = "Tasseled Throw Blanket",
+                            Slug = "tasseled-throw-blanket"
                         },
                         new
                         {
                             Id = 104,
-                            BasePrice = 89.99m,
-                            Brand = "Strideo",
-                            CategoryId = 2,
+                            BasePrice = 44.99m,
+                            Brand = "Makani",
+                            CategoryId = 12,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DescriptionHtml = "<p>Lightweight running shoes.</p>",
+                            DescriptionHtml = "<p>Chunky knitted throw for the sofa or bed.</p>",
                             IsActive = true,
                             IsDemoData = true,
-                            Name = "Running Shoes",
-                            Slug = "running-shoes"
+                            Name = "Knitted Throw",
+                            Slug = "knitted-throw"
                         },
                         new
                         {
                             Id = 105,
-                            BasePrice = 129.99m,
-                            Brand = "TrailMark",
-                            CategoryId = 2,
+                            BasePrice = 69.99m,
+                            Brand = "Makani",
+                            CategoryId = 13,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DescriptionHtml = "<p>Durable leather boots.</p>",
+                            DescriptionHtml = "<p>Set of handcrafted textured cushions.</p>",
                             IsActive = true,
                             IsDemoData = true,
-                            Name = "Leather Boots",
-                            Slug = "leather-boots"
+                            Name = "Handmade Cushion Set",
+                            Slug = "handmade-cushion-set"
                         },
                         new
                         {
                             Id = 106,
-                            BasePrice = 49.99m,
-                            Brand = "Strideo",
-                            CategoryId = 2,
+                            BasePrice = 84.99m,
+                            Brand = "Makani",
+                            CategoryId = 13,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DescriptionHtml = "<p>Casual canvas sneakers.</p>",
+                            DescriptionHtml = "<p>Three artisan pillows in complementary weaves.</p>",
                             IsActive = true,
                             IsDemoData = true,
-                            Name = "Canvas Sneakers",
-                            Slug = "canvas-sneakers"
+                            Name = "Artisan Pillow Trio",
+                            Slug = "artisan-pillow-trio"
                         },
                         new
                         {
                             Id = 107,
-                            BasePrice = 34.99m,
-                            Brand = "TrailMark",
-                            CategoryId = 3,
+                            BasePrice = 54.99m,
+                            Brand = "Makani",
+                            CategoryId = 14,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DescriptionHtml = "<p>Full-grain leather belt.</p>",
+                            DescriptionHtml = "<p>Patterned printed cushion set to accent any sofa.</p>",
                             IsActive = true,
                             IsDemoData = true,
-                            Name = "Leather Belt",
-                            Slug = "leather-belt"
+                            Name = "Printed Cushion Set",
+                            Slug = "printed-cushion-set"
                         },
                         new
                         {
                             Id = 108,
-                            BasePrice = 24.99m,
-                            Brand = "Everyday",
-                            CategoryId = 3,
+                            BasePrice = 42.99m,
+                            Brand = "Makani",
+                            CategoryId = 14,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DescriptionHtml = "<p>Spacious canvas tote.</p>",
+                            DescriptionHtml = "<p>Pair of floral-print pillows.</p>",
                             IsActive = true,
                             IsDemoData = true,
-                            Name = "Tote Bag",
-                            Slug = "tote-bag"
+                            Name = "Floral Print Pillows",
+                            Slug = "floral-print-pillows"
                         },
                         new
                         {
                             Id = 109,
-                            BasePrice = 29.99m,
-                            Brand = "BlueLine",
-                            CategoryId = 3,
+                            BasePrice = 49.99m,
+                            Brand = "Makani",
+                            CategoryId = 21,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DescriptionHtml = "<p>Warm wool scarf.</p>",
+                            DescriptionHtml = "<p>Hand-knotted macramé wall hanging.</p>",
                             IsActive = true,
                             IsDemoData = true,
-                            Name = "Wool Scarf",
-                            Slug = "wool-scarf"
+                            Name = "Macramé Wall Hanging",
+                            Slug = "macrame-wall-hanging"
                         },
                         new
                         {
                             Id = 110,
-                            BasePrice = 59.99m,
-                            Brand = "SoundCore",
-                            CategoryId = 4,
+                            BasePrice = 34.99m,
+                            Brand = "Makani",
+                            CategoryId = 22,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DescriptionHtml = "<p>Noise-isolating earbuds.</p>",
+                            DescriptionHtml = "<p>Decorative boho wall frame.</p>",
                             IsActive = true,
                             IsDemoData = true,
-                            Name = "Wireless Earbuds",
-                            Slug = "wireless-earbuds"
+                            Name = "Boho Wall Frame",
+                            Slug = "boho-wall-frame"
                         },
                         new
                         {
                             Id = 111,
-                            BasePrice = 149.99m,
-                            Brand = "SoundCore",
-                            CategoryId = 4,
+                            BasePrice = 119.99m,
+                            Brand = "Makani",
+                            CategoryId = 31,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DescriptionHtml = "<p>Fitness-tracking smart watch.</p>",
+                            DescriptionHtml = "<p>Soft textured area rug in neutral tones.</p>",
                             IsActive = true,
                             IsDemoData = true,
-                            Name = "Smart Watch",
-                            Slug = "smart-watch"
+                            Name = "Textured Area Rug",
+                            Slug = "textured-area-rug"
                         },
                         new
                         {
                             Id = 112,
-                            BasePrice = 39.99m,
-                            Brand = "SoundCore",
-                            CategoryId = 4,
+                            BasePrice = 64.99m,
+                            Brand = "Makani",
+                            CategoryId = 32,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DescriptionHtml = "<p>10,000mAh power bank.</p>",
+                            DescriptionHtml = "<p>Durable woven runner for hallways.</p>",
                             IsActive = true,
                             IsDemoData = true,
-                            Name = "Portable Charger",
-                            Slug = "portable-charger"
+                            Name = "Woven Floor Runner",
+                            Slug = "woven-floor-runner"
+                        },
+                        new
+                        {
+                            Id = 113,
+                            BasePrice = 47.99m,
+                            Brand = "Makani",
+                            CategoryId = 41,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DescriptionHtml = "<p>New-season throw in autumn hues.</p>",
+                            IsActive = true,
+                            IsDemoData = true,
+                            Name = "Autumn Collection Throw",
+                            Slug = "autumn-collection-throw"
                         });
                 });
 
@@ -954,119 +1104,119 @@ namespace Shop.DAL.Migrations
                         new
                         {
                             Id = 2001,
-                            AltText = "Classic Tee front",
+                            AltText = "Woven Sofa Cover",
                             IsDemoData = true,
                             ProductId = 101,
                             SortOrder = 0,
-                            Url = "https://demo.local/img/classic-tee-1.jpg"
+                            Url = "assets/images/sofa/sofa-covers.webp"
                         },
                         new
                         {
                             Id = 2002,
-                            AltText = "Classic Tee back",
+                            AltText = "Stretch Slipcover",
                             IsDemoData = true,
-                            ProductId = 101,
-                            SortOrder = 1,
-                            Url = "https://demo.local/img/classic-tee-2.jpg"
+                            ProductId = 102,
+                            SortOrder = 0,
+                            Url = "assets/images/sofa/sofa-covers.webp"
                         },
                         new
                         {
                             Id = 2003,
-                            AltText = "Hooded Sweatshirt",
+                            AltText = "Tasseled Throw Blanket",
                             IsDemoData = true,
-                            ProductId = 102,
+                            ProductId = 103,
                             SortOrder = 0,
-                            Url = "https://demo.local/img/hoodie-1.jpg"
+                            Url = "assets/images/sofa/blanket-throw.webp"
                         },
                         new
                         {
                             Id = 2004,
-                            AltText = "Denim Jacket",
+                            AltText = "Knitted Throw",
                             IsDemoData = true,
-                            ProductId = 103,
+                            ProductId = 104,
                             SortOrder = 0,
-                            Url = "https://demo.local/img/denim-jacket-1.jpg"
+                            Url = "assets/images/sofa/blanket-throw.webp"
                         },
                         new
                         {
                             Id = 2005,
-                            AltText = "Running Shoes",
+                            AltText = "Handmade Cushion Set",
                             IsDemoData = true,
-                            ProductId = 104,
+                            ProductId = 105,
                             SortOrder = 0,
-                            Url = "https://demo.local/img/running-shoes-1.jpg"
+                            Url = "assets/images/sofa/handmade-sets.webp"
                         },
                         new
                         {
                             Id = 2006,
-                            AltText = "Leather Boots",
+                            AltText = "Artisan Pillow Trio",
                             IsDemoData = true,
-                            ProductId = 105,
+                            ProductId = 106,
                             SortOrder = 0,
-                            Url = "https://demo.local/img/leather-boots-1.jpg"
+                            Url = "assets/images/sofa/handmade-sets.webp"
                         },
                         new
                         {
                             Id = 2007,
-                            AltText = "Canvas Sneakers",
+                            AltText = "Printed Cushion Set",
                             IsDemoData = true,
-                            ProductId = 106,
+                            ProductId = 107,
                             SortOrder = 0,
-                            Url = "https://demo.local/img/canvas-sneakers-1.jpg"
+                            Url = "assets/images/sofa/printed-sets.webp"
                         },
                         new
                         {
                             Id = 2008,
-                            AltText = "Leather Belt",
+                            AltText = "Floral Print Pillows",
                             IsDemoData = true,
-                            ProductId = 107,
+                            ProductId = 108,
                             SortOrder = 0,
-                            Url = "https://demo.local/img/leather-belt-1.jpg"
+                            Url = "assets/images/sofa/printed-sets.webp"
                         },
                         new
                         {
                             Id = 2009,
-                            AltText = "Tote Bag",
+                            AltText = "Macramé Wall Hanging",
                             IsDemoData = true,
-                            ProductId = 108,
+                            ProductId = 109,
                             SortOrder = 0,
-                            Url = "https://demo.local/img/tote-bag-1.jpg"
+                            Url = "assets/images/categories/wall.webp"
                         },
                         new
                         {
                             Id = 2010,
-                            AltText = "Wool Scarf",
+                            AltText = "Boho Wall Frame",
                             IsDemoData = true,
-                            ProductId = 109,
+                            ProductId = 110,
                             SortOrder = 0,
-                            Url = "https://demo.local/img/wool-scarf-1.jpg"
+                            Url = "assets/images/categories/wall.webp"
                         },
                         new
                         {
                             Id = 2011,
-                            AltText = "Wireless Earbuds",
+                            AltText = "Textured Area Rug",
                             IsDemoData = true,
-                            ProductId = 110,
+                            ProductId = 111,
                             SortOrder = 0,
-                            Url = "https://demo.local/img/earbuds-1.jpg"
+                            Url = "assets/images/categories/floor.webp"
                         },
                         new
                         {
                             Id = 2012,
-                            AltText = "Smart Watch",
+                            AltText = "Woven Floor Runner",
                             IsDemoData = true,
-                            ProductId = 111,
+                            ProductId = 112,
                             SortOrder = 0,
-                            Url = "https://demo.local/img/smart-watch-1.jpg"
+                            Url = "assets/images/categories/floor.webp"
                         },
                         new
                         {
                             Id = 2013,
-                            AltText = "Portable Charger",
+                            AltText = "Autumn Collection Throw",
                             IsDemoData = true,
-                            ProductId = 112,
+                            ProductId = 113,
                             SortOrder = 0,
-                            Url = "https://demo.local/img/charger-1.jpg"
+                            Url = "assets/images/categories/newarrivals.webp"
                         });
                 });
 
@@ -1117,122 +1267,187 @@ namespace Shop.DAL.Migrations
                             Id = 1001,
                             IsDemoData = true,
                             OptionName = "Size",
-                            OptionValue = "S",
-                            Price = 19.99m,
+                            OptionValue = "2-Seater",
+                            Price = 59.99m,
                             ProductId = 101,
-                            Sku = "TEE-S"
+                            Sku = "COVER-2S"
                         },
                         new
                         {
                             Id = 1002,
                             IsDemoData = true,
                             OptionName = "Size",
-                            OptionValue = "M",
-                            Price = 19.99m,
+                            OptionValue = "3-Seater",
+                            Price = 69.99m,
                             ProductId = 101,
-                            Sku = "TEE-M"
+                            Sku = "COVER-3S"
                         },
                         new
                         {
                             Id = 1003,
                             IsDemoData = true,
                             OptionName = "Size",
-                            OptionValue = "L",
-                            Price = 19.99m,
+                            OptionValue = "L-Shape",
+                            Price = 89.99m,
                             ProductId = 101,
-                            Sku = "TEE-L"
+                            Sku = "COVER-LS"
                         },
                         new
                         {
                             Id = 1004,
-                            CompareAtPrice = 54.99m,
+                            CompareAtPrice = 84.99m,
                             IsDemoData = true,
                             OptionName = "Size",
-                            OptionValue = "M",
-                            Price = 44.99m,
+                            OptionValue = "2-Seater",
+                            Price = 74.99m,
                             ProductId = 102,
-                            Sku = "HOOD-M"
+                            Sku = "SLIP-2S"
                         },
                         new
                         {
                             Id = 1005,
-                            CompareAtPrice = 54.99m,
+                            CompareAtPrice = 94.99m,
                             IsDemoData = true,
                             OptionName = "Size",
-                            OptionValue = "L",
-                            Price = 44.99m,
+                            OptionValue = "3-Seater",
+                            Price = 84.99m,
                             ProductId = 102,
-                            Sku = "HOOD-L"
+                            Sku = "SLIP-3S"
                         },
                         new
                         {
                             Id = 1006,
                             IsDemoData = true,
-                            OptionName = "Size",
-                            OptionValue = "9",
-                            Price = 89.99m,
-                            ProductId = 104,
-                            Sku = "RUN-9"
+                            OptionName = "Colour",
+                            OptionValue = "Beige",
+                            Price = 69.99m,
+                            ProductId = 105,
+                            Sku = "CUSH-BEIGE"
                         },
                         new
                         {
                             Id = 1007,
                             IsDemoData = true,
-                            OptionName = "Size",
-                            OptionValue = "10",
-                            Price = 89.99m,
-                            ProductId = 104,
-                            Sku = "RUN-10"
+                            OptionName = "Colour",
+                            OptionValue = "Clay",
+                            Price = 69.99m,
+                            ProductId = 105,
+                            Sku = "CUSH-CLAY"
                         },
                         new
                         {
                             Id = 1008,
                             IsDemoData = true,
-                            OptionName = "Size",
-                            OptionValue = "11",
-                            Price = 89.99m,
-                            ProductId = 104,
-                            Sku = "RUN-11"
+                            OptionName = "Pattern",
+                            OptionValue = "Floral",
+                            Price = 54.99m,
+                            ProductId = 107,
+                            Sku = "PRNT-FLORAL"
                         },
                         new
                         {
                             Id = 1009,
                             IsDemoData = true,
-                            OptionName = "Size",
-                            OptionValue = "9",
-                            Price = 129.99m,
-                            ProductId = 105,
-                            Sku = "BOOT-9"
+                            OptionName = "Pattern",
+                            OptionValue = "Geometric",
+                            Price = 54.99m,
+                            ProductId = 107,
+                            Sku = "PRNT-GEO"
                         },
                         new
                         {
                             Id = 1010,
                             IsDemoData = true,
                             OptionName = "Size",
-                            OptionValue = "10",
-                            Price = 129.99m,
-                            ProductId = 105,
-                            Sku = "BOOT-10"
+                            OptionValue = "120x170",
+                            Price = 119.99m,
+                            ProductId = 111,
+                            Sku = "RUG-120"
                         },
                         new
                         {
                             Id = 1011,
                             IsDemoData = true,
-                            OptionName = "Color",
-                            OptionValue = "Black",
-                            Price = 59.99m,
-                            ProductId = 110,
-                            Sku = "EAR-BLK"
+                            OptionName = "Size",
+                            OptionValue = "160x230",
+                            Price = 159.99m,
+                            ProductId = 111,
+                            Sku = "RUG-160"
                         },
                         new
                         {
                             Id = 1012,
                             IsDemoData = true,
-                            OptionName = "Color",
-                            OptionValue = "White",
-                            Price = 59.99m,
-                            ProductId = 110,
-                            Sku = "EAR-WHT"
+                            OptionName = "Size",
+                            OptionValue = "200x290",
+                            Price = 199.99m,
+                            ProductId = 111,
+                            Sku = "RUG-200"
+                        });
+                });
+
+            modelBuilder.Entity("Shop.DAL.Models.Review", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsDemoData")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("Reviews");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 7001,
+                            Comment = "The woven cover transformed our sofa — beautiful quality.",
+                            CreatedAt = new DateTime(2024, 2, 10, 9, 30, 0, 0, DateTimeKind.Utc),
+                            CustomerId = 1,
+                            IsDemoData = true,
+                            OrderId = 5001,
+                            ProductId = 101,
+                            Rating = 5
+                        },
+                        new
+                        {
+                            Id = 7002,
+                            Comment = "Lovely printed cushions, colours as pictured.",
+                            CreatedAt = new DateTime(2024, 2, 10, 9, 30, 0, 0, DateTimeKind.Utc),
+                            CustomerId = 1,
+                            IsDemoData = true,
+                            OrderId = 5001,
+                            ProductId = 107,
+                            Rating = 4
                         });
                 });
 
@@ -1296,6 +1511,16 @@ namespace Shop.DAL.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("Variant");
+                });
+
+            modelBuilder.Entity("Shop.DAL.Models.Category", b =>
+                {
+                    b.HasOne("Shop.DAL.Models.Category", "ParentCategory")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ParentCategory");
                 });
 
             modelBuilder.Entity("Shop.DAL.Models.InventoryItem", b =>
@@ -1385,6 +1610,32 @@ namespace Shop.DAL.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("Shop.DAL.Models.Review", b =>
+                {
+                    b.HasOne("Shop.DAL.Models.Customer", "Customer")
+                        .WithMany("Reviews")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Shop.DAL.Models.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Shop.DAL.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("Shop.DAL.Models.Cart", b =>
                 {
                     b.Navigation("Items");
@@ -1392,12 +1643,16 @@ namespace Shop.DAL.Migrations
 
             modelBuilder.Entity("Shop.DAL.Models.Category", b =>
                 {
+                    b.Navigation("Children");
+
                     b.Navigation("Products");
                 });
 
             modelBuilder.Entity("Shop.DAL.Models.Customer", b =>
                 {
                     b.Navigation("Orders");
+
+                    b.Navigation("Reviews");
                 });
 
             modelBuilder.Entity("Shop.DAL.Models.Order", b =>

@@ -1,11 +1,31 @@
-# Build output
+# --- .NET build artifacts ---
 bin/
 obj/
-
-# Rider / VS
+*.user
+*.suo
 .vs/
-.idea/
 
-# Node (Angular client, added later)
+# --- SQLite demo database (regenerated on API startup) ---
+*.db
+*.db-shm
+*.db-wal
+
+# --- Node / Angular ---
 node_modules/
-dist/
+client/dist/
+client/.angular/
+*.log
+
+# --- Agent workflow scratch / task artifacts ---
+.agents/
+
+# --- Local scratch files ---
+_*.txt
+b1.txt
+build_out.txt
+ng_out.txt
+sent-emails/
+
+# --- OS noise ---
+Thumbs.db
+.DS_Store

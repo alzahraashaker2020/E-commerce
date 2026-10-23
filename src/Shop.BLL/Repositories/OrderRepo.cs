@@ -26,4 +26,17 @@ public class OrderRepo : GenericRepo<Order>, IOrderRepo
             .Include(o => o.Items)
             .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
     }
+
+    /// <inheritdoc />
+    public Task<Order?> GetMostRecentByGuestEmailAsync(string email)
+    {
+        // Normalise both sides so the guest email match is case-insensitive,
+        // then take the newest matching order (with its line items).
+        string normalized = email.ToLower();
+        return _context.Orders
+            .Include(o => o.Items)
+            .Where(o => o.GuestEmail != null && o.GuestEmail.ToLower() == normalized)
+            .OrderByDescending(o => o.PlacedAt)
+            .FirstOrDefaultAsync();
+    }
 }

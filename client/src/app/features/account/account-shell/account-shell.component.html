@@ -1,0 +1,17 @@
+<div class="account-head spread">
+  <div>
+    <h1>My Account</h1>
+    <p class="muted" *ngIf="name$ | async as name">Signed in as {{ name }}</p>
+  </div>
+  <button class="btn btn-outline btn-sm" (click)="logout()">Sign out</button>
+</div>
+
+<nav class="account-tabs">
+  <a routerLink="/account/profile" routerLinkActive="active">Profile</a>
+  <a routerLink="/account/orders" routerLinkActive="active">Order history</a>
+  <a routerLink="/account/reviews" routerLinkActive="active">My reviews</a>
+</nav>
+
+<section class="account-body">
+  <router-outlet></router-outlet>
+</section>

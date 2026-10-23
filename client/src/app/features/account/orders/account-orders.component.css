@@ -1,0 +1,10 @@
+/* Customer order history styling. */
+.right { text-align: right; }
+.small { font-size: 0.78rem; margin-left: 0.6rem; }
+.empty { text-align: center; padding: 2rem; }
+.empty p { margin-bottom: 1rem; }
+.order { margin-bottom: 1rem; }
+.order-head { margin-bottom: 0.8rem; }
+.order-no { font-size: 1.05rem; }
+.order table { margin: 0.5rem 0; }
+.order-total { border-top: 1px solid var(--border); padding-top: 0.7rem; font-weight: 700; }

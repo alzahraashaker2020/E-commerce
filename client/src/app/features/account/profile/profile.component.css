@@ -1,0 +1,5 @@
+/* Customer profile form styling. */
+.profile-form { max-width: 480px; padding: 1.5rem; }
+.small { font-size: 0.78rem; }
+.consent { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; margin: 0.4rem 0 1rem; }
+.profile-form input:disabled { background: #faf6f3; color: var(--muted); }

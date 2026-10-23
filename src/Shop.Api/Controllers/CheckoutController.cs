@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Shop.BLL.Email;
 using Shop.BLL.IRepositories;
 using Shop.BLL.Response_VM;
 using Shop.DAL.Models;
@@ -20,14 +21,23 @@ public class CheckoutController : ControllerBase
     private const int OrderNumberMaxAttempts = 3;
 
     private readonly IRepoWrapper _repo;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<CheckoutController> _logger;
 
     /// <summary>
     /// Creates a new <see cref="CheckoutController"/>.
     /// </summary>
     /// <param name="repo">Unit-of-work repository wrapper.</param>
-    public CheckoutController(IRepoWrapper repo)
+    /// <param name="emailService">Service used to send the order-summary email.</param>
+    /// <param name="logger">Logger for best-effort email failures.</param>
+    public CheckoutController(
+        IRepoWrapper repo,
+        IEmailService emailService,
+        ILogger<CheckoutController> logger)
     {
         _repo = repo;
+        _emailService = emailService;
+        _logger = logger;
     }
 
     /// <summary>
@@ -107,6 +117,11 @@ public class CheckoutController : ControllerBase
             total = 0m;
         }
 
+        // Load the store settings for the order currency (fall back to USD/$ if
+        // the single settings row is somehow missing).
+        StoreSettings settings = await _repo._StoreSettings.Query().FirstOrDefaultAsync()
+            ?? new StoreSettings { Id = 1, CurrencyCode = "USD", CurrencySymbol = "$" };
+
         var now = DateTime.UtcNow;
         var order = new Order
         {
@@ -119,6 +134,19 @@ public class CheckoutController : ControllerBase
             Tax = 0m,
             ShippingTotal = 0m,
             Total = total,
+            CurrencyCode = settings.CurrencyCode,
+            PaymentMethod = request.PaymentMethod,
+            // Card payments are treated as captured; cash is collected on delivery.
+            PaymentStatus = request.PaymentMethod == PaymentMethod.Card
+                ? PaymentStatus.Paid
+                : PaymentStatus.CashOnDelivery,
+            AddressLine1 = request.AddressLine1,
+            AddressLine2 = request.AddressLine2,
+            City = request.City,
+            StateRegion = request.StateRegion,
+            PostalCode = request.PostalCode,
+            Country = request.Country,
+            ContactPhone = request.ContactPhone,
             PlacedAt = now,
             IsDemoData = false,
             Items = items
@@ -133,6 +161,19 @@ public class CheckoutController : ControllerBase
             {
                 _repo._Order.Add(order);
                 _repo.Save();
+
+                // Best-effort order-summary email. A failure here must never fail
+                // the checkout or change the 200 response.
+                try
+                {
+                    await _emailService.SendOrderSummaryAsync(order, settings);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "Failed to send order-summary email for order {OrderNumber}", order.OrderNumber);
+                }
+
                 break;
             }
             catch (DbUpdateException) when (attempt < OrderNumberMaxAttempts)
@@ -155,7 +196,17 @@ public class CheckoutController : ControllerBase
             OrderNumber = order.OrderNumber,
             Total = order.Total,
             Status = order.Status.ToString(),
-            PlacedAt = order.PlacedAt
+            PlacedAt = order.PlacedAt,
+            CurrencyCode = order.CurrencyCode,
+            PaymentMethod = order.PaymentMethod.ToString(),
+            PaymentStatus = order.PaymentStatus.ToString(),
+            AddressLine1 = order.AddressLine1,
+            AddressLine2 = order.AddressLine2,
+            City = order.City,
+            StateRegion = order.StateRegion,
+            PostalCode = order.PostalCode,
+            Country = order.Country,
+            ContactPhone = order.ContactPhone
         };
 
         return Ok(ApiResponse<OrderConfirmationResponse>.Ok(confirmation, message));

@@ -1,0 +1,41 @@
+<h1 class="admin-title">Orders</h1>
+
+<div class="loading" *ngIf="loading">Loading…</div>
+<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+<div class="card" *ngIf="!loading">
+  <table class="data" *ngIf="orders.length">
+    <thead>
+      <tr>
+        <th>Order #</th><th>Customer</th><th>Placed</th><th>Total</th>
+        <th>Payment</th><th>Status</th><th>Update</th>
+      </tr>
+    </thead>
+    <tbody>
+      <ng-container *ngFor="let o of orders">
+        <tr>
+          <td>{{ o.orderNumber }}</td>
+          <td>{{ o.customerName || o.guestEmail || '—' }}</td>
+          <td>{{ o.placedAt | date: 'short' }}</td>
+          <td>{{ o.total | storeCurrency }} <span class="muted">({{ o.currencyCode }})</span></td>
+          <td>{{ o.paymentMethod }} · {{ o.paymentStatus }}</td>
+          <td><span class="badge" [ngClass]="statusClass(o.status)">{{ o.status }}</span></td>
+          <td>
+            <select [ngModel]="o.status" [name]="'status' + o.id" (ngModelChange)="changeStatus(o, $event)">
+              <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+            </select>
+          </td>
+        </tr>
+        <tr class="detail-row">
+          <td colspan="7">
+            <span class="muted">Ship to:</span>
+            {{ o.addressLine1 }}<ng-container *ngIf="o.addressLine2">, {{ o.addressLine2 }}</ng-container>,
+            {{ o.city }}, {{ o.stateRegion }} {{ o.postalCode }}, {{ o.country }}
+            <ng-container *ngIf="o.contactPhone"> · {{ o.contactPhone }}</ng-container>
+          </td>
+        </tr>
+      </ng-container>
+    </tbody>
+  </table>
+  <p class="muted" *ngIf="!orders.length">No orders yet.</p>
+</div>

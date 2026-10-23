@@ -26,6 +26,18 @@ public class Product
     /// <summary>Foreign key to the owning <see cref="Category"/>.</summary>
     public int CategoryId { get; set; }
 
+    /// <summary>Optional colour attribute.</summary>
+    public string? Colour { get; set; }
+
+    /// <summary>Optional size attribute.</summary>
+    public string? Size { get; set; }
+
+    /// <summary>Optional width in centimetres (cm).</summary>
+    public decimal? Width { get; set; }
+
+    /// <summary>Optional height in centimetres (cm).</summary>
+    public decimal? Height { get; set; }
+
     /// <summary>Whether the product is active and visible in the storefront.</summary>
     public bool IsActive { get; set; }
 

@@ -31,6 +31,12 @@ public interface IRepoWrapper
     /// <summary>Role repository.</summary>
     IRoleRepo _Role { get; }
 
+    /// <summary>Review repository.</summary>
+    IReviewRepo _Review { get; }
+
+    /// <summary>Store-settings repository.</summary>
+    IStoreSettingsRepo _StoreSettings { get; }
+
     /// <summary>
     /// Cart repository. Present for structural symmetry only — unused by any
     /// current endpoint because the cart is client-side.

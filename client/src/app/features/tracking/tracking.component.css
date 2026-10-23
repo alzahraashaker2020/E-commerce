@@ -1,0 +1,25 @@
+/* Order tracking page styling. */
+.page-title { margin-bottom: 1.2rem; }
+.small { font-size: 0.8rem; }
+.right { text-align: right; }
+
+.track-form {
+  display: flex;
+  gap: 0.6rem;
+  max-width: 620px;
+  margin-bottom: 1.5rem;
+}
+.track-form input {
+  flex: 1;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+.track-form input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+.track-result { max-width: 720px; }
+.order-no { margin: 0.2rem 0 0; font-size: 1.3rem; }
+.track-result table { margin: 1.2rem 0; }
+.grand-total { font-size: 1.15rem; font-weight: 700; border-top: 1px solid var(--border); padding-top: 0.8rem; }

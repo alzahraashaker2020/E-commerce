@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Shop.BLL.Email;
 using Shop.BLL.IRepositories;
 using Shop.BLL.Response_VM;
 using Shop.DAL.Models;
@@ -20,16 +21,26 @@ public class AdminOrdersController : ControllerBase
 {
     private readonly IRepoWrapper _repo;
     private readonly IMapper _mapper;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<AdminOrdersController> _logger;
 
     /// <summary>
     /// Creates a new <see cref="AdminOrdersController"/>.
     /// </summary>
     /// <param name="repo">Unit-of-work repository wrapper.</param>
     /// <param name="mapper">AutoMapper instance.</param>
-    public AdminOrdersController(IRepoWrapper repo, IMapper mapper)
+    /// <param name="emailService">Service used to send the status-update email.</param>
+    /// <param name="logger">Logger for best-effort email failures.</param>
+    public AdminOrdersController(
+        IRepoWrapper repo,
+        IMapper mapper,
+        IEmailService emailService,
+        ILogger<AdminOrdersController> logger)
     {
         _repo = repo;
         _mapper = mapper;
+        _emailService = emailService;
+        _logger = logger;
     }
 
     /// <summary>
@@ -87,6 +98,21 @@ public class AdminOrdersController : ControllerBase
         order.Status = request.Status;
         _repo._Order.Update(order);
         _repo.Save();
+
+        // Best-effort status-update email. Load the store settings for the
+        // currency symbol (fall back to USD/$ if the single row is missing).
+        // A failure here must never fail the status update.
+        try
+        {
+            StoreSettings settings = await _repo._StoreSettings.Query().FirstOrDefaultAsync()
+                ?? new StoreSettings { Id = 1, CurrencyCode = "USD", CurrencySymbol = "$" };
+            await _emailService.SendStatusUpdateAsync(order, settings);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Failed to send status-update email for order {OrderNumber}", order.OrderNumber);
+        }
 
         return Ok(ApiResponse<bool>.Ok(true));
     }

@@ -1,0 +1,19 @@
+/* Admin dashboard styling. */
+.admin-title { font-size: 1.4rem; margin-bottom: 1.2rem; }
+.right { text-align: right; }
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.kpi { display: flex; flex-direction: column; gap: 0.3rem; }
+.kpi-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.kpi-value { font-size: 1.5rem; font-weight: 700; color: var(--ink); }
+.kpi-value.warn { color: var(--warn); }
+.card h3 { margin-bottom: 1rem; }
+.card table { margin-top: 0.5rem; }
+
+@media (max-width: 760px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}

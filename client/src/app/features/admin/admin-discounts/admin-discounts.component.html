@@ -1,0 +1,35 @@
+<h1 class="admin-title">Discounts</h1>
+
+<div class="loading" *ngIf="loading">Loading…</div>
+<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+<!-- Create form -->
+<div class="card form-card">
+  <h3>Create discount</h3>
+  <div class="form-grid">
+    <div class="field"><label>Code</label><input name="code" [(ngModel)]="form.code" placeholder="SUMMER20" /></div>
+    <div class="field"><label>Type</label><select name="type" [(ngModel)]="form.type"><option value="Percentage">Percentage</option><option value="Fixed">Fixed</option></select></div>
+    <div class="field"><label>Value</label><input name="value" type="number" [(ngModel)]="form.value" /></div>
+    <div class="field"><label>Active</label><select name="active" [(ngModel)]="form.isActive"><option [ngValue]="true">Yes</option><option [ngValue]="false">No</option></select></div>
+  </div>
+  <button class="btn btn-primary" (click)="create()">Create</button>
+</div>
+
+<!-- Discount table -->
+<div class="card">
+  <table class="data" *ngIf="discounts.length">
+    <thead>
+      <tr><th>Code</th><th>Type</th><th>Value</th><th>Active</th><th></th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let d of discounts">
+        <td><strong>{{ d.code }}</strong></td>
+        <td>{{ d.type }}</td>
+        <td>{{ d.type === 'Percentage' ? d.value + '%' : (d.value | storeCurrency) }}</td>
+        <td><span class="badge" [class.badge-ok]="d.isActive" [class.badge-muted]="!d.isActive">{{ d.isActive ? 'Yes' : 'No' }}</span></td>
+        <td><button class="btn btn-danger btn-sm" (click)="remove(d)">Delete</button></td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted" *ngIf="!discounts.length && !loading">No discounts.</p>
+</div>

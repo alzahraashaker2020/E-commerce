@@ -1,0 +1,22 @@
+/* Checkout page styling. */
+.page-title { margin-bottom: 1.5rem; }
+.small { font-size: 0.82rem; }
+.full { width: 100%; text-align: center; margin-top: 0.6rem; }
+
+.checkout-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 1.5rem;
+  align-items: start;
+}
+.checkout-form h3 { margin-bottom: 0.3rem; }
+.checkout-form p { margin-bottom: 1.2rem; }
+
+.summary h3 { margin-bottom: 1rem; }
+.sum-line { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.5rem; gap: 1rem; }
+.summary hr { border: none; border-top: 1px solid var(--border); margin: 0.8rem 0; }
+.total { font-size: 1.1rem; font-weight: 600; }
+
+@media (max-width: 760px) {
+  .checkout-layout { grid-template-columns: 1fr; }
+}

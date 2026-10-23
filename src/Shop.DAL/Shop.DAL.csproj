@@ -15,6 +15,10 @@
     <!-- Latest available 7.0.x patch for this provider (7.0.20 is not published;
          never 8.x, which requires the absent .NET 8 runtime). -->
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.18" />
+    <!-- SQLite provider for zero-install local/demo runs. PostgreSQL remains the
+         production target; the active provider is chosen at runtime by the
+         "Database:Provider" config setting (see Shop.Api/Program.cs). -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.20" />
   </ItemGroup>
 
 </Project>

@@ -22,5 +22,11 @@ public enum OrderStatus
     Delivered = 4,
 
     /// <summary>Order was cancelled.</summary>
-    Cancelled = 5
+    Cancelled = 5,
+
+    /// <summary>Order has been confirmed by the merchant.</summary>
+    Confirmed = 6,
+
+    /// <summary>Order is packed and ready to hand to the carrier.</summary>
+    ReadyToShip = 7
 }

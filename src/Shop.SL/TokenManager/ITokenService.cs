@@ -14,4 +14,12 @@ public interface ITokenService
     /// </summary>
     /// <param name="user">The authenticated admin user.</param>
     TokenVM GenerateToken(AdminUser user);
+
+    /// <summary>
+    /// Generates a signed JWT for an authenticated customer. The token carries
+    /// the "Customer" role claim and the customer's id as the subject, keeping
+    /// customer tokens distinct from admin tokens.
+    /// </summary>
+    /// <param name="customer">The authenticated customer.</param>
+    TokenVM GenerateCustomerToken(Customer customer);
 }

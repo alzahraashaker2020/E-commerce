@@ -1,0 +1,54 @@
+<!-- Storefront shell: announcement bar + navigation + routed content.
+     Layout and colours mirror the reference site's navbar (terracotta
+     announcement bar, blush nav row, centered wordmark), reorganised for
+     clarity. -->
+<header class="site-header">
+  <!-- Top announcement strip (terracotta brand colour) -->
+  <div class="announcement">Protect your home without compromising on elegance</div>
+
+  <!-- Main navigation row (blush background) -->
+  <div class="nav-bar">
+    <div class="container nav-inner">
+      <nav class="main-nav" aria-label="Primary">
+        <a routerLink="/catalog" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">Shop All</a>
+        <a routerLink="/track" routerLinkActive="active">Track order</a>
+        <a routerLink="/admin" routerLinkActive="active">Admin</a>
+      </nav>
+
+      <a class="brand" routerLink="/catalog" aria-label="MakaniShop home">
+        <span class="brand-mark">◆</span> Makani<span class="brand-accent">Shop</span>
+      </a>
+
+      <div class="nav-actions">
+        <!-- Account: shows "My account" when signed in, else "Sign in". -->
+        <a class="account-link" *ngIf="(loggedIn$ | async); else signIn" routerLink="/account">My account</a>
+        <ng-template #signIn><a class="account-link" routerLink="/login">Sign in</a></ng-template>
+
+        <a class="cart-link" routerLink="/cart" aria-label="View cart">
+          <span class="cart-icon">🛒</span>
+          <span class="cart-badge" *ngIf="(cartCount$ | async) as count">{{ count }}</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-banner">Demonstration storefront — sample data, no real transactions</div>
+</header>
+
+<main class="container page">
+  <router-outlet></router-outlet>
+</main>
+
+<!-- Basic, compact footer (deliberately minimal — not the full multi-column
+     version from the reference site), using the terracotta brand color. -->
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <span class="footer-brand">◆ MakaniShop</span>
+    <nav class="footer-links">
+      <a routerLink="/catalog">Shop</a>
+      <a routerLink="/track">Track order</a>
+      <a routerLink="/admin">Admin</a>
+    </nav>
+    <span class="footer-note">Demo · Angular · ASP.NET Core · PostgreSQL</span>
+  </div>
+</footer>

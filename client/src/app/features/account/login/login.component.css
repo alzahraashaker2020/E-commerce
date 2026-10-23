@@ -1,0 +1,40 @@
+/* Customer login styling. */
+.auth-wrap { min-height: 60vh; display: flex; align-items: center; justify-content: center; }
+.auth-card { width: 100%; max-width: 400px; padding: 2rem; }
+.auth-card h1 { font-size: 1.5rem; margin-bottom: 0.3rem; }
+.small { font-size: 0.8rem; }
+.auth-card > .small { margin-bottom: 1.2rem; }
+.full { width: 100%; text-align: center; margin-top: 0.4rem; }
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin: 1.2rem 0;
+}
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border);
+}
+.divider span { padding: 0 0.7rem; }
+
+.social-buttons { display: flex; gap: 0.6rem; }
+.social {
+  flex: 1;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+.social:hover { border-color: var(--accent); }
+.social .g { color: #4285f4; font-weight: 800; }
+.social .f { color: #1877f2; font-weight: 800; }
+
+.auth-foot { text-align: center; margin-top: 1.2rem; }

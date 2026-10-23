@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Shop.DAL.Models;
 
 namespace Shop.DAL.ViewModels;
 
@@ -25,6 +26,45 @@ public class PlaceOrderRequest
     /// <summary>Optional discount code (max 40 chars).</summary>
     [StringLength(40)]
     public string? DiscountCode { get; set; }
+
+    /// <summary>Primary shipping address line (required).</summary>
+    [Required]
+    [StringLength(200, MinimumLength = 1)]
+    public string AddressLine1 { get; set; } = string.Empty;
+
+    /// <summary>Optional secondary shipping address line.</summary>
+    [StringLength(200)]
+    public string? AddressLine2 { get; set; }
+
+    /// <summary>Shipping city (required).</summary>
+    [Required]
+    [StringLength(120, MinimumLength = 1)]
+    public string City { get; set; } = string.Empty;
+
+    /// <summary>Shipping state, region, or governorate (required).</summary>
+    [Required]
+    [StringLength(120, MinimumLength = 1)]
+    public string StateRegion { get; set; } = string.Empty;
+
+    /// <summary>Shipping postal/ZIP code (required).</summary>
+    [Required]
+    [StringLength(40, MinimumLength = 1)]
+    public string PostalCode { get; set; } = string.Empty;
+
+    /// <summary>Shipping country (required).</summary>
+    [Required]
+    [StringLength(120, MinimumLength = 1)]
+    public string Country { get; set; } = string.Empty;
+
+    /// <summary>Contact phone number for the delivery (required).</summary>
+    [Required]
+    [StringLength(40, MinimumLength = 1)]
+    public string ContactPhone { get; set; } = string.Empty;
+
+    /// <summary>Chosen payment method (Cash or Card).</summary>
+    [Required]
+    [EnumDataType(typeof(PaymentMethod))]
+    public PaymentMethod PaymentMethod { get; set; }
 }
 
 /// <summary>
@@ -43,4 +83,34 @@ public class OrderConfirmationResponse
 
     /// <summary>UTC placement timestamp.</summary>
     public DateTime PlacedAt { get; set; }
+
+    /// <summary>ISO currency code the order was priced in.</summary>
+    public string CurrencyCode { get; set; } = string.Empty;
+
+    /// <summary>Chosen payment method (Cash or Card).</summary>
+    public string PaymentMethod { get; set; } = string.Empty;
+
+    /// <summary>Settlement state of the payment.</summary>
+    public string PaymentStatus { get; set; } = string.Empty;
+
+    /// <summary>Primary shipping address line.</summary>
+    public string AddressLine1 { get; set; } = string.Empty;
+
+    /// <summary>Optional secondary shipping address line.</summary>
+    public string? AddressLine2 { get; set; }
+
+    /// <summary>Shipping city.</summary>
+    public string City { get; set; } = string.Empty;
+
+    /// <summary>Shipping state, region, or governorate.</summary>
+    public string StateRegion { get; set; } = string.Empty;
+
+    /// <summary>Shipping postal/ZIP code.</summary>
+    public string PostalCode { get; set; } = string.Empty;
+
+    /// <summary>Shipping country.</summary>
+    public string Country { get; set; } = string.Empty;
+
+    /// <summary>Contact phone number for the delivery.</summary>
+    public string ContactPhone { get; set; } = string.Empty;
 }

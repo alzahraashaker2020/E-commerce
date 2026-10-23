@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Shop.Api.Mapping;
 using Shop.Api.Middleware;
+using Shop.BLL.Email;
 using Shop.BLL.IRepositories;
 using Shop.BLL.Repositories;
 using Shop.BLL.Security;
@@ -23,14 +24,38 @@ IConfiguration config = builder.Configuration;
 // CORS policy name for the Angular dev origin.
 const string AngularCorsPolicy = "AngularDevPolicy";
 
-// 1. EF Core DbContext over PostgreSQL (provider only; no connection yet).
+// 1. EF Core DbContext. The active provider is chosen by the "Database:Provider"
+//    config setting: "Postgres" (production target) or "Sqlite" (zero-install
+//    local/demo run against a local file). Defaults to Sqlite so the demo runs
+//    without a database server; set it to "Postgres" to use PostgreSQL.
+string dbProvider = config["Database:Provider"] ?? "Sqlite";
 builder.Services.AddDbContext<ShopContext>(o =>
-    o.UseNpgsql(config.GetConnectionString("DefaultConnection")));
+{
+    if (string.Equals(dbProvider, "Postgres", StringComparison.OrdinalIgnoreCase))
+    {
+        o.UseNpgsql(config.GetConnectionString("DefaultConnection"));
+    }
+    else
+    {
+        // SQLite: a local file alongside the API; no server to install or start.
+        o.UseSqlite(config.GetConnectionString("SqliteConnection")
+            ?? "Data Source=shop_demo.db");
+    }
+});
 
 // 2-3a. Repository/unit-of-work + cross-cutting services.
 builder.Services.AddScoped<IRepoWrapper, RepoWrapper>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
+
+// Email service. Options are bound from the "Email" config section and the
+// host content-root path (used by the demo-mode disk sink) is supplied here.
+builder.Services.AddScoped<IEmailService>(sp =>
+{
+    EmailOptions options = config.GetSection("Email").Get<EmailOptions>() ?? new EmailOptions();
+    options.ContentRootPath = builder.Environment.ContentRootPath;
+    return new EmailService(options, sp.GetRequiredService<ILogger<EmailService>>());
+});
 
 // 4. AutoMapper — the Type overload comes from the 12.x DI extension package.
 builder.Services.AddAutoMapper(typeof(MappingProfile));
@@ -100,6 +125,18 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+// On the SQLite demo path, create and seed the local database on startup if it
+// doesn't exist yet. EnsureCreated() builds the full schema (including HasData
+// seed rows) directly from the model, so no migrations/DB server are needed for
+// the demo. The Postgres path uses real migrations (dotnet ef database update)
+// and is left untouched here.
+if (string.Equals(dbProvider, "Sqlite", StringComparison.OrdinalIgnoreCase))
+{
+    using IServiceScope scope = app.Services.CreateScope();
+    ShopContext db = scope.ServiceProvider.GetRequiredService<ShopContext>();
+    db.Database.EnsureCreated();
+}
 
 // Pipeline (outermost first).
 // 9. Global exception middleware wraps the entire pipeline so any unhandled

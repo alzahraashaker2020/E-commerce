@@ -1,0 +1,20 @@
+/* Admin products styling. */
+.admin-title { font-size: 1.4rem; margin-bottom: 1.2rem; }
+.small { font-size: 0.8rem; }
+.form-card, .bulk-card { margin-bottom: 1.2rem; }
+.form-card h3, .bulk-card h3 { margin-bottom: 0.9rem; }
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+.form-grid .full { grid-column: 1 / -1; }
+.form-actions { display: flex; gap: 0.6rem; }
+.bulk-row { display: flex; gap: 0.6rem; align-items: center; }
+.bulk-row input { max-width: 160px; }
+.actions { display: flex; gap: 0.4rem; }
+
+@media (max-width: 760px) {
+  .form-grid { grid-template-columns: 1fr; }
+}

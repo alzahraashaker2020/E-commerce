@@ -1,0 +1,20 @@
+/* Customer account hub styling. */
+.account-head { margin-bottom: 1.2rem; }
+.account-head h1 { font-size: 1.5rem; margin-bottom: 0.2rem; }
+.account-tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+.account-tabs a {
+  padding: 0.6rem 1rem;
+  text-decoration: none;
+  color: var(--muted);
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.account-tabs a:hover { color: var(--ink); }
+.account-tabs a.active { color: var(--accent-dark); border-bottom-color: var(--accent); }
+.account-body { min-height: 30vh; }

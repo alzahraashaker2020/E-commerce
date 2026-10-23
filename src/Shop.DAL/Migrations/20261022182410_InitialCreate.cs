@@ -38,11 +38,19 @@ namespace Shop.DAL.Migrations
                     Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Slug = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Description = table.Column<string>(type: "text", nullable: true),
+                    ImageUrl = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    ParentCategoryId = table.Column<int>(type: "integer", nullable: true),
                     IsDemoData = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Categories", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Categories_Categories_ParentCategoryId",
+                        column: x => x.ParentCategoryId,
+                        principalTable: "Categories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -55,6 +63,11 @@ namespace Shop.DAL.Migrations
                     FullName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Phone = table.Column<string>(type: "text", nullable: true),
                     MarketingConsent = table.Column<bool>(type: "boolean", nullable: false),
+                    PasswordHash = table.Column<string>(type: "text", nullable: true),
+                    ExternalProvider = table.Column<string>(type: "character varying(40)", maxLength: 40, nullable: true),
+                    ExternalId = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    IsRegistered = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsDemoData = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
@@ -224,6 +237,43 @@ namespace Shop.DAL.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Reviews",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    CustomerId = table.Column<int>(type: "integer", nullable: false),
+                    ProductId = table.Column<int>(type: "integer", nullable: false),
+                    OrderId = table.Column<int>(type: "integer", nullable: true),
+                    Rating = table.Column<int>(type: "integer", nullable: false),
+                    Comment = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsDemoData = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Reviews", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Reviews_Customers_CustomerId",
+                        column: x => x.CustomerId,
+                        principalTable: "Customers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Reviews_Orders_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Orders",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Reviews_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "CartItems",
                 columns: table => new
                 {
@@ -327,22 +377,22 @@ namespace Shop.DAL.Migrations
 
             migrationBuilder.InsertData(
                 table: "Categories",
-                columns: new[] { "Id", "Description", "IsDemoData", "Name", "Slug" },
+                columns: new[] { "Id", "Description", "ImageUrl", "IsDemoData", "Name", "ParentCategoryId", "Slug" },
                 values: new object[,]
                 {
-                    { 1, "Clothing and wearables.", true, "Apparel", "apparel" },
-                    { 2, "Shoes and sandals.", true, "Footwear", "footwear" },
-                    { 3, "Bags, belts, and more.", true, "Accessories", "accessories" },
-                    { 4, "Gadgets and devices.", true, "Electronics", "electronics" }
+                    { 1, "Covers, throws, and cushions for your sofa.", "assets/images/categories/sofa.webp", true, "Sofa Styling", null, "sofa-styling" },
+                    { 2, "Macramé, hangings, and wall décor.", "assets/images/categories/wall.webp", true, "Wall Styling", null, "wall-styling" },
+                    { 3, "Rugs, runners, and floor accents.", "assets/images/categories/floor.webp", true, "Floor Styling", null, "floor-styling" },
+                    { 4, "The latest additions to the collection.", "assets/images/categories/newarrivals.webp", true, "New Arrivals", null, "new-arrivals" }
                 });
 
             migrationBuilder.InsertData(
                 table: "Customers",
-                columns: new[] { "Id", "Email", "FullName", "IsDemoData", "MarketingConsent", "Phone" },
+                columns: new[] { "Id", "CreatedAt", "Email", "ExternalId", "ExternalProvider", "FullName", "IsDemoData", "IsRegistered", "MarketingConsent", "PasswordHash", "Phone" },
                 values: new object[,]
                 {
-                    { 1, "jordan@demo.local", "Jordan Rivera", true, true, "+1-555-0100" },
-                    { 2, "sam@demo.local", "Sam Taylor", true, false, "+1-555-0101" }
+                    { 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "jordan@demo.local", null, null, "Jordan Rivera", true, true, true, "AQAAAAIAAYagAAAAEEFXRDAJVQm+ewFvN7Vr34QeNosx0FUZdw1WUhmkykFNRkcH5bjLM/2rbTxsBQ5hFw==", "+1-555-0100" },
+                    { 2, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "sam@demo.local", null, null, "Sam Taylor", true, false, false, null, "+1-555-0101" }
                 });
 
             migrationBuilder.InsertData(
@@ -357,7 +407,7 @@ namespace Shop.DAL.Migrations
             migrationBuilder.InsertData(
                 table: "Orders",
                 columns: new[] { "Id", "CustomerId", "DiscountTotal", "GuestEmail", "GuestName", "IsDemoData", "OrderNumber", "PlacedAt", "ShippingTotal", "Status", "Subtotal", "Tax", "Total" },
-                values: new object[] { 5002, null, 0m, "guest@demo.local", "Guest Shopper", true, "ORD-20240215-D4E5F6", new DateTime(2024, 2, 15, 14, 0, 0, 0, DateTimeKind.Utc), 7.50m, 4, 89.99m, 0m, 97.49m });
+                values: new object[] { 5002, null, 0m, "guest@demo.local", "Guest Shopper", true, "ORD-20240215-D4E5F6", new DateTime(2024, 2, 15, 14, 0, 0, 0, DateTimeKind.Utc), 7.50m, 4, 159.99m, 0m, 167.49m });
 
             migrationBuilder.InsertData(
                 table: "Roles",
@@ -370,12 +420,28 @@ namespace Shop.DAL.Migrations
                 values: new object[] { 1, "admin@onlineshopping.demo", true, true, "AQAAAAIAAYagAAAAEEFXRDAJVQm+ewFvN7Vr34QeNosx0FUZdw1WUhmkykFNRkcH5bjLM/2rbTxsBQ5hFw==", 1, "admin" });
 
             migrationBuilder.InsertData(
+                table: "Categories",
+                columns: new[] { "Id", "Description", "ImageUrl", "IsDemoData", "Name", "ParentCategoryId", "Slug" },
+                values: new object[,]
+                {
+                    { 11, "Protective, elegant sofa covers.", "assets/images/sofa/sofa-covers.webp", true, "Sofa covers", 1, "sofa-covers" },
+                    { 12, "Soft throws and blankets.", "assets/images/sofa/blanket-throw.webp", true, "Blanket / throw out", 1, "blanket-throw" },
+                    { 13, "Handcrafted cushion and cover sets.", "assets/images/sofa/handmade-sets.webp", true, "Hand made sets", 1, "hand-made-sets" },
+                    { 14, "Patterned, printed cushion sets.", "assets/images/sofa/printed-sets.webp", true, "Printed sets", 1, "printed-sets" },
+                    { 21, "Woven macramé wall hangings.", "assets/images/categories/wall.webp", true, "Macramé hangings", 2, "macrame-hangings" },
+                    { 22, "Decorative wall frames.", "assets/images/categories/wall.webp", true, "Wall frames", 2, "wall-frames" },
+                    { 31, "Soft area rugs.", "assets/images/categories/floor.webp", true, "Area rugs", 3, "area-rugs" },
+                    { 32, "Hallway and kitchen runners.", "assets/images/categories/floor.webp", true, "Runners", 3, "runners" },
+                    { 41, "Freshly added items.", "assets/images/categories/newarrivals.webp", true, "Latest picks", 4, "latest-picks" }
+                });
+
+            migrationBuilder.InsertData(
                 table: "Orders",
                 columns: new[] { "Id", "CustomerId", "DiscountTotal", "GuestEmail", "GuestName", "IsDemoData", "OrderNumber", "PlacedAt", "ShippingTotal", "Status", "Subtotal", "Tax", "Total" },
                 values: new object[,]
                 {
-                    { 5001, 1, 6.50m, null, null, true, "ORD-20240210-A1B2C3", new DateTime(2024, 2, 10, 9, 30, 0, 0, DateTimeKind.Utc), 0m, 1, 64.98m, 0m, 58.48m },
-                    { 5003, 2, 0m, null, null, true, "ORD-20240301-G7H8J9", new DateTime(2024, 3, 1, 11, 15, 0, 0, DateTimeKind.Utc), 5.00m, 0, 39.99m, 0m, 44.99m }
+                    { 5001, 1, 12.50m, null, null, true, "ORD-20240210-A1B2C3", new DateTime(2024, 2, 10, 9, 30, 0, 0, DateTimeKind.Utc), 0m, 1, 124.98m, 0m, 112.48m },
+                    { 5003, 2, 0m, null, null, true, "ORD-20240301-G7H8J9", new DateTime(2024, 3, 1, 11, 15, 0, 0, DateTimeKind.Utc), 5.00m, 0, 49.99m, 0m, 54.99m }
                 });
 
             migrationBuilder.InsertData(
@@ -383,18 +449,19 @@ namespace Shop.DAL.Migrations
                 columns: new[] { "Id", "BasePrice", "Brand", "CategoryId", "CreatedAt", "DescriptionHtml", "IsActive", "IsDemoData", "Name", "Slug" },
                 values: new object[,]
                 {
-                    { 101, 19.99m, "Everyday", 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Soft cotton T-shirt.</p>", true, true, "Classic Tee", "classic-tee" },
-                    { 102, 44.99m, "Everyday", 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Cozy fleece hoodie.</p>", true, true, "Hooded Sweatshirt", "hooded-sweatshirt" },
-                    { 103, 79.99m, "BlueLine", 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Rugged denim jacket.</p>", true, true, "Denim Jacket", "denim-jacket" },
-                    { 104, 89.99m, "Strideo", 2, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Lightweight running shoes.</p>", true, true, "Running Shoes", "running-shoes" },
-                    { 105, 129.99m, "TrailMark", 2, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Durable leather boots.</p>", true, true, "Leather Boots", "leather-boots" },
-                    { 106, 49.99m, "Strideo", 2, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Casual canvas sneakers.</p>", true, true, "Canvas Sneakers", "canvas-sneakers" },
-                    { 107, 34.99m, "TrailMark", 3, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Full-grain leather belt.</p>", true, true, "Leather Belt", "leather-belt" },
-                    { 108, 24.99m, "Everyday", 3, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Spacious canvas tote.</p>", true, true, "Tote Bag", "tote-bag" },
-                    { 109, 29.99m, "BlueLine", 3, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Warm wool scarf.</p>", true, true, "Wool Scarf", "wool-scarf" },
-                    { 110, 59.99m, "SoundCore", 4, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Noise-isolating earbuds.</p>", true, true, "Wireless Earbuds", "wireless-earbuds" },
-                    { 111, 149.99m, "SoundCore", 4, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Fitness-tracking smart watch.</p>", true, true, "Smart Watch", "smart-watch" },
-                    { 112, 39.99m, "SoundCore", 4, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>10,000mAh power bank.</p>", true, true, "Portable Charger", "portable-charger" }
+                    { 101, 59.99m, "Makani", 11, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Soft woven cover that drapes any sofa in elegance.</p>", true, true, "Woven Sofa Cover", "woven-sofa-cover" },
+                    { 102, 74.99m, "Makani", 11, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Form-fitting stretch slipcover for a tailored look.</p>", true, true, "Stretch Slipcover", "stretch-slipcover" },
+                    { 103, 39.99m, "Makani", 12, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Cozy tasseled throw in warm neutral tones.</p>", true, true, "Tasseled Throw Blanket", "tasseled-throw-blanket" },
+                    { 104, 44.99m, "Makani", 12, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Chunky knitted throw for the sofa or bed.</p>", true, true, "Knitted Throw", "knitted-throw" },
+                    { 105, 69.99m, "Makani", 13, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Set of handcrafted textured cushions.</p>", true, true, "Handmade Cushion Set", "handmade-cushion-set" },
+                    { 106, 84.99m, "Makani", 13, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Three artisan pillows in complementary weaves.</p>", true, true, "Artisan Pillow Trio", "artisan-pillow-trio" },
+                    { 107, 54.99m, "Makani", 14, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Patterned printed cushion set to accent any sofa.</p>", true, true, "Printed Cushion Set", "printed-cushion-set" },
+                    { 108, 42.99m, "Makani", 14, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Pair of floral-print pillows.</p>", true, true, "Floral Print Pillows", "floral-print-pillows" },
+                    { 109, 49.99m, "Makani", 21, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Hand-knotted macramé wall hanging.</p>", true, true, "Macramé Wall Hanging", "macrame-wall-hanging" },
+                    { 110, 34.99m, "Makani", 22, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Decorative boho wall frame.</p>", true, true, "Boho Wall Frame", "boho-wall-frame" },
+                    { 111, 119.99m, "Makani", 31, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Soft textured area rug in neutral tones.</p>", true, true, "Textured Area Rug", "textured-area-rug" },
+                    { 112, 64.99m, "Makani", 32, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>Durable woven runner for hallways.</p>", true, true, "Woven Floor Runner", "woven-floor-runner" },
+                    { 113, 47.99m, "Makani", 41, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "<p>New-season throw in autumn hues.</p>", true, true, "Autumn Collection Throw", "autumn-collection-throw" }
                 });
 
             migrationBuilder.InsertData(
@@ -402,42 +469,39 @@ namespace Shop.DAL.Migrations
                 columns: new[] { "Id", "IsDemoData", "LowStockThreshold", "ProductId", "QuantityOnHand", "VariantId" },
                 values: new object[,]
                 {
-                    { 3006, true, 4, 103, 15, null },
-                    { 3012, true, 6, 106, 60, null },
-                    { 3013, true, 5, 107, 45, null },
-                    { 3014, true, 6, 108, 70, null },
-                    { 3015, true, 5, 109, 4, null },
-                    { 3018, true, 4, 111, 18, null },
-                    { 3019, true, 6, 112, 50, null }
+                    { 3006, true, 6, 103, 55, null },
+                    { 3007, true, 5, 104, 30, null },
+                    { 3010, true, 4, 106, 16, null },
+                    { 3013, true, 5, 108, 38, null },
+                    { 3014, true, 4, 109, 12, null },
+                    { 3015, true, 5, 110, 4, null },
+                    { 3019, true, 5, 112, 28, null },
+                    { 3020, true, 5, 113, 33, null }
                 });
 
             migrationBuilder.InsertData(
                 table: "OrderItems",
                 columns: new[] { "Id", "IsDemoData", "LineTotal", "OrderId", "ProductId", "ProductNameSnapshot", "Quantity", "UnitPrice", "VariantId" },
-                values: new object[,]
-                {
-                    { 6002, true, 24.99m, 5001, 108, "Tote Bag", 1, 24.99m, null },
-                    { 6004, true, 39.99m, 5003, 112, "Portable Charger", 1, 39.99m, null }
-                });
+                values: new object[] { 6004, true, 49.99m, 5003, 109, "Macramé Wall Hanging", 1, 49.99m, null });
 
             migrationBuilder.InsertData(
                 table: "ProductImages",
                 columns: new[] { "Id", "AltText", "IsDemoData", "ProductId", "SortOrder", "Url" },
                 values: new object[,]
                 {
-                    { 2001, "Classic Tee front", true, 101, 0, "https://demo.local/img/classic-tee-1.jpg" },
-                    { 2002, "Classic Tee back", true, 101, 1, "https://demo.local/img/classic-tee-2.jpg" },
-                    { 2003, "Hooded Sweatshirt", true, 102, 0, "https://demo.local/img/hoodie-1.jpg" },
-                    { 2004, "Denim Jacket", true, 103, 0, "https://demo.local/img/denim-jacket-1.jpg" },
-                    { 2005, "Running Shoes", true, 104, 0, "https://demo.local/img/running-shoes-1.jpg" },
-                    { 2006, "Leather Boots", true, 105, 0, "https://demo.local/img/leather-boots-1.jpg" },
-                    { 2007, "Canvas Sneakers", true, 106, 0, "https://demo.local/img/canvas-sneakers-1.jpg" },
-                    { 2008, "Leather Belt", true, 107, 0, "https://demo.local/img/leather-belt-1.jpg" },
-                    { 2009, "Tote Bag", true, 108, 0, "https://demo.local/img/tote-bag-1.jpg" },
-                    { 2010, "Wool Scarf", true, 109, 0, "https://demo.local/img/wool-scarf-1.jpg" },
-                    { 2011, "Wireless Earbuds", true, 110, 0, "https://demo.local/img/earbuds-1.jpg" },
-                    { 2012, "Smart Watch", true, 111, 0, "https://demo.local/img/smart-watch-1.jpg" },
-                    { 2013, "Portable Charger", true, 112, 0, "https://demo.local/img/charger-1.jpg" }
+                    { 2001, "Woven Sofa Cover", true, 101, 0, "assets/images/sofa/sofa-covers.webp" },
+                    { 2002, "Stretch Slipcover", true, 102, 0, "assets/images/sofa/sofa-covers.webp" },
+                    { 2003, "Tasseled Throw Blanket", true, 103, 0, "assets/images/sofa/blanket-throw.webp" },
+                    { 2004, "Knitted Throw", true, 104, 0, "assets/images/sofa/blanket-throw.webp" },
+                    { 2005, "Handmade Cushion Set", true, 105, 0, "assets/images/sofa/handmade-sets.webp" },
+                    { 2006, "Artisan Pillow Trio", true, 106, 0, "assets/images/sofa/handmade-sets.webp" },
+                    { 2007, "Printed Cushion Set", true, 107, 0, "assets/images/sofa/printed-sets.webp" },
+                    { 2008, "Floral Print Pillows", true, 108, 0, "assets/images/sofa/printed-sets.webp" },
+                    { 2009, "Macramé Wall Hanging", true, 109, 0, "assets/images/categories/wall.webp" },
+                    { 2010, "Boho Wall Frame", true, 110, 0, "assets/images/categories/wall.webp" },
+                    { 2011, "Textured Area Rug", true, 111, 0, "assets/images/categories/floor.webp" },
+                    { 2012, "Woven Floor Runner", true, 112, 0, "assets/images/categories/floor.webp" },
+                    { 2013, "Autumn Collection Throw", true, 113, 0, "assets/images/categories/newarrivals.webp" }
                 });
 
             migrationBuilder.InsertData(
@@ -445,18 +509,27 @@ namespace Shop.DAL.Migrations
                 columns: new[] { "Id", "CompareAtPrice", "IsDemoData", "OptionName", "OptionValue", "Price", "ProductId", "Sku" },
                 values: new object[,]
                 {
-                    { 1001, null, true, "Size", "S", 19.99m, 101, "TEE-S" },
-                    { 1002, null, true, "Size", "M", 19.99m, 101, "TEE-M" },
-                    { 1003, null, true, "Size", "L", 19.99m, 101, "TEE-L" },
-                    { 1004, 54.99m, true, "Size", "M", 44.99m, 102, "HOOD-M" },
-                    { 1005, 54.99m, true, "Size", "L", 44.99m, 102, "HOOD-L" },
-                    { 1006, null, true, "Size", "9", 89.99m, 104, "RUN-9" },
-                    { 1007, null, true, "Size", "10", 89.99m, 104, "RUN-10" },
-                    { 1008, null, true, "Size", "11", 89.99m, 104, "RUN-11" },
-                    { 1009, null, true, "Size", "9", 129.99m, 105, "BOOT-9" },
-                    { 1010, null, true, "Size", "10", 129.99m, 105, "BOOT-10" },
-                    { 1011, null, true, "Color", "Black", 59.99m, 110, "EAR-BLK" },
-                    { 1012, null, true, "Color", "White", 59.99m, 110, "EAR-WHT" }
+                    { 1001, null, true, "Size", "2-Seater", 59.99m, 101, "COVER-2S" },
+                    { 1002, null, true, "Size", "3-Seater", 69.99m, 101, "COVER-3S" },
+                    { 1003, null, true, "Size", "L-Shape", 89.99m, 101, "COVER-LS" },
+                    { 1004, 84.99m, true, "Size", "2-Seater", 74.99m, 102, "SLIP-2S" },
+                    { 1005, 94.99m, true, "Size", "3-Seater", 84.99m, 102, "SLIP-3S" },
+                    { 1006, null, true, "Colour", "Beige", 69.99m, 105, "CUSH-BEIGE" },
+                    { 1007, null, true, "Colour", "Clay", 69.99m, 105, "CUSH-CLAY" },
+                    { 1008, null, true, "Pattern", "Floral", 54.99m, 107, "PRNT-FLORAL" },
+                    { 1009, null, true, "Pattern", "Geometric", 54.99m, 107, "PRNT-GEO" },
+                    { 1010, null, true, "Size", "120x170", 119.99m, 111, "RUG-120" },
+                    { 1011, null, true, "Size", "160x230", 159.99m, 111, "RUG-160" },
+                    { 1012, null, true, "Size", "200x290", 199.99m, 111, "RUG-200" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Reviews",
+                columns: new[] { "Id", "Comment", "CreatedAt", "CustomerId", "IsDemoData", "OrderId", "ProductId", "Rating" },
+                values: new object[,]
+                {
+                    { 7001, "The woven cover transformed our sofa — beautiful quality.", new DateTime(2024, 2, 10, 9, 30, 0, 0, DateTimeKind.Utc), 1, true, 5001, 101, 5 },
+                    { 7002, "Lovely printed cushions, colours as pictured.", new DateTime(2024, 2, 10, 9, 30, 0, 0, DateTimeKind.Utc), 1, true, 5001, 107, 4 }
                 });
 
             migrationBuilder.InsertData(
@@ -464,18 +537,18 @@ namespace Shop.DAL.Migrations
                 columns: new[] { "Id", "IsDemoData", "LowStockThreshold", "ProductId", "QuantityOnHand", "VariantId" },
                 values: new object[,]
                 {
-                    { 3001, true, 5, 101, 50, 1001 },
+                    { 3001, true, 5, 101, 40, 1001 },
                     { 3002, true, 5, 101, 3, 1002 },
-                    { 3003, true, 5, 101, 40, 1003 },
-                    { 3004, true, 5, 102, 20, 1004 },
+                    { 3003, true, 5, 101, 18, 1003 },
+                    { 3004, true, 5, 102, 22, 1004 },
                     { 3005, true, 5, 102, 2, 1005 },
-                    { 3007, true, 5, 104, 25, 1006 },
-                    { 3008, true, 5, 104, 30, 1007 },
-                    { 3009, true, 5, 104, 5, 1008 },
-                    { 3010, true, 3, 105, 12, 1009 },
-                    { 3011, true, 3, 105, 8, 1010 },
-                    { 3016, true, 5, 110, 35, 1011 },
-                    { 3017, true, 5, 110, 22, 1012 }
+                    { 3008, true, 4, 105, 14, 1006 },
+                    { 3009, true, 4, 105, 4, 1007 },
+                    { 3011, true, 5, 107, 26, 1008 },
+                    { 3012, true, 5, 107, 20, 1009 },
+                    { 3016, true, 4, 111, 15, 1010 },
+                    { 3017, true, 4, 111, 9, 1011 },
+                    { 3018, true, 4, 111, 6, 1012 }
                 });
 
             migrationBuilder.InsertData(
@@ -483,8 +556,9 @@ namespace Shop.DAL.Migrations
                 columns: new[] { "Id", "IsDemoData", "LineTotal", "OrderId", "ProductId", "ProductNameSnapshot", "Quantity", "UnitPrice", "VariantId" },
                 values: new object[,]
                 {
-                    { 6001, true, 39.98m, 5001, 101, "Classic Tee", 2, 19.99m, 1002 },
-                    { 6003, true, 89.99m, 5002, 104, "Running Shoes", 1, 89.99m, 1008 }
+                    { 6001, true, 69.99m, 5001, 101, "Woven Sofa Cover (Size: 3-Seater)", 1, 69.99m, 1002 },
+                    { 6002, true, 54.99m, 5001, 107, "Printed Cushion Set (Pattern: Floral)", 1, 54.99m, 1008 },
+                    { 6003, true, 159.99m, 5002, 111, "Textured Area Rug (Size: 160x230)", 1, 159.99m, 1011 }
                 });
 
             migrationBuilder.CreateIndex(
@@ -514,9 +588,20 @@ namespace Shop.DAL.Migrations
                 column: "VariantId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Categories_ParentCategoryId",
+                table: "Categories",
+                column: "ParentCategoryId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Categories_Slug",
                 table: "Categories",
                 column: "Slug",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Customers_Email",
+                table: "Customers",
+                column: "Email",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -581,6 +666,21 @@ namespace Shop.DAL.Migrations
                 name: "IX_ProductVariants_ProductId",
                 table: "ProductVariants",
                 column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reviews_CustomerId",
+                table: "Reviews",
+                column: "CustomerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reviews_OrderId",
+                table: "Reviews",
+                column: "OrderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reviews_ProductId",
+                table: "Reviews",
+                column: "ProductId");
         }
 
         /// <inheritdoc />
@@ -605,22 +705,25 @@ namespace Shop.DAL.Migrations
                 name: "ProductImages");
 
             migrationBuilder.DropTable(
+                name: "Reviews");
+
+            migrationBuilder.DropTable(
                 name: "Roles");
 
             migrationBuilder.DropTable(
                 name: "Carts");
 
             migrationBuilder.DropTable(
-                name: "Orders");
-
-            migrationBuilder.DropTable(
                 name: "ProductVariants");
 
             migrationBuilder.DropTable(
-                name: "Customers");
+                name: "Orders");
 
             migrationBuilder.DropTable(
                 name: "Products");
+
+            migrationBuilder.DropTable(
+                name: "Customers");
 
             migrationBuilder.DropTable(
                 name: "Categories");

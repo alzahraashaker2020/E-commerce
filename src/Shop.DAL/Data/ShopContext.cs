@@ -59,6 +59,12 @@ public class ShopContext : DbContext
     /// <summary>RBAC roles.</summary>
     public DbSet<Role> Roles => Set<Role>();
 
+    /// <summary>Customer reviews.</summary>
+    public DbSet<Review> Reviews => Set<Review>();
+
+    /// <summary>Store-wide settings (single row).</summary>
+    public DbSet<StoreSettings> StoreSettings => Set<StoreSettings>();
+
     /// <summary>
     /// Configures the model: keys, relationships, unique indexes, decimal
     /// precision on money columns, enum-to-int conversions, then demo seeding.
@@ -68,13 +74,21 @@ public class ShopContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // --- Category ---
+        // --- Category (self-referencing two-level tree) ---
         modelBuilder.Entity<Category>(e =>
         {
             e.HasKey(c => c.Id);
             e.HasIndex(c => c.Slug).IsUnique();
             e.Property(c => c.Name).HasMaxLength(200);
             e.Property(c => c.Slug).HasMaxLength(200);
+            e.Property(c => c.ImageUrl).HasMaxLength(1000);
+
+            // A category may have a parent; deleting a parent is restricted so
+            // subcategories are never silently orphaned/cascaded away.
+            e.HasOne(c => c.ParentCategory)
+                .WithMany(c => c.Children)
+                .HasForeignKey(c => c.ParentCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // --- Product ---
@@ -85,6 +99,8 @@ public class ShopContext : DbContext
             e.Property(p => p.Name).HasMaxLength(200);
             e.Property(p => p.Slug).HasMaxLength(200);
             e.Property(p => p.BasePrice).HasPrecision(18, 2);
+            e.Property(p => p.Width).HasPrecision(18, 2);
+            e.Property(p => p.Height).HasPrecision(18, 2);
             e.HasOne(p => p.Category)
                 .WithMany(c => c.Products)
                 .HasForeignKey(p => p.CategoryId)
@@ -135,6 +151,30 @@ public class ShopContext : DbContext
             e.HasKey(c => c.Id);
             e.Property(c => c.Email).HasMaxLength(256);
             e.Property(c => c.FullName).HasMaxLength(200);
+            e.Property(c => c.ExternalProvider).HasMaxLength(40);
+            e.Property(c => c.ExternalId).HasMaxLength(256);
+            // Unique email for registered accounts (demo guest rows also have
+            // distinct emails, so a simple unique index is safe here).
+            e.HasIndex(c => c.Email).IsUnique();
+        });
+
+        // --- Review ---
+        modelBuilder.Entity<Review>(e =>
+        {
+            e.HasKey(r => r.Id);
+            e.Property(r => r.Comment).HasMaxLength(2000);
+            e.HasOne(r => r.Customer)
+                .WithMany(c => c.Reviews)
+                .HasForeignKey(r => r.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(r => r.Product)
+                .WithMany()
+                .HasForeignKey(r => r.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(r => r.Order)
+                .WithMany()
+                .HasForeignKey(r => r.OrderId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // --- Cart / CartItem (schema-only in this scaffold) ---
@@ -167,11 +207,21 @@ public class ShopContext : DbContext
             e.HasIndex(o => o.OrderNumber).IsUnique();
             e.Property(o => o.OrderNumber).HasMaxLength(40);
             e.Property(o => o.Status).HasConversion<int>();
+            e.Property(o => o.PaymentMethod).HasConversion<int>();
+            e.Property(o => o.PaymentStatus).HasConversion<int>();
             e.Property(o => o.Subtotal).HasPrecision(18, 2);
             e.Property(o => o.DiscountTotal).HasPrecision(18, 2);
             e.Property(o => o.Tax).HasPrecision(18, 2);
             e.Property(o => o.ShippingTotal).HasPrecision(18, 2);
             e.Property(o => o.Total).HasPrecision(18, 2);
+            e.Property(o => o.CurrencyCode).HasMaxLength(10);
+            e.Property(o => o.AddressLine1).HasMaxLength(200);
+            e.Property(o => o.AddressLine2).HasMaxLength(200);
+            e.Property(o => o.City).HasMaxLength(100);
+            e.Property(o => o.StateRegion).HasMaxLength(100);
+            e.Property(o => o.PostalCode).HasMaxLength(20);
+            e.Property(o => o.Country).HasMaxLength(100);
+            e.Property(o => o.ContactPhone).HasMaxLength(40);
             e.HasOne(o => o.Customer)
                 .WithMany(c => c.Orders)
                 .HasForeignKey(o => o.CustomerId)
@@ -227,6 +277,14 @@ public class ShopContext : DbContext
                 .WithMany(r => r.AdminUsers)
                 .HasForeignKey(a => a.RoleId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // --- StoreSettings (single row, Id = 1) ---
+        modelBuilder.Entity<StoreSettings>(e =>
+        {
+            e.HasKey(s => s.Id);
+            e.Property(s => s.CurrencyCode).HasMaxLength(10);
+            e.Property(s => s.CurrencySymbol).HasMaxLength(8);
         });
 
         // Apply deterministic demo seed data (HasData).

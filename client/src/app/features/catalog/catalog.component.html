@@ -1,0 +1,93 @@
+<!-- Hero banner. Mirrors the reference home wallpaper: a warm interior image
+     with a left-aligned headline and a call-to-action. The background image is
+     set in CSS (.hero) and falls back to a warm gradient if the asset is
+     absent, so the page looks intentional before the real wallpaper is added. -->
+<section class="hero">
+  <div class="hero-overlay">
+    <p class="hero-eyebrow">Home Revive</p>
+    <h1 class="hero-title">Elegant comfort<br />for every room</h1>
+    <p class="hero-sub">Finally, a place you can truly call your own.</p>
+    <button class="btn btn-primary hero-cta" (click)="scrollToGrid()">Shop Now</button>
+  </div>
+</section>
+
+<!-- Top-level category cards. Each links to that category's subcategory
+     drill-down page (e.g. "Sofa Styling" → its four subcategories). -->
+<section class="category-cards" *ngIf="topCategories.length">
+  <h2 class="section-title">Shop by Room</h2>
+  <div class="cards-grid">
+    <a class="cat-card" *ngFor="let c of topCategories" [routerLink]="['/category', c.slug]">
+      <div class="cat-media">
+        <img *ngIf="c.imageUrl" [src]="c.imageUrl" [alt]="c.name" loading="lazy" />
+      </div>
+      <div class="cat-label">{{ c.name }}</div>
+    </a>
+  </div>
+</section>
+
+<!-- Category filter + product grid -->
+<section class="filters" id="catalog-grid">
+  <div class="filter-head spread">
+    <h2 class="section-title">Shop All</h2>
+    <span class="muted" *ngIf="result">{{ result.totalCount }} products</span>
+  </div>
+
+  <div class="chips">
+    <button class="chip" [class.active]="categoryId === null" (click)="selectCategory(null)">All</button>
+    <button
+      class="chip"
+      *ngFor="let c of categories"
+      [class.active]="categoryId === c.id"
+      (click)="selectCategory(c.id)"
+    >
+      {{ c.name }}
+    </button>
+  </div>
+</section>
+
+<!-- States -->
+<div class="loading" *ngIf="loading">Loading products…</div>
+<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+<!-- Product grid -->
+<section class="grid" *ngIf="result && !loading">
+  <article class="product-card" *ngFor="let p of result.items" (click)="openProduct(p.id)">
+    <div class="product-media">
+      <img
+        *ngIf="p.primaryImageUrl"
+        [src]="p.primaryImageUrl"
+        [alt]="p.name"
+        loading="lazy"
+      />
+      <div class="product-media-placeholder" *ngIf="!p.primaryImageUrl">
+        <span>{{ p.name.charAt(0) }}</span>
+      </div>
+    </div>
+    <div class="product-body">
+      <span class="product-cat">{{ p.categoryName }}</span>
+      <h3 class="product-name">{{ p.name }}</h3>
+      <div class="spread">
+        <span class="price">{{ p.basePrice | storeCurrency }}</span>
+        <button class="btn btn-secondary btn-sm" (click)="quickAdd(p, $event)">Add</button>
+      </div>
+    </div>
+  </article>
+
+  <div class="empty" *ngIf="result.items.length === 0">
+    No products found in this category.
+  </div>
+</section>
+
+<!-- Pagination -->
+<nav class="pager" *ngIf="result && totalPages > 1 && !loading" aria-label="Pagination">
+  <button class="btn btn-outline btn-sm" [disabled]="page <= 1" (click)="goToPage(page - 1)">Prev</button>
+  <button
+    class="page-num"
+    *ngFor="let n of pageNumbers"
+    [class.active]="n === page"
+    (click)="goToPage(n)"
+  >
+    {{ n }}
+  </button>
+  <button class="btn btn-outline btn-sm" [disabled]="page >= totalPages" (click)="goToPage(page + 1)">Next</button>
+</nav>

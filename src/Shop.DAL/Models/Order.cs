@@ -40,6 +40,36 @@ public class Order
     /// <summary>Grand total charged.</summary>
     public decimal Total { get; set; }
 
+    /// <summary>Chosen payment method (cash or card).</summary>
+    public PaymentMethod PaymentMethod { get; set; }
+
+    /// <summary>Settlement state of the payment.</summary>
+    public PaymentStatus PaymentStatus { get; set; }
+
+    /// <summary>ISO currency code the order was priced in (defaults to USD).</summary>
+    public string CurrencyCode { get; set; } = "USD";
+
+    /// <summary>Primary shipping address line.</summary>
+    public string AddressLine1 { get; set; } = string.Empty;
+
+    /// <summary>Optional secondary shipping address line.</summary>
+    public string? AddressLine2 { get; set; }
+
+    /// <summary>Shipping city.</summary>
+    public string City { get; set; } = string.Empty;
+
+    /// <summary>Shipping state, region, or governorate.</summary>
+    public string StateRegion { get; set; } = string.Empty;
+
+    /// <summary>Shipping postal/ZIP code.</summary>
+    public string PostalCode { get; set; } = string.Empty;
+
+    /// <summary>Shipping country.</summary>
+    public string Country { get; set; } = string.Empty;
+
+    /// <summary>Contact phone number for the delivery.</summary>
+    public string ContactPhone { get; set; } = string.Empty;
+
     /// <summary>UTC timestamp when the order was placed.</summary>
     public DateTime PlacedAt { get; set; }
 

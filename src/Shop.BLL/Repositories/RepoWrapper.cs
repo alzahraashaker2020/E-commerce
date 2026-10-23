@@ -23,6 +23,8 @@ public class RepoWrapper : IRepoWrapper
     private IAdminUserRepo? _adminUserRepo;
     private IRoleRepo? _roleRepo;
     private ICartRepo? _cartRepo;
+    private IReviewRepo? _reviewRepo;
+    private IStoreSettingsRepo? _storeSettingsRepo;
 
     /// <summary>
     /// Creates a new <see cref="RepoWrapper"/> over the supplied context.
@@ -61,6 +63,12 @@ public class RepoWrapper : IRepoWrapper
 
     /// <inheritdoc />
     public ICartRepo _Cart => _cartRepo ??= new CartRepo(_context);
+
+    /// <inheritdoc />
+    public IReviewRepo _Review => _reviewRepo ??= new ReviewRepo(_context);
+
+    /// <inheritdoc />
+    public IStoreSettingsRepo _StoreSettings => _storeSettingsRepo ??= new StoreSettingsRepo(_context);
 
     /// <inheritdoc />
     public void Save()

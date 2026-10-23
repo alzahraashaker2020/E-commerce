@@ -1,0 +1,7 @@
+/* Customer "my reviews" styling. */
+.small { font-size: 0.78rem; }
+.empty { text-align: center; padding: 2rem; }
+.empty p { margin-bottom: 1rem; }
+.review { margin-bottom: 0.9rem; }
+.stars { color: var(--accent); letter-spacing: 0.1em; }
+.comment { margin: 0.5rem 0; }

@@ -45,4 +45,21 @@ public class OrderTrackingController : ControllerBase
 
         return Ok(ApiResponse<OrderTrackingVM>.Ok(_mapper.Map<OrderTrackingVM>(order)));
     }
+
+    /// <summary>
+    /// Returns the tracking view for the most recent order placed with the
+    /// supplied guest email, or a 404 failure envelope when none is found.
+    /// </summary>
+    /// <param name="email">The guest email used at checkout.</param>
+    [HttpGet("by-email")]
+    public async Task<ActionResult<ApiResponse<OrderTrackingVM>>> TrackByEmail([FromQuery] string email)
+    {
+        Order? order = await _repo._Order.GetMostRecentByGuestEmailAsync(email);
+        if (order is null)
+        {
+            return NotFound(ApiResponse<OrderTrackingVM>.Fail("No order found for that email", 404));
+        }
+
+        return Ok(ApiResponse<OrderTrackingVM>.Ok(_mapper.Map<OrderTrackingVM>(order)));
+    }
 }

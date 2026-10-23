@@ -1,0 +1,44 @@
+<h1 class="admin-title">Sales Overview</h1>
+
+<div class="loading" *ngIf="loading">Loading…</div>
+<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+<div *ngIf="overview && !loading">
+  <!-- KPI cards -->
+  <div class="kpi-grid">
+    <div class="kpi card">
+      <span class="kpi-label">Total revenue</span>
+      <span class="kpi-value">{{ overview.totalRevenue | storeCurrency }}</span>
+    </div>
+    <div class="kpi card">
+      <span class="kpi-label">Orders</span>
+      <span class="kpi-value">{{ overview.orderCount }}</span>
+    </div>
+    <div class="kpi card">
+      <span class="kpi-label">Avg order value</span>
+      <span class="kpi-value">{{ overview.averageOrderValue | storeCurrency }}</span>
+    </div>
+    <div class="kpi card">
+      <span class="kpi-label">Low-stock items</span>
+      <span class="kpi-value" [class.warn]="overview.lowStockCount > 0">{{ overview.lowStockCount }}</span>
+    </div>
+  </div>
+
+  <!-- Top products -->
+  <div class="card">
+    <h3>Top products by units sold</h3>
+    <table class="data" *ngIf="overview.topProducts?.length">
+      <thead>
+        <tr><th>Product</th><th>Units sold</th><th class="right">Revenue</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of overview.topProducts">
+          <td>{{ p.productName }}</td>
+          <td>{{ p.quantitySold }}</td>
+          <td class="right">{{ p.revenue | storeCurrency }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="muted" *ngIf="!overview.topProducts?.length">No sales in this period.</p>
+  </div>
+</div>

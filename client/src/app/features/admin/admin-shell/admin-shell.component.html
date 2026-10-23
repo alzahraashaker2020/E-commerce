@@ -1,0 +1,25 @@
+<div class="admin-layout">
+  <!-- Sidebar navigation -->
+  <aside class="admin-sidebar">
+    <div class="admin-brand">◆ Admin</div>
+    <nav>
+      <a routerLink="/admin/dashboard" routerLinkActive="active">Sales overview</a>
+      <a routerLink="/admin/products" routerLinkActive="active">Products</a>
+      <a routerLink="/admin/categories" routerLinkActive="active">Categories</a>
+      <a routerLink="/admin/inventory" routerLinkActive="active">Inventory alerts</a>
+      <a routerLink="/admin/orders" routerLinkActive="active">Orders</a>
+      <a routerLink="/admin/discounts" routerLinkActive="active">Discounts</a>
+      <a routerLink="/admin/customers" routerLinkActive="active">Customers</a>
+    </nav>
+    <div class="admin-user">
+      <span class="muted small">Signed in as</span>
+      <strong>{{ username }}</strong>
+      <button class="btn btn-outline btn-sm" (click)="logout()">Sign out</button>
+    </div>
+  </aside>
+
+  <!-- Routed admin content -->
+  <section class="admin-content">
+    <router-outlet></router-outlet>
+  </section>
+</div>

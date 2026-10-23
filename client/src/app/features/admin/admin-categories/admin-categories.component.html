@@ -1,0 +1,48 @@
+<h1 class="admin-title">Categories</h1>
+
+<div class="loading" *ngIf="loading">Loading…</div>
+<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+<!-- Create / edit form -->
+<div class="card form-card">
+  <h3>{{ editing ? 'Edit category' : 'Create category' }}</h3>
+  <div class="form-grid">
+    <div class="field"><label>Name</label><input name="name" [(ngModel)]="form.name" placeholder="Sofa Styling" /></div>
+    <div class="field">
+      <label>Parent</label>
+      <select name="parent" [(ngModel)]="form.parentCategoryId">
+        <option [ngValue]="null">— Top-level —</option>
+        <option *ngFor="let p of topLevel" [ngValue]="p.id">{{ p.name }}</option>
+      </select>
+    </div>
+    <div class="field"><label>Image URL</label><input name="imageUrl" [(ngModel)]="form.imageUrl" placeholder="assets/..." /></div>
+    <div class="field field-wide"><label>Description</label><input name="description" [(ngModel)]="form.description" /></div>
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-primary" (click)="save()">{{ editing ? 'Save' : 'Create' }}</button>
+    <button class="btn btn-outline" *ngIf="editing" (click)="cancel()">Cancel</button>
+  </div>
+</div>
+
+<!-- Category table -->
+<div class="card">
+  <table class="data" *ngIf="categories.length">
+    <thead>
+      <tr><th>Name</th><th>Parent</th><th>Slug</th><th>Subcategories</th><th>Products</th><th></th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let c of categories">
+        <td><strong>{{ c.name }}</strong></td>
+        <td>{{ c.parentName || '—' }}</td>
+        <td><span class="muted small">{{ c.slug }}</span></td>
+        <td>{{ c.childCount }}</td>
+        <td>{{ c.productCount }}</td>
+        <td class="row-actions">
+          <button class="btn btn-outline btn-sm" (click)="startEdit(c)">Edit</button>
+          <button class="btn btn-danger btn-sm" (click)="remove(c)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted" *ngIf="!categories.length && !loading">No categories.</p>
+</div>

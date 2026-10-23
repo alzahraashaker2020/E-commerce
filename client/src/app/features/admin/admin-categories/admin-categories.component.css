@@ -1,0 +1,16 @@
+/* Admin categories styling. */
+.admin-title { font-size: 1.4rem; margin-bottom: 1.2rem; }
+.form-card { margin-bottom: 1.2rem; }
+.form-card h3 { margin-bottom: 0.9rem; }
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+.field-wide { grid-column: 1 / -1; }
+.form-actions { display: flex; gap: 0.6rem; }
+.row-actions { display: flex; gap: 0.5rem; }
+@media (max-width: 760px) {
+  .form-grid { grid-template-columns: 1fr; }
+}

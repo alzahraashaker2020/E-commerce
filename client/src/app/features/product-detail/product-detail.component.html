@@ -1,0 +1,129 @@
+<div class="loading" *ngIf="loading">Loading…</div>
+<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+<article class="pdp" *ngIf="product && !loading">
+  <nav class="breadcrumb">
+    <a routerLink="/catalog">Home</a>
+    <span>›</span>
+    <span>{{ product.categoryName }}</span>
+    <span>›</span>
+    <span>{{ product.name }}</span>
+  </nav>
+
+  <div class="pdp-grid">
+    <!-- Media -->
+    <div class="pdp-media">
+      <img *ngIf="product.images.length" [src]="product.images[0].url" [alt]="product.images[0].altText || product.name" />
+      <div class="pdp-media-placeholder" *ngIf="!product.images.length">{{ product.name.charAt(0) }}</div>
+    </div>
+
+    <!-- Info -->
+    <div class="pdp-info">
+      <span class="pdp-brand" *ngIf="product.brand">{{ product.brand }}</span>
+      <h1 class="pdp-name">{{ product.name }}</h1>
+      <div class="pdp-price">{{ currentPrice | storeCurrency }}</div>
+
+      <div class="pdp-stock">
+        <span class="badge" [class.badge-ok]="inStock" [class.badge-warn]="!inStock">
+          {{ inStock ? 'In stock' : 'Out of stock' }}
+        </span>
+        <span class="muted">{{ product.totalQuantityOnHand }} available</span>
+      </div>
+
+      <ul class="pdp-attributes" *ngIf="product.colour || product.size || product.width != null || product.height != null">
+        <li *ngIf="product.colour"><span class="muted">Colour:</span> {{ product.colour }}</li>
+        <li *ngIf="product.size"><span class="muted">Size:</span> {{ product.size }}</li>
+        <li *ngIf="product.width != null"><span class="muted">Width:</span> {{ product.width }} cm</li>
+        <li *ngIf="product.height != null"><span class="muted">Height:</span> {{ product.height }} cm</li>
+      </ul>
+
+      <div class="pdp-desc" *ngIf="product.descriptionHtml" [innerHTML]="product.descriptionHtml"></div>
+
+      <!-- Variant selector -->
+      <div class="pdp-variants" *ngIf="product.variants.length">
+        <label>{{ product.variants[0].optionName }}</label>
+        <div class="variant-options">
+          <button
+            class="variant-btn"
+            *ngFor="let v of product.variants"
+            [class.active]="selectedVariant?.id === v.id"
+            (click)="selectVariant(v)"
+          >
+            {{ v.optionValue }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Quantity + add -->
+      <div class="pdp-actions">
+        <div class="qty">
+          <button (click)="quantity = quantity > 1 ? quantity - 1 : 1">−</button>
+          <span>{{ quantity }}</span>
+          <button (click)="quantity = quantity + 1">+</button>
+        </div>
+        <button class="btn btn-primary" [disabled]="!inStock" (click)="addToCart()">Add to cart</button>
+      </div>
+
+      <div class="alert alert-info" *ngIf="added">
+        Added to cart. <a (click)="goToCart()" class="link">View cart →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reviews -->
+  <section class="reviews">
+    <h2>Customer reviews</h2>
+
+    <div class="review-summary" *ngIf="reviews">
+      <div class="avg">
+        <span class="avg-num">{{ (reviews.averageRating || 0) | number: '1.1-1' }}</span>
+        <span class="stars">{{ stars(roundedAverage) }}</span>
+        <span class="muted">{{ reviews.reviewCount }} review(s)</span>
+      </div>
+    </div>
+
+    <!-- Existing reviews -->
+    <div class="review-list" *ngIf="reviews && reviews.reviews.length">
+      <div class="review-item" *ngFor="let r of reviews.reviews">
+        <div class="spread">
+          <strong>{{ r.authorName }}</strong>
+          <span class="stars">{{ stars(r.rating) }}</span>
+        </div>
+        <p *ngIf="r.comment">{{ r.comment }}</p>
+        <span class="muted small">{{ r.createdAt | date: 'mediumDate' }}</span>
+      </div>
+    </div>
+    <p class="muted" *ngIf="reviews && !reviews.reviews.length">No reviews yet. Be the first to review this product.</p>
+
+    <!-- Review form (signed-in customers; server enforces purchase gating) -->
+    <div class="review-form card" *ngIf="isLoggedIn">
+      <h3>Write a review</h3>
+      <p class="muted small">You can review products you've purchased.</p>
+
+      <div class="alert alert-error" *ngIf="reviewError">{{ reviewError }}</div>
+      <div class="alert alert-info" *ngIf="reviewSuccess">Thanks! Your review has been posted.</div>
+
+      <div class="field">
+        <label for="rating">Rating</label>
+        <select id="rating" name="rating" [(ngModel)]="newRating">
+          <option [ngValue]="5">★★★★★ (5)</option>
+          <option [ngValue]="4">★★★★☆ (4)</option>
+          <option [ngValue]="3">★★★☆☆ (3)</option>
+          <option [ngValue]="2">★★☆☆☆ (2)</option>
+          <option [ngValue]="1">★☆☆☆☆ (1)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="comment">Comment</label>
+        <textarea id="comment" name="comment" rows="3" [(ngModel)]="newComment" placeholder="Share your thoughts…"></textarea>
+      </div>
+      <button class="btn btn-primary" (click)="submitReview()" [disabled]="reviewSubmitting">
+        {{ reviewSubmitting ? 'Posting…' : 'Post review' }}
+      </button>
+    </div>
+
+    <div class="alert alert-info signin-cta" *ngIf="!isLoggedIn">
+      <a routerLink="/login">Sign in</a> to write a review.
+    </div>
+  </section>
+</article>

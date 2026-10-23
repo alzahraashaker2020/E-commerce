@@ -1,0 +1,62 @@
+<h1 class="admin-title">Products</h1>
+
+<div class="loading" *ngIf="loading">Loading…</div>
+<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+<!-- Create / edit form -->
+<div class="card form-card">
+  <h3>{{ editing ? 'Edit product' : 'Add product' }}</h3>
+  <div class="form-grid">
+    <div class="field"><label>Name</label><input name="name" [(ngModel)]="form.name" /></div>
+    <div class="field"><label>Brand</label><input name="brand" [(ngModel)]="form.brand" /></div>
+    <div class="field"><label>Base price</label><input name="basePrice" type="number" [(ngModel)]="form.basePrice" /></div>
+    <div class="field"><label>Category id</label><input name="categoryId" type="number" [(ngModel)]="form.categoryId" /></div>
+    <div class="field"><label>Colour</label><input name="colour" [(ngModel)]="form.colour" /></div>
+    <div class="field"><label>Size</label><input name="size" [(ngModel)]="form.size" /></div>
+    <div class="field"><label>Width (cm)</label><input name="width" type="number" [(ngModel)]="form.width" /></div>
+    <div class="field"><label>Height (cm)</label><input name="height" type="number" [(ngModel)]="form.height" /></div>
+    <div class="field"><label>Quantity on hand</label><input name="quantityOnHand" type="number" [(ngModel)]="form.quantityOnHand" /></div>
+    <div class="field"><label>Low-stock threshold</label><input name="lowStockThreshold" type="number" [(ngModel)]="form.lowStockThreshold" /></div>
+    <div class="field full"><label>Description (HTML)</label><textarea name="desc" rows="2" [(ngModel)]="form.descriptionHtml"></textarea></div>
+    <div class="field"><label>Active</label><select name="active" [(ngModel)]="form.isActive"><option [ngValue]="true">Yes</option><option [ngValue]="false">No</option></select></div>
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-primary" (click)="save()">{{ editing ? 'Update' : 'Create' }}</button>
+    <button class="btn btn-outline" *ngIf="editing" (click)="startCreate()">Cancel</button>
+  </div>
+</div>
+
+<!-- Bulk price update -->
+<div class="card bulk-card">
+  <h3>Bulk price update</h3>
+  <p class="muted small">Tick products below, set a price, and apply.</p>
+  <div class="bulk-row">
+    <input type="number" placeholder="New price" [(ngModel)]="bulkPrice" name="bulkPrice" />
+    <button class="btn btn-secondary" (click)="applyBulk()">Apply to selected</button>
+  </div>
+</div>
+
+<!-- Product table -->
+<div class="card">
+  <table class="data" *ngIf="products.length">
+    <thead>
+      <tr><th></th><th>Name</th><th>Brand</th><th>Price</th><th>Cat</th><th>Stock</th><th>Active</th><th></th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let p of products">
+        <td><input type="checkbox" [(ngModel)]="selectedIds[p.id]" [name]="'sel' + p.id" /></td>
+        <td>{{ p.name }}</td>
+        <td>{{ p.brand }}</td>
+        <td>{{ p.basePrice | storeCurrency }}</td>
+        <td>{{ p.categoryId }}</td>
+        <td>{{ p.quantityOnHand }}</td>
+        <td><span class="badge" [class.badge-ok]="p.isActive" [class.badge-muted]="!p.isActive">{{ p.isActive ? 'Yes' : 'No' }}</span></td>
+        <td class="actions">
+          <button class="btn btn-outline btn-sm" (click)="startEdit(p)">Edit</button>
+          <button class="btn btn-danger btn-sm" (click)="remove(p)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted" *ngIf="!products.length && !loading">No products.</p>
+</div>

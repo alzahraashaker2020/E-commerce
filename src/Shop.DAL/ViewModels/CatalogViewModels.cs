@@ -31,6 +31,15 @@ public class ProductListItemVM
 
     /// <summary>Primary (first) image URL, if any.</summary>
     public string? PrimaryImageUrl { get; set; }
+
+    /// <summary>Optional colour attribute for display.</summary>
+    public string? Colour { get; set; }
+
+    /// <summary>Optional size attribute for display.</summary>
+    public string? Size { get; set; }
+
+    /// <summary>Units on hand from the product-level inventory row (admin list).</summary>
+    public int QuantityOnHand { get; set; }
 }
 
 /// <summary>
@@ -71,12 +80,28 @@ public class ProductDetailVM
     /// <summary>Images of the product.</summary>
     public List<ProductImageVM> Images { get; set; } = new List<ProductImageVM>();
 
+    /// <summary>Optional colour attribute.</summary>
+    public string? Colour { get; set; }
+
+    /// <summary>Optional size attribute.</summary>
+    public string? Size { get; set; }
+
+    /// <summary>Optional width in centimetres (cm).</summary>
+    public decimal? Width { get; set; }
+
+    /// <summary>Optional height in centimetres (cm).</summary>
+    public decimal? Height { get; set; }
+
     /// <summary>Total units available across inventory rows.</summary>
     public int TotalQuantityOnHand { get; set; }
+
+    /// <summary>Units on hand from the product-level inventory row (admin list).</summary>
+    public int QuantityOnHand { get; set; }
 }
 
 /// <summary>
-/// Category representation.
+/// Category representation. Carries the hierarchy fields so the storefront can
+/// render top-level category cards and drill into subcategories.
 /// </summary>
 public class CategoryVM
 {
@@ -91,6 +116,18 @@ public class CategoryVM
 
     /// <summary>Optional description.</summary>
     public string? Description { get; set; }
+
+    /// <summary>Optional category card image URL.</summary>
+    public string? ImageUrl { get; set; }
+
+    /// <summary>Parent category id, or null when this is a top-level category.</summary>
+    public int? ParentCategoryId { get; set; }
+
+    /// <summary>
+    /// Child subcategories. Populated when the tree is requested so a single
+    /// call can render a top-level category and its subcategories.
+    /// </summary>
+    public List<CategoryVM> Children { get; set; } = new List<CategoryVM>();
 }
 
 /// <summary>

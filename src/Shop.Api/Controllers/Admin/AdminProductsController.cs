@@ -87,7 +87,11 @@ public class AdminProductsController : ControllerBase
         _repo._Product.Add(product);
         _repo.Save();
 
-        return Ok(ApiResponse<ProductDetailVM>.Ok(_mapper.Map<ProductDetailVM>(product)));
+        // With the product Id assigned, upsert its product-level inventory row.
+        UpsertProductInventory(product, request);
+        _repo.Save();
+
+        return Ok(ApiResponse<ProductDetailVM>.Ok(await GetDetailVM(product.Id)));
     }
 
     /// <summary>
@@ -101,7 +105,10 @@ public class AdminProductsController : ControllerBase
         int id,
         [FromBody] ProductUpsertRequest request)
     {
-        Product? product = await _repo._Product.GetByIdAsync(id);
+        // Load with inventory so the product-level row upsert can see it.
+        Product? product = await _repo._Product.Query()
+            .Include(p => p.InventoryItems)
+            .FirstOrDefaultAsync(p => p.Id == id);
         if (product is null)
         {
             return NotFound(ApiResponse<ProductDetailVM>.Fail("Not found", 404));
@@ -113,9 +120,63 @@ public class AdminProductsController : ControllerBase
         product.Slug = Slugify(request.Slug ?? request.Name);
 
         _repo._Product.Update(product);
+
+        // Upsert the single product-level inventory row (variant rows untouched).
+        UpsertProductInventory(product, request);
         _repo.Save();
 
-        return Ok(ApiResponse<ProductDetailVM>.Ok(_mapper.Map<ProductDetailVM>(product)));
+        return Ok(ApiResponse<ProductDetailVM>.Ok(await GetDetailVM(product.Id)));
+    }
+
+    /// <summary>
+    /// Creates or updates the single product-level <see cref="InventoryItem"/>
+    /// (the one with <c>VariantId == null</c>) from the request quantity and
+    /// threshold. Variant-level inventory rows are left untouched.
+    /// </summary>
+    /// <param name="product">The product whose inventory is being set.</param>
+    /// <param name="request">The upsert payload carrying the quantity fields.</param>
+    private void UpsertProductInventory(Product product, ProductUpsertRequest request)
+    {
+        InventoryItem? item = product.InventoryItems
+            .FirstOrDefault(i => i.VariantId == null);
+
+        if (item is null)
+        {
+            // No product-level row yet: create one.
+            _repo._InventoryItem.Add(new InventoryItem
+            {
+                ProductId = product.Id,
+                VariantId = null,
+                QuantityOnHand = request.QuantityOnHand,
+                LowStockThreshold = request.LowStockThreshold,
+                IsDemoData = false
+            });
+        }
+        else
+        {
+            // Reuse the existing row so no duplicate is created.
+            item.QuantityOnHand = request.QuantityOnHand;
+            item.LowStockThreshold = request.LowStockThreshold;
+            _repo._InventoryItem.Update(item);
+        }
+    }
+
+    /// <summary>
+    /// Re-queries a product with all related data and projects it to a
+    /// <see cref="ProductDetailVM"/> so the response reflects the latest
+    /// attributes and inventory.
+    /// </summary>
+    /// <param name="id">The product identifier.</param>
+    private async Task<ProductDetailVM> GetDetailVM(int id)
+    {
+        Product? reloaded = await _repo._Product.Query()
+            .Include(p => p.Category)
+            .Include(p => p.Variants)
+            .Include(p => p.Images)
+            .Include(p => p.InventoryItems)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        return _mapper.Map<ProductDetailVM>(reloaded);
     }
 
     /// <summary>

@@ -33,6 +33,30 @@ public class ProductUpsertRequest
 
     /// <summary>Whether the product is active.</summary>
     public bool IsActive { get; set; }
+
+    /// <summary>Optional colour attribute.</summary>
+    [StringLength(80)]
+    public string? Colour { get; set; }
+
+    /// <summary>Optional size attribute.</summary>
+    [StringLength(80)]
+    public string? Size { get; set; }
+
+    /// <summary>Optional width in centimetres (cm).</summary>
+    [Range(0, double.MaxValue)]
+    public decimal? Width { get; set; }
+
+    /// <summary>Optional height in centimetres (cm).</summary>
+    [Range(0, double.MaxValue)]
+    public decimal? Height { get; set; }
+
+    /// <summary>Units available for the product-level inventory row.</summary>
+    [Range(0, int.MaxValue)]
+    public int QuantityOnHand { get; set; }
+
+    /// <summary>Low-stock threshold for the product-level inventory row.</summary>
+    [Range(0, int.MaxValue)]
+    public int LowStockThreshold { get; set; }
 }
 
 /// <summary>

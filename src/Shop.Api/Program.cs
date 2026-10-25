@@ -94,7 +94,26 @@ builder.Services.AddCors(options =>
 });
 
 // 8. Controllers + Swagger with a JWT bearer security definition.
-builder.Services.AddControllers();
+// AddJsonOptions registers a JsonStringEnumConverter so System.Text.Json binds
+// enum request fields (e.g. PaymentMethod) from their string names ("Cash"/"Card")
+// — matching what the Angular client sends — and serializes enums back as strings.
+builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
+
+// [ApiController] model-state validation failures default to a ProblemDetails body
+// (no "message" field), which leaves the Angular error path (err.error.message)
+// empty. Override the factory so validation 400s return the standard ApiResponse
+// envelope with a readable, aggregated message instead.
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(opt =>
+    opt.InvalidModelStateResponseFactory = ctx =>
+    {
+        var msg = string.Join("; ", ctx.ModelState.Values
+            .SelectMany(v => v.Errors)
+            .Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? "Invalid request" : e.ErrorMessage));
+        return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(
+            Shop.BLL.Response_VM.ApiResponse<object>.Fail(string.IsNullOrWhiteSpace(msg) ? "Invalid request" : msg, 400));
+    });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {

@@ -73,11 +73,11 @@ public static class ShopContextSeed
         SeedStoreSettings(modelBuilder);
     }
 
-    // Store settings: a single demo row (Id = 1) priced in USD.
+    // Store settings: a single demo row (Id = 1) priced in EGP.
     private static void SeedStoreSettings(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<StoreSettings>().HasData(
-            new StoreSettings { Id = 1, CurrencyCode = "USD", CurrencySymbol = "$", IsDemoData = true });
+            new StoreSettings { Id = 1, CurrencyCode = "EGP", CurrencySymbol = "E\u00a3", IsDemoData = true });
     }
 
     // Roles (small ints) + one admin user.

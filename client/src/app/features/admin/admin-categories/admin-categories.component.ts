@@ -2,12 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../core/services/admin.service';
+import { environment } from '../../../../environments/environment';
 
 /**
  * Admin category management: list top-level categories and subcategories (with
  * parent names and child/product counts), create/edit via an inline form with a
- * parent picker, and delete. Deleting a category that still has subcategories or
- * products surfaces the server 409 message.
+ * parent picker and an image upload (preview/replace/remove), and delete.
+ * Deleting a category that still has subcategories or products surfaces the
+ * server 409 message.
  */
 @Component({
   selector: 'app-admin-categories',
@@ -103,6 +105,43 @@ export class AdminCategoriesComponent implements OnInit {
         this.error = err?.error?.message ?? 'Create failed.';
       }
     });
+  }
+
+  /** Builds an absolute URL for previewing a stored image path. */
+  previewUrl(path: string | null | undefined): string {
+    if (!path) {
+      return '';
+    }
+    if (/^https?:\/\//i.test(path) || path.startsWith('assets/')) {
+      return path;
+    }
+    const origin = environment.apiBaseUrl.replace(/\/api\/?$/, '');
+    return path.startsWith('/') ? origin + path : origin + '/' + path;
+  }
+
+  /** Uploads the selected file and stores the returned path on the form. */
+  onImage(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files && input.files[0];
+    if (!file) {
+      return;
+    }
+    this.error = null;
+    this.admin.uploadImage(file).subscribe({
+      next: res => {
+        if (res.success) {
+          this.form.imageUrl = res.data;
+        } else {
+          this.error = res.message ?? 'Upload failed.';
+        }
+      },
+      error: err => (this.error = err?.error?.message ?? 'Upload failed.')
+    });
+  }
+
+  /** Clears the chosen image. */
+  removeImage(): void {
+    this.form.imageUrl = '';
   }
 
   /** Deletes a category; surfaces the 409 message when it has children/products. */

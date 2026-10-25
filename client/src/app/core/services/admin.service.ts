@@ -48,6 +48,42 @@ export class AdminService {
     return this.api.delete<any>(`admin/categories/${id}`);
   }
 
+  // --- Sizes ---
+  getSizes(): Observable<any[]> {
+    return this.api.get<any[]>('admin/sizes');
+  }
+  createSize(body: unknown): Observable<any> {
+    return this.api.postEnvelope<any>('admin/sizes', body);
+  }
+  updateSize(id: number, body: unknown): Observable<any> {
+    return this.api.put<any>(`admin/sizes/${id}`, body);
+  }
+  deleteSize(id: number): Observable<any> {
+    return this.api.delete<any>(`admin/sizes/${id}`);
+  }
+
+  // --- Colors ---
+  getColors(): Observable<any[]> {
+    return this.api.get<any[]>('admin/colors');
+  }
+  createColor(body: unknown): Observable<any> {
+    return this.api.postEnvelope<any>('admin/colors', body);
+  }
+  updateColor(id: number, body: unknown): Observable<any> {
+    return this.api.put<any>(`admin/colors/${id}`, body);
+  }
+  deleteColor(id: number): Observable<any> {
+    return this.api.delete<any>(`admin/colors/${id}`);
+  }
+
+  // --- Uploads (multipart/form-data; returns the full envelope so the
+  //     validation/400 message surfaces to the caller). ---
+  uploadImage(file: File): Observable<any> {
+    const data = new FormData();
+    data.append('file', file);
+    return this.api.postEnvelope<any>('admin/uploads', data);
+  }
+
   // --- Inventory ---
   getLowStock(): Observable<any[]> {
     return this.api.get<any[]>('admin/inventory/low-stock');

@@ -84,6 +84,10 @@ public class AdminProductsController : ControllerBase
         product.CreatedAt = DateTime.UtcNow;
         product.IsDemoData = false;
 
+        // Persist the chosen variant rows (only when the product has variants);
+        // they are added as part of the same Save() as the product.
+        product.Variants = BuildVariants(request);
+
         _repo._Product.Add(product);
         _repo.Save();
 
@@ -101,7 +105,11 @@ public class AdminProductsController : ControllerBase
         int id,
         [FromBody] ProductUpsertRequest request)
     {
-        Product? product = await _repo._Product.GetByIdAsync(id);
+        // Load the tracked product with its variants so EF can diff the
+        // replacement set (removed rows get deleted, new rows inserted).
+        Product? product = await _repo._Product.Query()
+            .Include(p => p.Variants)
+            .FirstOrDefaultAsync(p => p.Id == id);
         if (product is null)
         {
             return NotFound(ApiResponse<ProductDetailVM>.Fail("Not found", 404));
@@ -111,6 +119,14 @@ public class AdminProductsController : ControllerBase
         // are ignored by the write map, so copy them explicitly.
         _mapper.Map(request, product);
         product.Slug = Slugify(request.Slug ?? request.Name);
+
+        // Replace-all: drop the existing variants and add the submitted set, so
+        // the single Save() both removes the old rows and inserts the new ones.
+        product.Variants.Clear();
+        foreach (ProductVariant variant in BuildVariants(request))
+        {
+            product.Variants.Add(variant);
+        }
 
         _repo._Product.Update(product);
         _repo.Save();
@@ -197,6 +213,33 @@ public class AdminProductsController : ControllerBase
         _repo.Save();
 
         return Ok(ApiResponse<int>.Ok(products.Count));
+    }
+
+    /// <summary>
+    /// Builds the variant rows to persist for a product. When the product has
+    /// no variants the list is empty; otherwise each submitted row maps to a
+    /// new <see cref="ProductVariant"/> (one chosen size/color combination).
+    /// </summary>
+    /// <param name="request">The product create/update payload.</param>
+    private static List<ProductVariant> BuildVariants(ProductUpsertRequest request)
+    {
+        if (!request.HasVariants || request.Variants is null)
+        {
+            return new List<ProductVariant>();
+        }
+
+        return request.Variants.Select(v => new ProductVariant
+        {
+            SizeId = v.SizeId,
+            ColorId = v.ColorId,
+            Sku = v.Sku,
+            Price = v.Price,
+            StockQuantity = v.StockQuantity,
+            LowStockThreshold = v.LowStockThreshold,
+            IsActive = v.IsActive,
+            ImageUrl = v.ImageUrl,
+            IsDemoData = false
+        }).ToList();
     }
 
     /// <summary>

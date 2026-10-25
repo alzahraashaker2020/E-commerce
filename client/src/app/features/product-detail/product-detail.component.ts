@@ -117,9 +117,16 @@ export class ProductDetailComponent implements OnInit {
     return this.product?.basePrice ?? 0;
   }
 
-  /** Whether the product has any stock on hand. */
+  /**
+   * Whether the product has any stock on hand. For variant products this reads
+   * the selected variant's stock; otherwise the product-level stock. (FEAT-004
+   * owns the full storefront variant UX; this keeps the page compiling.)
+   */
   get inStock(): boolean {
-    return (this.product?.totalQuantityOnHand ?? 0) > 0;
+    if (this.product?.hasVariants) {
+      return (this.selectedVariant?.stockQuantity ?? 0) > 0;
+    }
+    return (this.product?.stockQuantity ?? 0) > 0;
   }
 
   selectVariant(v: ProductVariant): void {

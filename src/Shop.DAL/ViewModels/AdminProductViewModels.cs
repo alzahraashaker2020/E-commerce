@@ -47,6 +47,47 @@ public class ProductUpsertRequest
     /// <summary>Product-level low-stock threshold.</summary>
     [Range(0, int.MaxValue)]
     public int LowStockThreshold { get; set; }
+
+    /// <summary>
+    /// The specific variant rows to persist when <see cref="HasVariants"/> is
+    /// true. On update these replace the product's existing variants entirely.
+    /// </summary>
+    public List<ProductVariantUpsert> Variants { get; set; } = new List<ProductVariantUpsert>();
+}
+
+/// <summary>
+/// A single variant row within a product create/update payload. Each row is one
+/// chosen size/color combination (there is no auto size x color matrix).
+/// </summary>
+public class ProductVariantUpsert
+{
+    /// <summary>Optional size identifier for this variant.</summary>
+    public int? SizeId { get; set; }
+
+    /// <summary>Optional color identifier for this variant.</summary>
+    public int? ColorId { get; set; }
+
+    /// <summary>Optional stock-keeping unit.</summary>
+    [StringLength(100)]
+    public string? Sku { get; set; }
+
+    /// <summary>Selling price of this variant (must be &gt;= 0).</summary>
+    [Range(0, double.MaxValue)]
+    public decimal Price { get; set; }
+
+    /// <summary>Units currently available for this variant.</summary>
+    [Range(0, int.MaxValue)]
+    public int StockQuantity { get; set; }
+
+    /// <summary>Threshold at/below which this variant is low stock.</summary>
+    [Range(0, int.MaxValue)]
+    public int LowStockThreshold { get; set; }
+
+    /// <summary>Whether the variant is active and sellable.</summary>
+    public bool IsActive { get; set; }
+
+    /// <summary>Optional variant-specific image URL.</summary>
+    public string? ImageUrl { get; set; }
 }
 
 /// <summary>

@@ -15,7 +15,14 @@
         <option *ngFor="let p of topLevel" [ngValue]="p.id">{{ p.name }}</option>
       </select>
     </div>
-    <div class="field"><label>Image URL</label><input name="imageUrl" [(ngModel)]="form.imageUrl" placeholder="assets/..." /></div>
+    <div class="field">
+      <label>Image</label>
+      <div class="image-picker">
+        <img *ngIf="form.imageUrl" class="preview" [src]="previewUrl(form.imageUrl)" alt="Preview" />
+        <input type="file" accept="image/*" (change)="onImage($event)" />
+        <button type="button" class="btn btn-outline btn-sm" *ngIf="form.imageUrl" (click)="removeImage()">Remove</button>
+      </div>
+    </div>
     <div class="field field-wide"><label>Description</label><input name="description" [(ngModel)]="form.description" /></div>
   </div>
   <div class="form-actions">

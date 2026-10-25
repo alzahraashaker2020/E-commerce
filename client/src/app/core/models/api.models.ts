@@ -31,9 +31,10 @@ export interface ProductListItem {
   categoryName?: string | null;
   isActive: boolean;
   primaryImageUrl?: string | null;
-  colour?: string | null;
-  size?: string | null;
-  quantityOnHand: number;
+  hasVariants: boolean;
+  showStockQuantity: boolean;
+  stockQuantity: number;
+  lowStockThreshold: number;
 }
 
 /** Full product detail for the product page. */
@@ -49,21 +50,41 @@ export interface ProductDetail {
   isActive: boolean;
   variants: ProductVariant[];
   images: ProductImage[];
-  colour?: string | null;
-  size?: string | null;
-  width?: number | null;
-  height?: number | null;
-  totalQuantityOnHand: number;
-  quantityOnHand: number;
+  hasVariants: boolean;
+  showStockQuantity: boolean;
+  stockQuantity: number;
+  lowStockThreshold: number;
 }
 
+/** A purchasable size/color variant of a product (normalized shape). */
 export interface ProductVariant {
   id: number;
-  sku: string;
-  optionName: string;
-  optionValue: string;
+  sizeId?: number | null;
+  sizeName?: string | null;
+  colorId?: number | null;
+  colorName?: string | null;
+  sku?: string | null;
   price: number;
-  compareAtPrice?: number | null;
+  stockQuantity: number;
+  isActive: boolean;
+  imageUrl?: string | null;
+}
+
+/** An admin-managed size dimension. */
+export interface Size {
+  id: number;
+  name: string;
+  displayOrder: number;
+  isActive: boolean;
+}
+
+/** An admin-managed color dimension. */
+export interface Color {
+  id: number;
+  name: string;
+  hexCode?: string | null;
+  displayOrder: number;
+  isActive: boolean;
 }
 
 export interface ProductImage {

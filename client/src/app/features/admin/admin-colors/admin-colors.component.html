@@ -1,0 +1,54 @@
+<h1 class="admin-title">Colors</h1>
+
+<div class="loading" *ngIf="loading">Loading…</div>
+<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+<!-- Create / edit form -->
+<div class="card form-card">
+  <h3>{{ editing ? 'Edit color' : 'Create color' }}</h3>
+  <div class="form-grid">
+    <div class="field"><label>Name</label><input name="name" [(ngModel)]="form.name" placeholder="Beige" /></div>
+    <div class="field">
+      <label>Hex code</label>
+      <div class="hex-row">
+        <input name="hexCode" [(ngModel)]="form.hexCode" placeholder="#D8C3A5" />
+        <span class="swatch" [style.background]="form.hexCode"></span>
+      </div>
+    </div>
+    <div class="field"><label>Display order</label><input name="displayOrder" type="number" [(ngModel)]="form.displayOrder" /></div>
+    <div class="field">
+      <label>Active</label>
+      <select name="active" [(ngModel)]="form.isActive">
+        <option [ngValue]="true">Yes</option>
+        <option [ngValue]="false">No</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-primary" (click)="save()">{{ editing ? 'Save' : 'Create' }}</button>
+    <button class="btn btn-outline" *ngIf="editing" (click)="cancel()">Cancel</button>
+  </div>
+</div>
+
+<!-- Color table -->
+<div class="card">
+  <table class="data" *ngIf="colors.length">
+    <thead>
+      <tr><th>Swatch</th><th>Name</th><th>Hex</th><th>Order</th><th>Active</th><th></th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let c of colors">
+        <td><span class="swatch" [style.background]="c.hexCode || 'transparent'"></span></td>
+        <td><strong>{{ c.name }}</strong></td>
+        <td><span class="muted small">{{ c.hexCode || '—' }}</span></td>
+        <td>{{ c.displayOrder }}</td>
+        <td><span class="badge" [class.badge-ok]="c.isActive" [class.badge-muted]="!c.isActive">{{ c.isActive ? 'Yes' : 'No' }}</span></td>
+        <td class="row-actions">
+          <button class="btn btn-outline btn-sm" (click)="startEdit(c)">Edit</button>
+          <button class="btn btn-danger btn-sm" (click)="remove(c)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted" *ngIf="!colors.length && !loading">No colors.</p>
+</div>

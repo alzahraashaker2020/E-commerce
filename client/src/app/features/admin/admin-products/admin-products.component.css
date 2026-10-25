@@ -15,6 +15,14 @@
 .bulk-row input { max-width: 160px; }
 .actions { display: flex; gap: 0.4rem; }
 
+/* Variant editor + image pickers. */
+.variants { margin-top: 0.6rem; margin-bottom: 1rem; }
+.variants h4 { margin-bottom: 0.3rem; }
+.variants .narrow { width: 90px; }
+.image-picker { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.image-picker .preview { max-width: 120px; max-height: 120px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.15); }
+.image-picker-sm .preview-sm { max-width: 48px; max-height: 48px; }
+
 @media (max-width: 760px) {
   .form-grid { grid-template-columns: 1fr; }
 }

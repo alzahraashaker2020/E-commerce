@@ -27,21 +27,15 @@
         <span class="badge" [class.badge-ok]="inStock" [class.badge-warn]="!inStock">
           {{ inStock ? 'In stock' : 'Out of stock' }}
         </span>
-        <span class="muted">{{ product.totalQuantityOnHand }} available</span>
+        <span class="muted" *ngIf="product.showStockQuantity && !product.hasVariants">{{ product.stockQuantity }} available</span>
+        <span class="muted" *ngIf="product.showStockQuantity && product.hasVariants && selectedVariant">{{ selectedVariant.stockQuantity }} available</span>
       </div>
-
-      <ul class="pdp-attributes" *ngIf="product.colour || product.size || product.width != null || product.height != null">
-        <li *ngIf="product.colour"><span class="muted">Colour:</span> {{ product.colour }}</li>
-        <li *ngIf="product.size"><span class="muted">Size:</span> {{ product.size }}</li>
-        <li *ngIf="product.width != null"><span class="muted">Width:</span> {{ product.width }} cm</li>
-        <li *ngIf="product.height != null"><span class="muted">Height:</span> {{ product.height }} cm</li>
-      </ul>
 
       <div class="pdp-desc" *ngIf="product.descriptionHtml" [innerHTML]="product.descriptionHtml"></div>
 
-      <!-- Variant selector -->
+      <!-- Variant selector (FEAT-004 owns the full size/color resolve UX). -->
       <div class="pdp-variants" *ngIf="product.variants.length">
-        <label>{{ product.variants[0].optionName }}</label>
+        <label>Variant</label>
         <div class="variant-options">
           <button
             class="variant-btn"
@@ -49,7 +43,7 @@
             [class.active]="selectedVariant?.id === v.id"
             (click)="selectVariant(v)"
           >
-            {{ v.optionValue }}
+            {{ v.sizeName || '' }}{{ v.sizeName && v.colorName ? ' / ' : '' }}{{ v.colorName || '' }}
           </button>
         </div>
       </div>

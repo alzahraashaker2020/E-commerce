@@ -13,7 +13,7 @@
       <tr *ngFor="let i of items">
         <td>{{ i.productName }}</td>
         <td>{{ i.variantLabel || '—' }}</td>
-        <td>{{ i.quantityOnHand }}</td>
+        <td>{{ i.stockQuantity }}</td>
         <td>{{ i.lowStockThreshold }}</td>
         <td><span class="badge badge-warn">Reorder</span></td>
       </tr>

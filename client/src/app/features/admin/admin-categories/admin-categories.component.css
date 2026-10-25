@@ -11,6 +11,8 @@
 .field-wide { grid-column: 1 / -1; }
 .form-actions { display: flex; gap: 0.6rem; }
 .row-actions { display: flex; gap: 0.5rem; }
+.image-picker { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.image-picker .preview { max-width: 96px; max-height: 96px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.15); }
 @media (max-width: 760px) {
   .form-grid { grid-template-columns: 1fr; }
 }

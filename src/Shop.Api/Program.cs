@@ -170,6 +170,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Serve static files from wwwroot (including runtime uploads under
+// wwwroot/uploads) so admin-uploaded images resolve by their returned path.
+app.UseStaticFiles();
+
 // 11-14. CORS, then authentication, authorization, and controller routing.
 app.UseCors(AngularCorsPolicy);
 app.UseAuthentication();

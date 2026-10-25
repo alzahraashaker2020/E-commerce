@@ -10,16 +10,87 @@
     <div class="field"><label>Name</label><input name="name" [(ngModel)]="form.name" /></div>
     <div class="field"><label>Brand</label><input name="brand" [(ngModel)]="form.brand" /></div>
     <div class="field"><label>Base price</label><input name="basePrice" type="number" [(ngModel)]="form.basePrice" /></div>
-    <div class="field"><label>Category id</label><input name="categoryId" type="number" [(ngModel)]="form.categoryId" /></div>
-    <div class="field"><label>Colour</label><input name="colour" [(ngModel)]="form.colour" /></div>
-    <div class="field"><label>Size</label><input name="size" [(ngModel)]="form.size" /></div>
-    <div class="field"><label>Width (cm)</label><input name="width" type="number" [(ngModel)]="form.width" /></div>
-    <div class="field"><label>Height (cm)</label><input name="height" type="number" [(ngModel)]="form.height" /></div>
-    <div class="field"><label>Quantity on hand</label><input name="quantityOnHand" type="number" [(ngModel)]="form.quantityOnHand" /></div>
-    <div class="field"><label>Low-stock threshold</label><input name="lowStockThreshold" type="number" [(ngModel)]="form.lowStockThreshold" /></div>
-    <div class="field full"><label>Description (HTML)</label><textarea name="desc" rows="2" [(ngModel)]="form.descriptionHtml"></textarea></div>
+
+    <!-- Category + dependent subcategory dropdowns (bind category id). -->
+    <div class="field">
+      <label>Category</label>
+      <select name="parentCategory" [(ngModel)]="parentCategoryId" (ngModelChange)="form.categoryId = parentCategoryId">
+        <option [ngValue]="null">— Select —</option>
+        <option *ngFor="let c of topLevelCategories" [ngValue]="c.id">{{ c.name }}</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Subcategory</label>
+      <select name="subCategory" [(ngModel)]="form.categoryId" [disabled]="!subCategories.length">
+        <option [ngValue]="parentCategoryId">— Use parent —</option>
+        <option *ngFor="let s of subCategories" [ngValue]="s.id">{{ s.name }}</option>
+      </select>
+    </div>
+
     <div class="field"><label>Active</label><select name="active" [(ngModel)]="form.isActive"><option [ngValue]="true">Yes</option><option [ngValue]="false">No</option></select></div>
+    <div class="field"><label>Show stock on storefront</label><select name="showStock" [(ngModel)]="form.showStockQuantity"><option [ngValue]="true">Yes</option><option [ngValue]="false">No</option></select></div>
+    <div class="field"><label>Has variants</label><select name="hasVariants" [(ngModel)]="form.hasVariants"><option [ngValue]="false">No</option><option [ngValue]="true">Yes</option></select></div>
+
+    <div class="field full"><label>Description (HTML)</label><textarea name="desc" rows="2" [(ngModel)]="form.descriptionHtml"></textarea></div>
+
+    <!-- Product-level stock shown only when the product has no variants. -->
+    <ng-container *ngIf="!form.hasVariants">
+      <div class="field"><label>Stock quantity</label><input name="stockQuantity" type="number" [(ngModel)]="form.stockQuantity" /></div>
+      <div class="field"><label>Low-stock threshold</label><input name="lowStockThreshold" type="number" [(ngModel)]="form.lowStockThreshold" /></div>
+    </ng-container>
+
+    <!-- Product image upload with preview/replace/remove. -->
+    <div class="field full">
+      <label>Product image</label>
+      <div class="image-picker">
+        <img *ngIf="form.imageUrl" class="preview" [src]="previewUrl(form.imageUrl)" alt="Preview" />
+        <input type="file" accept="image/*" (change)="onProductImage($event)" />
+        <button type="button" class="btn btn-outline btn-sm" *ngIf="form.imageUrl" (click)="removeProductImage()">Remove</button>
+      </div>
+    </div>
   </div>
+
+  <!-- Variant rows (only specific chosen combos; no auto matrix). -->
+  <div class="variants" *ngIf="form.hasVariants">
+    <h4>Variants</h4>
+    <p class="muted small">Add only the specific size/color combinations you sell.</p>
+    <table class="data" *ngIf="form.variants.length">
+      <thead>
+        <tr><th>Size</th><th>Color</th><th>SKU</th><th>Price</th><th>Stock</th><th>Low thr.</th><th>Active</th><th>Image</th><th></th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let v of form.variants; let i = index">
+          <td>
+            <select [(ngModel)]="v.sizeId" [name]="'vsize' + i">
+              <option [ngValue]="null">—</option>
+              <option *ngFor="let s of sizes" [ngValue]="s.id">{{ s.name }}</option>
+            </select>
+          </td>
+          <td>
+            <select [(ngModel)]="v.colorId" [name]="'vcolor' + i">
+              <option [ngValue]="null">—</option>
+              <option *ngFor="let c of colors" [ngValue]="c.id">{{ c.name }}</option>
+            </select>
+          </td>
+          <td><input [(ngModel)]="v.sku" [name]="'vsku' + i" class="narrow" /></td>
+          <td><input type="number" [(ngModel)]="v.price" [name]="'vprice' + i" class="narrow" /></td>
+          <td><input type="number" [(ngModel)]="v.stockQuantity" [name]="'vstock' + i" class="narrow" /></td>
+          <td><input type="number" [(ngModel)]="v.lowStockThreshold" [name]="'vthr' + i" class="narrow" /></td>
+          <td><input type="checkbox" [(ngModel)]="v.isActive" [name]="'vactive' + i" /></td>
+          <td>
+            <div class="image-picker image-picker-sm">
+              <img *ngIf="v.imageUrl" class="preview preview-sm" [src]="previewUrl(v.imageUrl)" alt="Variant" />
+              <input type="file" accept="image/*" (change)="onVariantImage($event, v)" />
+              <button type="button" class="btn btn-outline btn-sm" *ngIf="v.imageUrl" (click)="removeVariantImage(v)">Remove</button>
+            </div>
+          </td>
+          <td><button type="button" class="btn btn-danger btn-sm" (click)="removeVariant(i)">Remove</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <button type="button" class="btn btn-outline btn-sm" (click)="addVariant()">+ Add variant</button>
+  </div>
+
   <div class="form-actions">
     <button class="btn btn-primary" (click)="save()">{{ editing ? 'Update' : 'Create' }}</button>
     <button class="btn btn-outline" *ngIf="editing" (click)="startCreate()">Cancel</button>
@@ -40,7 +111,7 @@
 <div class="card">
   <table class="data" *ngIf="products.length">
     <thead>
-      <tr><th></th><th>Name</th><th>Brand</th><th>Price</th><th>Cat</th><th>Stock</th><th>Active</th><th></th></tr>
+      <tr><th></th><th>Name</th><th>Brand</th><th>Price</th><th>Category</th><th>Variants</th><th>Stock</th><th>Active</th><th></th></tr>
     </thead>
     <tbody>
       <tr *ngFor="let p of products">
@@ -48,8 +119,9 @@
         <td>{{ p.name }}</td>
         <td>{{ p.brand }}</td>
         <td>{{ p.basePrice | storeCurrency }}</td>
-        <td>{{ p.categoryId }}</td>
-        <td>{{ p.quantityOnHand }}</td>
+        <td>{{ p.categoryName || p.categoryId }}</td>
+        <td>{{ p.hasVariants ? (p.variants?.length || 0) : '—' }}</td>
+        <td>{{ stockLabel(p) }}</td>
         <td><span class="badge" [class.badge-ok]="p.isActive" [class.badge-muted]="!p.isActive">{{ p.isActive ? 'Yes' : 'No' }}</span></td>
         <td class="actions">
           <button class="btn btn-outline btn-sm" (click)="startEdit(p)">Edit</button>

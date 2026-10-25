@@ -21,6 +21,12 @@ public class OrderItem
     /// <summary>Product name captured at purchase time.</summary>
     public string ProductNameSnapshot { get; set; } = string.Empty;
 
+    /// <summary>Size name captured at purchase time, when the variant had a size.</summary>
+    public string? SizeSnapshot { get; set; }
+
+    /// <summary>Color name captured at purchase time, when the variant had a color.</summary>
+    public string? ColorSnapshot { get; set; }
+
     /// <summary>Unit price captured at purchase time.</summary>
     public decimal UnitPrice { get; set; }
 

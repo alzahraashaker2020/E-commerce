@@ -60,9 +60,14 @@ public class AdminSalesController : ControllerBase
         int orderCount = windowOrders.Count;
         decimal averageOrderValue = orderCount > 0 ? totalRevenue / orderCount : 0m;
 
-        // Low-stock is a current read-side rule, independent of the window.
-        int lowStockCount = await _repo._InventoryItem.Query()
-            .CountAsync(i => i.QuantityOnHand <= i.LowStockThreshold);
+        // Low-stock is a current read-side rule, independent of the window:
+        // count no-variant products plus variants at/below their threshold.
+        int productLowStockCount = await _repo._Product.Query()
+            .CountAsync(p => !p.HasVariants && p.StockQuantity <= p.LowStockThreshold);
+        int variantLowStockCount = await _repo._Product.Query()
+            .SelectMany(p => p.Variants)
+            .CountAsync(v => v.StockQuantity <= v.LowStockThreshold);
+        int lowStockCount = productLowStockCount + variantLowStockCount;
 
         // Top products by units sold within the window.
         List<TopProductVM> topProducts = windowOrders

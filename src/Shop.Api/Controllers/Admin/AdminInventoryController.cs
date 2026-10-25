@@ -38,12 +38,65 @@ public class AdminInventoryController : ControllerBase
     [HttpGet("low-stock")]
     public async Task<ActionResult<ApiResponse<List<LowStockItemVM>>>> GetLowStock()
     {
-        List<InventoryItem> lowStock = await _repo._InventoryItem.Query()
-            .Include(i => i.Product)
-            .Include(i => i.Variant)
-            .Where(i => i.QuantityOnHand <= i.LowStockThreshold)
+        // Variant-level low stock: a variant at/below its own threshold. Load
+        // the products that have low variants with their variant graph, then
+        // flatten/project in memory.
+        List<Product> productsWithVariants = await _repo._Product.Query()
+            .Where(p => p.Variants.Any(v => v.StockQuantity <= v.LowStockThreshold))
+            .Include(p => p.Variants).ThenInclude(v => v.Size)
+            .Include(p => p.Variants).ThenInclude(v => v.Color)
             .ToListAsync();
 
-        return Ok(ApiResponse<List<LowStockItemVM>>.Ok(_mapper.Map<List<LowStockItemVM>>(lowStock)));
+        List<LowStockItemVM> variantLow = productsWithVariants
+            .SelectMany(p => p.Variants
+                .Where(v => v.StockQuantity <= v.LowStockThreshold)
+                .Select(v => new LowStockItemVM
+                {
+                    ProductId = p.Id,
+                    ProductName = p.Name,
+                    VariantId = v.Id,
+                    VariantLabel = ComposeVariantLabel(v.Size?.Name, v.Color?.Name),
+                    StockQuantity = v.StockQuantity,
+                    LowStockThreshold = v.LowStockThreshold
+                }))
+            .ToList();
+
+        // Product-level low stock: a no-variant product at/below its threshold.
+        List<LowStockItemVM> productLow = await _repo._Product.Query()
+            .Where(p => !p.HasVariants && p.StockQuantity <= p.LowStockThreshold)
+            .Select(p => new LowStockItemVM
+            {
+                ProductId = p.Id,
+                ProductName = p.Name,
+                VariantId = null,
+                VariantLabel = null,
+                StockQuantity = p.StockQuantity,
+                LowStockThreshold = p.LowStockThreshold
+            })
+            .ToListAsync();
+
+        List<LowStockItemVM> lowStock = productLow.Concat(variantLow).ToList();
+
+        return Ok(ApiResponse<List<LowStockItemVM>>.Ok(lowStock));
+    }
+
+    /// <summary>
+    /// Builds a size/color label for a variant, or null when neither is set.
+    /// </summary>
+    /// <param name="sizeName">Size name, if assigned.</param>
+    /// <param name="colorName">Color name, if assigned.</param>
+    private static string? ComposeVariantLabel(string? sizeName, string? colorName)
+    {
+        if (sizeName is null && colorName is null)
+        {
+            return null;
+        }
+
+        if (sizeName is not null && colorName is not null)
+        {
+            return sizeName + " / " + colorName;
+        }
+
+        return sizeName ?? colorName;
     }
 }

@@ -47,7 +47,8 @@ public class CartController : ControllerBase
         {
             // Load the product with its variants so variant pricing resolves.
             Product? product = await _repo._Product.Query()
-                .Include(p => p.Variants)
+                .Include(p => p.Variants).ThenInclude(v => v.Size)
+                .Include(p => p.Variants).ThenInclude(v => v.Color)
                 .FirstOrDefaultAsync(p => p.Id == line.ProductId);
             if (product is null)
             {
@@ -72,7 +73,7 @@ public class CartController : ControllerBase
                 }
 
                 unitPrice = variant.Price;
-                productName = $"{product.Name} ({variant.OptionName}: {variant.OptionValue})";
+                productName = ComposeVariantName(product.Name, variant);
             }
 
             var cartLine = new CartLineVM
@@ -91,5 +92,30 @@ public class CartController : ControllerBase
         cart.Subtotal = cart.Lines.Sum(l => l.LineTotal);
 
         return Ok(ApiResponse<CartVM>.Ok(cart));
+    }
+
+    /// <summary>
+    /// Composes a display name for a variant line from the product name and the
+    /// variant's size/color (whichever are present). Falls back to the product
+    /// name when the variant carries neither dimension.
+    /// </summary>
+    /// <param name="productName">The owning product name.</param>
+    /// <param name="variant">The resolved variant.</param>
+    private static string ComposeVariantName(string productName, ProductVariant variant)
+    {
+        var parts = new List<string>();
+        if (variant.Size is not null)
+        {
+            parts.Add(variant.Size.Name);
+        }
+
+        if (variant.Color is not null)
+        {
+            parts.Add(variant.Color.Name);
+        }
+
+        return parts.Count == 0
+            ? productName
+            : $"{productName} ({string.Join(", ", parts)})";
     }
 }

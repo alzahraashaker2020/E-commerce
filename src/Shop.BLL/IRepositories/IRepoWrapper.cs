@@ -22,8 +22,11 @@ public interface IRepoWrapper
     /// <summary>Discount repository.</summary>
     IDiscountRepo _Discount { get; }
 
-    /// <summary>Inventory-item repository.</summary>
-    IInventoryItemRepo _InventoryItem { get; }
+    /// <summary>Size repository.</summary>
+    ISizeRepo _Size { get; }
+
+    /// <summary>Color repository.</summary>
+    IColorRepo _Color { get; }
 
     /// <summary>Admin-user repository.</summary>
     IAdminUserRepo _AdminUser { get; }

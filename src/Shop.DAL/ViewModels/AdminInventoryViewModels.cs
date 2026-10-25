@@ -1,8 +1,9 @@
 namespace Shop.DAL.ViewModels;
 
 /// <summary>
-/// A low-stock inventory row. One entry per inventory row at/below its
-/// threshold, so a specific low-stock variant is identifiable.
+/// A low-stock row. One entry per product (no variants) or per variant that is
+/// at/below its low-stock threshold, so a specific low-stock unit is
+/// identifiable.
 /// </summary>
 public class LowStockItemVM
 {
@@ -15,11 +16,11 @@ public class LowStockItemVM
     /// <summary>Variant identifier, when the row is variant-level.</summary>
     public int? VariantId { get; set; }
 
-    /// <summary>Variant label (option name/value), when applicable.</summary>
+    /// <summary>Variant label (size / color), when applicable.</summary>
     public string? VariantLabel { get; set; }
 
     /// <summary>Units currently available.</summary>
-    public int QuantityOnHand { get; set; }
+    public int StockQuantity { get; set; }
 
     /// <summary>Low-stock threshold.</summary>
     public int LowStockThreshold { get; set; }

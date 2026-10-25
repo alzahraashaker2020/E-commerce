@@ -32,14 +32,17 @@ public class ProductListItemVM
     /// <summary>Primary (first) image URL, if any.</summary>
     public string? PrimaryImageUrl { get; set; }
 
-    /// <summary>Optional colour attribute for display.</summary>
-    public string? Colour { get; set; }
+    /// <summary>Whether the product sells through variants.</summary>
+    public bool HasVariants { get; set; }
 
-    /// <summary>Optional size attribute for display.</summary>
-    public string? Size { get; set; }
+    /// <summary>Whether remaining stock is shown on the storefront.</summary>
+    public bool ShowStockQuantity { get; set; }
 
-    /// <summary>Units on hand from the product-level inventory row (admin list).</summary>
-    public int QuantityOnHand { get; set; }
+    /// <summary>Product-level units available (admin list; product-level stock).</summary>
+    public int StockQuantity { get; set; }
+
+    /// <summary>Product-level low-stock threshold.</summary>
+    public int LowStockThreshold { get; set; }
 }
 
 /// <summary>
@@ -80,23 +83,17 @@ public class ProductDetailVM
     /// <summary>Images of the product.</summary>
     public List<ProductImageVM> Images { get; set; } = new List<ProductImageVM>();
 
-    /// <summary>Optional colour attribute.</summary>
-    public string? Colour { get; set; }
+    /// <summary>Whether the product sells through variants.</summary>
+    public bool HasVariants { get; set; }
 
-    /// <summary>Optional size attribute.</summary>
-    public string? Size { get; set; }
+    /// <summary>Whether remaining stock is shown on the storefront.</summary>
+    public bool ShowStockQuantity { get; set; }
 
-    /// <summary>Optional width in centimetres (cm).</summary>
-    public decimal? Width { get; set; }
+    /// <summary>Product-level units available (used when the product has no variants).</summary>
+    public int StockQuantity { get; set; }
 
-    /// <summary>Optional height in centimetres (cm).</summary>
-    public decimal? Height { get; set; }
-
-    /// <summary>Total units available across inventory rows.</summary>
-    public int TotalQuantityOnHand { get; set; }
-
-    /// <summary>Units on hand from the product-level inventory row (admin list).</summary>
-    public int QuantityOnHand { get; set; }
+    /// <summary>Product-level low-stock threshold.</summary>
+    public int LowStockThreshold { get; set; }
 }
 
 /// <summary>
@@ -131,27 +128,39 @@ public class CategoryVM
 }
 
 /// <summary>
-/// Product variant representation.
+/// Product variant representation (normalized size/color shape).
 /// </summary>
 public class ProductVariantVM
 {
     /// <summary>Variant identifier.</summary>
     public int Id { get; set; }
 
-    /// <summary>Stock-keeping unit.</summary>
-    public string Sku { get; set; } = string.Empty;
+    /// <summary>Size identifier, when the variant has a size.</summary>
+    public int? SizeId { get; set; }
 
-    /// <summary>Option dimension name, e.g. "Size".</summary>
-    public string OptionName { get; set; } = string.Empty;
+    /// <summary>Size display name, when the variant has a size.</summary>
+    public string? SizeName { get; set; }
 
-    /// <summary>Option value, e.g. "Large".</summary>
-    public string OptionValue { get; set; } = string.Empty;
+    /// <summary>Color identifier, when the variant has a color.</summary>
+    public int? ColorId { get; set; }
+
+    /// <summary>Color display name, when the variant has a color.</summary>
+    public string? ColorName { get; set; }
+
+    /// <summary>Optional stock-keeping unit.</summary>
+    public string? Sku { get; set; }
 
     /// <summary>Selling price.</summary>
     public decimal Price { get; set; }
 
-    /// <summary>Optional compare-at price.</summary>
-    public decimal? CompareAtPrice { get; set; }
+    /// <summary>Units currently available for this variant.</summary>
+    public int StockQuantity { get; set; }
+
+    /// <summary>Whether the variant is active and sellable.</summary>
+    public bool IsActive { get; set; }
+
+    /// <summary>Optional variant-specific image URL.</summary>
+    public string? ImageUrl { get; set; }
 }
 
 /// <summary>

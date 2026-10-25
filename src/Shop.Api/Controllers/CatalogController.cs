@@ -91,9 +91,9 @@ public class CatalogController : ControllerBase
         // detail VM can project variants/images and sum stock on hand.
         Product? product = await _repo._Product.Query()
             .Include(p => p.Category)
-            .Include(p => p.Variants)
+            .Include(p => p.Variants).ThenInclude(v => v.Size)
+            .Include(p => p.Variants).ThenInclude(v => v.Color)
             .Include(p => p.Images)
-            .Include(p => p.InventoryItems)
             .FirstOrDefaultAsync(p => p.Id == id);
         if (product is null)
         {

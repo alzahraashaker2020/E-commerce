@@ -61,10 +61,11 @@ public static class ShopContextSeed
     {
         SeedRolesAndAdmin(modelBuilder);
         SeedCategories(modelBuilder);
+        SeedSizes(modelBuilder);
+        SeedColors(modelBuilder);
         SeedProducts(modelBuilder);
         SeedVariants(modelBuilder);
         SeedImages(modelBuilder);
-        SeedInventory(modelBuilder);
         SeedCustomers(modelBuilder);
         SeedDiscounts(modelBuilder);
         SeedOrders(modelBuilder);
@@ -135,50 +136,74 @@ public static class ShopContextSeed
     private static void SeedProducts(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Product>().HasData(
-            // Sofa covers (cat 11)
-            new Product { Id = 101, Name = "Woven Sofa Cover", Slug = "woven-sofa-cover", DescriptionHtml = "<p>Soft woven cover that drapes any sofa in elegance.</p>", Brand = "Makani", BasePrice = 59.99m, CategoryId = 11, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
-            new Product { Id = 102, Name = "Stretch Slipcover", Slug = "stretch-slipcover", DescriptionHtml = "<p>Form-fitting stretch slipcover for a tailored look.</p>", Brand = "Makani", BasePrice = 74.99m, CategoryId = 11, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
-            // Blanket / throw out (cat 12)
-            new Product { Id = 103, Name = "Tasseled Throw Blanket", Slug = "tasseled-throw-blanket", DescriptionHtml = "<p>Cozy tasseled throw in warm neutral tones.</p>", Brand = "Makani", BasePrice = 39.99m, CategoryId = 12, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
-            new Product { Id = 104, Name = "Knitted Throw", Slug = "knitted-throw", DescriptionHtml = "<p>Chunky knitted throw for the sofa or bed.</p>", Brand = "Makani", BasePrice = 44.99m, CategoryId = 12, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
-            // Hand made sets (cat 13)
-            new Product { Id = 105, Name = "Handmade Cushion Set", Slug = "handmade-cushion-set", DescriptionHtml = "<p>Set of handcrafted textured cushions.</p>", Brand = "Makani", BasePrice = 69.99m, CategoryId = 13, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
-            new Product { Id = 106, Name = "Artisan Pillow Trio", Slug = "artisan-pillow-trio", DescriptionHtml = "<p>Three artisan pillows in complementary weaves.</p>", Brand = "Makani", BasePrice = 84.99m, CategoryId = 13, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
-            // Printed sets (cat 14)
-            new Product { Id = 107, Name = "Printed Cushion Set", Slug = "printed-cushion-set", DescriptionHtml = "<p>Patterned printed cushion set to accent any sofa.</p>", Brand = "Makani", BasePrice = 54.99m, CategoryId = 14, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
-            new Product { Id = 108, Name = "Floral Print Pillows", Slug = "floral-print-pillows", DescriptionHtml = "<p>Pair of floral-print pillows.</p>", Brand = "Makani", BasePrice = 42.99m, CategoryId = 14, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
-            // Wall styling (cat 21 / 22)
-            new Product { Id = 109, Name = "Macramé Wall Hanging", Slug = "macrame-wall-hanging", DescriptionHtml = "<p>Hand-knotted macramé wall hanging.</p>", Brand = "Makani", BasePrice = 49.99m, CategoryId = 21, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
-            new Product { Id = 110, Name = "Boho Wall Frame", Slug = "boho-wall-frame", DescriptionHtml = "<p>Decorative boho wall frame.</p>", Brand = "Makani", BasePrice = 34.99m, CategoryId = 22, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
-            // Floor styling (cat 31 / 32)
-            new Product { Id = 111, Name = "Textured Area Rug", Slug = "textured-area-rug", DescriptionHtml = "<p>Soft textured area rug in neutral tones.</p>", Brand = "Makani", BasePrice = 119.99m, CategoryId = 31, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
-            new Product { Id = 112, Name = "Woven Floor Runner", Slug = "woven-floor-runner", DescriptionHtml = "<p>Durable woven runner for hallways.</p>", Brand = "Makani", BasePrice = 64.99m, CategoryId = 32, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
-            // New arrivals (cat 41)
-            new Product { Id = 113, Name = "Autumn Collection Throw", Slug = "autumn-collection-throw", DescriptionHtml = "<p>New-season throw in autumn hues.</p>", Brand = "Makani", BasePrice = 47.99m, CategoryId = 41, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true });
+            // --- Variant products (HasVariants = true) ---
+            // Product 101 is the mandatory 3-variant PROOF product: sizes
+            // Small/Large x colors Beige/Grey with (Small,Grey) ABSENT.
+            new Product { Id = 101, Name = "Woven Sofa Cover", Slug = "woven-sofa-cover", DescriptionHtml = "<p>Soft woven cover that drapes any sofa in elegance.</p>", Brand = "Makani", BasePrice = 59.99m, CategoryId = 11, HasVariants = true, ShowStockQuantity = true, StockQuantity = 0, LowStockThreshold = 0, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
+            new Product { Id = 102, Name = "Stretch Slipcover", Slug = "stretch-slipcover", DescriptionHtml = "<p>Form-fitting stretch slipcover for a tailored look.</p>", Brand = "Makani", BasePrice = 74.99m, CategoryId = 11, HasVariants = true, ShowStockQuantity = true, StockQuantity = 0, LowStockThreshold = 0, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
+            new Product { Id = 105, Name = "Handmade Cushion Set", Slug = "handmade-cushion-set", DescriptionHtml = "<p>Set of handcrafted textured cushions.</p>", Brand = "Makani", BasePrice = 69.99m, CategoryId = 13, HasVariants = true, ShowStockQuantity = true, StockQuantity = 0, LowStockThreshold = 0, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
+            new Product { Id = 107, Name = "Printed Cushion Set", Slug = "printed-cushion-set", DescriptionHtml = "<p>Patterned printed cushion set to accent any sofa.</p>", Brand = "Makani", BasePrice = 54.99m, CategoryId = 14, HasVariants = true, ShowStockQuantity = true, StockQuantity = 0, LowStockThreshold = 0, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
+            new Product { Id = 111, Name = "Textured Area Rug", Slug = "textured-area-rug", DescriptionHtml = "<p>Soft textured area rug in neutral tones.</p>", Brand = "Makani", BasePrice = 119.99m, CategoryId = 31, HasVariants = true, ShowStockQuantity = true, StockQuantity = 0, LowStockThreshold = 0, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
+
+            // --- No-variant products (HasVariants = false; product-level stock) ---
+            new Product { Id = 103, Name = "Tasseled Throw Blanket", Slug = "tasseled-throw-blanket", DescriptionHtml = "<p>Cozy tasseled throw in warm neutral tones.</p>", Brand = "Makani", BasePrice = 39.99m, CategoryId = 12, HasVariants = false, ShowStockQuantity = true, StockQuantity = 55, LowStockThreshold = 6, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
+            new Product { Id = 104, Name = "Knitted Throw", Slug = "knitted-throw", DescriptionHtml = "<p>Chunky knitted throw for the sofa or bed.</p>", Brand = "Makani", BasePrice = 44.99m, CategoryId = 12, HasVariants = false, ShowStockQuantity = true, StockQuantity = 30, LowStockThreshold = 5, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
+            new Product { Id = 106, Name = "Artisan Pillow Trio", Slug = "artisan-pillow-trio", DescriptionHtml = "<p>Three artisan pillows in complementary weaves.</p>", Brand = "Makani", BasePrice = 84.99m, CategoryId = 13, HasVariants = false, ShowStockQuantity = true, StockQuantity = 16, LowStockThreshold = 4, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
+            new Product { Id = 108, Name = "Floral Print Pillows", Slug = "floral-print-pillows", DescriptionHtml = "<p>Pair of floral-print pillows.</p>", Brand = "Makani", BasePrice = 42.99m, CategoryId = 14, HasVariants = false, ShowStockQuantity = true, StockQuantity = 38, LowStockThreshold = 5, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
+            new Product { Id = 109, Name = "Macramé Wall Hanging", Slug = "macrame-wall-hanging", DescriptionHtml = "<p>Hand-knotted macramé wall hanging.</p>", Brand = "Makani", BasePrice = 49.99m, CategoryId = 21, HasVariants = false, ShowStockQuantity = true, StockQuantity = 12, LowStockThreshold = 4, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
+            new Product { Id = 110, Name = "Boho Wall Frame", Slug = "boho-wall-frame", DescriptionHtml = "<p>Decorative boho wall frame.</p>", Brand = "Makani", BasePrice = 34.99m, CategoryId = 22, HasVariants = false, ShowStockQuantity = true, StockQuantity = 4, LowStockThreshold = 5, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true }, // LOW STOCK
+            new Product { Id = 112, Name = "Woven Floor Runner", Slug = "woven-floor-runner", DescriptionHtml = "<p>Durable woven runner for hallways.</p>", Brand = "Makani", BasePrice = 64.99m, CategoryId = 32, HasVariants = false, ShowStockQuantity = true, StockQuantity = 28, LowStockThreshold = 5, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true },
+            new Product { Id = 113, Name = "Autumn Collection Throw", Slug = "autumn-collection-throw", DescriptionHtml = "<p>New-season throw in autumn hues.</p>", Brand = "Makani", BasePrice = 47.99m, CategoryId = 41, HasVariants = false, ShowStockQuantity = true, StockQuantity = 33, LowStockThreshold = 5, IsActive = true, CreatedAt = SeedCreatedAt, IsDemoData = true });
     }
 
-    // Variants: IDs in the 1000-series. Home goods use size/colour options
-    // where sensible (covers by sofa size, rugs by dimension, cushions by colour).
+    // Sizes: admin-managed variant dimension. Generic names; the demo domain is
+    // data only. IDs 1-2.
+    private static void SeedSizes(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Size>().HasData(
+            new Size { Id = 1, Name = "Small", DisplayOrder = 1, IsActive = true, IsDemoData = true },
+            new Size { Id = 2, Name = "Large", DisplayOrder = 2, IsActive = true, IsDemoData = true });
+    }
+
+    // Colors: admin-managed variant dimension. IDs 1-2.
+    private static void SeedColors(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Color>().HasData(
+            new Color { Id = 1, Name = "Beige", HexCode = "#D8C3A5", DisplayOrder = 1, IsActive = true, IsDemoData = true },
+            new Color { Id = 2, Name = "Grey", HexCode = "#808080", DisplayOrder = 2, IsActive = true, IsDemoData = true });
+    }
+
+    // Variants: IDs in the 1000-series. Normalized size/color shape; stock lives
+    // on each variant row (no separate inventory table). Only the specific
+    // chosen size/color combos are created — never a full size x color matrix.
+    //
+    // Product 101 is the mandatory PROOF product: exactly 3 variants across
+    // sizes Small(1)/Large(2) and colors Beige(1)/Grey(2), with (Small,Grey)
+    // ABSENT. Prices A/B/C = 59.99 / 69.99 / 79.99; stock 10 / 5 / 8.
     private static void SeedVariants(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<ProductVariant>().HasData(
-            // Woven Sofa Cover - sofa size
-            new ProductVariant { Id = 1001, ProductId = 101, Sku = "COVER-2S", OptionName = "Size", OptionValue = "2-Seater", Price = 59.99m, IsDemoData = true },
-            new ProductVariant { Id = 1002, ProductId = 101, Sku = "COVER-3S", OptionName = "Size", OptionValue = "3-Seater", Price = 69.99m, IsDemoData = true },
-            new ProductVariant { Id = 1003, ProductId = 101, Sku = "COVER-LS", OptionName = "Size", OptionValue = "L-Shape", Price = 89.99m, IsDemoData = true },
-            // Stretch Slipcover - sofa size
-            new ProductVariant { Id = 1004, ProductId = 102, Sku = "SLIP-2S", OptionName = "Size", OptionValue = "2-Seater", Price = 74.99m, CompareAtPrice = 84.99m, IsDemoData = true },
-            new ProductVariant { Id = 1005, ProductId = 102, Sku = "SLIP-3S", OptionName = "Size", OptionValue = "3-Seater", Price = 84.99m, CompareAtPrice = 94.99m, IsDemoData = true },
-            // Handmade Cushion Set - colour
-            new ProductVariant { Id = 1006, ProductId = 105, Sku = "CUSH-BEIGE", OptionName = "Colour", OptionValue = "Beige", Price = 69.99m, IsDemoData = true },
-            new ProductVariant { Id = 1007, ProductId = 105, Sku = "CUSH-CLAY", OptionName = "Colour", OptionValue = "Clay", Price = 69.99m, IsDemoData = true },
-            // Printed Cushion Set - colour
-            new ProductVariant { Id = 1008, ProductId = 107, Sku = "PRNT-FLORAL", OptionName = "Pattern", OptionValue = "Floral", Price = 54.99m, IsDemoData = true },
-            new ProductVariant { Id = 1009, ProductId = 107, Sku = "PRNT-GEO", OptionName = "Pattern", OptionValue = "Geometric", Price = 54.99m, IsDemoData = true },
-            // Textured Area Rug - dimension
-            new ProductVariant { Id = 1010, ProductId = 111, Sku = "RUG-120", OptionName = "Size", OptionValue = "120x170", Price = 119.99m, IsDemoData = true },
-            new ProductVariant { Id = 1011, ProductId = 111, Sku = "RUG-160", OptionName = "Size", OptionValue = "160x230", Price = 159.99m, IsDemoData = true },
-            new ProductVariant { Id = 1012, ProductId = 111, Sku = "RUG-200", OptionName = "Size", OptionValue = "200x290", Price = 199.99m, IsDemoData = true });
+            // --- PROOF product 101: (Small,Beige),(Large,Beige),(Large,Grey) ---
+            new ProductVariant { Id = 1001, ProductId = 101, SizeId = 1, ColorId = 1, Sku = "COVER-S-BEIGE", Price = 59.99m, StockQuantity = 10, LowStockThreshold = 3, IsActive = true, IsDemoData = true },
+            new ProductVariant { Id = 1002, ProductId = 101, SizeId = 2, ColorId = 1, Sku = "COVER-L-BEIGE", Price = 69.99m, StockQuantity = 5, LowStockThreshold = 3, IsActive = true, IsDemoData = true },
+            new ProductVariant { Id = 1003, ProductId = 101, SizeId = 2, ColorId = 2, Sku = "COVER-L-GREY", Price = 79.99m, StockQuantity = 8, LowStockThreshold = 3, IsActive = true, IsDemoData = true },
+            // (Small,Grey) intentionally ABSENT.
+
+            // --- Stretch Slipcover 102: size-only combos ---
+            new ProductVariant { Id = 1004, ProductId = 102, SizeId = 1, ColorId = null, Sku = "SLIP-S", Price = 74.99m, StockQuantity = 22, LowStockThreshold = 5, IsActive = true, IsDemoData = true },
+            new ProductVariant { Id = 1005, ProductId = 102, SizeId = 2, ColorId = null, Sku = "SLIP-L", Price = 84.99m, StockQuantity = 2, LowStockThreshold = 5, IsActive = true, IsDemoData = true }, // LOW STOCK
+
+            // --- Handmade Cushion Set 105: color-only combos ---
+            new ProductVariant { Id = 1006, ProductId = 105, SizeId = null, ColorId = 1, Sku = "CUSH-BEIGE", Price = 69.99m, StockQuantity = 14, LowStockThreshold = 4, IsActive = true, IsDemoData = true },
+            new ProductVariant { Id = 1007, ProductId = 105, SizeId = null, ColorId = 2, Sku = "CUSH-GREY", Price = 69.99m, StockQuantity = 4, LowStockThreshold = 4, IsActive = true, IsDemoData = true }, // LOW STOCK (at threshold)
+
+            // --- Printed Cushion Set 107: color-only combos ---
+            new ProductVariant { Id = 1008, ProductId = 107, SizeId = null, ColorId = 1, Sku = "PRNT-BEIGE", Price = 54.99m, StockQuantity = 26, LowStockThreshold = 5, IsActive = true, IsDemoData = true },
+            new ProductVariant { Id = 1009, ProductId = 107, SizeId = null, ColorId = 2, Sku = "PRNT-GREY", Price = 54.99m, StockQuantity = 20, LowStockThreshold = 5, IsActive = true, IsDemoData = true },
+
+            // --- Textured Area Rug 111: size-only combos ---
+            new ProductVariant { Id = 1010, ProductId = 111, SizeId = 1, ColorId = null, Sku = "RUG-S", Price = 119.99m, StockQuantity = 15, LowStockThreshold = 4, IsActive = true, IsDemoData = true },
+            new ProductVariant { Id = 1011, ProductId = 111, SizeId = 2, ColorId = null, Sku = "RUG-L", Price = 159.99m, StockQuantity = 9, LowStockThreshold = 4, IsActive = true, IsDemoData = true });
     }
 
     // Images: IDs in the 2000-series. URLs point at the Angular assets copied
@@ -199,42 +224,6 @@ public static class ShopContextSeed
             new ProductImage { Id = 2011, ProductId = 111, Url = "assets/images/categories/floor.webp", AltText = "Textured Area Rug", SortOrder = 0, IsDemoData = true },
             new ProductImage { Id = 2012, ProductId = 112, Url = "assets/images/categories/floor.webp", AltText = "Woven Floor Runner", SortOrder = 0, IsDemoData = true },
             new ProductImage { Id = 2013, ProductId = 113, Url = "assets/images/categories/newarrivals.webp", AltText = "Autumn Collection Throw", SortOrder = 0, IsDemoData = true });
-    }
-
-    // Inventory: IDs in the 3000-series. Variant-level rows where variants exist,
-    // else product-level. At least one row is at/below its LowStockThreshold.
-    private static void SeedInventory(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<InventoryItem>().HasData(
-            // Woven Sofa Cover variants
-            new InventoryItem { Id = 3001, ProductId = 101, VariantId = 1001, QuantityOnHand = 40, LowStockThreshold = 5, IsDemoData = true },
-            new InventoryItem { Id = 3002, ProductId = 101, VariantId = 1002, QuantityOnHand = 3, LowStockThreshold = 5, IsDemoData = true }, // LOW STOCK
-            new InventoryItem { Id = 3003, ProductId = 101, VariantId = 1003, QuantityOnHand = 18, LowStockThreshold = 5, IsDemoData = true },
-            // Stretch Slipcover variants
-            new InventoryItem { Id = 3004, ProductId = 102, VariantId = 1004, QuantityOnHand = 22, LowStockThreshold = 5, IsDemoData = true },
-            new InventoryItem { Id = 3005, ProductId = 102, VariantId = 1005, QuantityOnHand = 2, LowStockThreshold = 5, IsDemoData = true }, // LOW STOCK
-            // Throws - product-level (no variants)
-            new InventoryItem { Id = 3006, ProductId = 103, VariantId = null, QuantityOnHand = 55, LowStockThreshold = 6, IsDemoData = true },
-            new InventoryItem { Id = 3007, ProductId = 104, VariantId = null, QuantityOnHand = 30, LowStockThreshold = 5, IsDemoData = true },
-            // Handmade Cushion Set variants
-            new InventoryItem { Id = 3008, ProductId = 105, VariantId = 1006, QuantityOnHand = 14, LowStockThreshold = 4, IsDemoData = true },
-            new InventoryItem { Id = 3009, ProductId = 105, VariantId = 1007, QuantityOnHand = 4, LowStockThreshold = 4, IsDemoData = true }, // LOW STOCK (at threshold)
-            // Artisan Pillow Trio - product-level
-            new InventoryItem { Id = 3010, ProductId = 106, VariantId = null, QuantityOnHand = 16, LowStockThreshold = 4, IsDemoData = true },
-            // Printed Cushion Set variants
-            new InventoryItem { Id = 3011, ProductId = 107, VariantId = 1008, QuantityOnHand = 26, LowStockThreshold = 5, IsDemoData = true },
-            new InventoryItem { Id = 3012, ProductId = 107, VariantId = 1009, QuantityOnHand = 20, LowStockThreshold = 5, IsDemoData = true },
-            // Remaining product-level rows
-            new InventoryItem { Id = 3013, ProductId = 108, VariantId = null, QuantityOnHand = 38, LowStockThreshold = 5, IsDemoData = true },
-            new InventoryItem { Id = 3014, ProductId = 109, VariantId = null, QuantityOnHand = 12, LowStockThreshold = 4, IsDemoData = true },
-            new InventoryItem { Id = 3015, ProductId = 110, VariantId = null, QuantityOnHand = 4, LowStockThreshold = 5, IsDemoData = true }, // LOW STOCK
-            // Area Rug variants
-            new InventoryItem { Id = 3016, ProductId = 111, VariantId = 1010, QuantityOnHand = 15, LowStockThreshold = 4, IsDemoData = true },
-            new InventoryItem { Id = 3017, ProductId = 111, VariantId = 1011, QuantityOnHand = 9, LowStockThreshold = 4, IsDemoData = true },
-            new InventoryItem { Id = 3018, ProductId = 111, VariantId = 1012, QuantityOnHand = 6, LowStockThreshold = 4, IsDemoData = true },
-            // Floor Runner + New Arrival - product-level
-            new InventoryItem { Id = 3019, ProductId = 112, VariantId = null, QuantityOnHand = 28, LowStockThreshold = 5, IsDemoData = true },
-            new InventoryItem { Id = 3020, ProductId = 113, VariantId = null, QuantityOnHand = 33, LowStockThreshold = 5, IsDemoData = true });
     }
 
     // Customers: small ints (reused as FK on orders). Customer 1 is a demo
@@ -281,12 +270,12 @@ public static class ShopContextSeed
     private static void SeedOrderItems(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<OrderItem>().HasData(
-            // Order 5001: Woven Sofa Cover (3-Seater, low-stock variant) x1 + Printed Cushion Set x1
-            new OrderItem { Id = 6001, OrderId = 5001, ProductId = 101, VariantId = 1002, ProductNameSnapshot = "Woven Sofa Cover (Size: 3-Seater)", UnitPrice = 69.99m, Quantity = 1, LineTotal = 69.99m, IsDemoData = true },
-            new OrderItem { Id = 6002, OrderId = 5001, ProductId = 107, VariantId = 1008, ProductNameSnapshot = "Printed Cushion Set (Pattern: Floral)", UnitPrice = 54.99m, Quantity = 1, LineTotal = 54.99m, IsDemoData = true },
-            // Order 5002: Textured Area Rug (160x230) x1
-            new OrderItem { Id = 6003, OrderId = 5002, ProductId = 111, VariantId = 1011, ProductNameSnapshot = "Textured Area Rug (Size: 160x230)", UnitPrice = 159.99m, Quantity = 1, LineTotal = 159.99m, IsDemoData = true },
-            // Order 5003: Macramé Wall Hanging x1
-            new OrderItem { Id = 6004, OrderId = 5003, ProductId = 109, VariantId = null, ProductNameSnapshot = "Macramé Wall Hanging", UnitPrice = 49.99m, Quantity = 1, LineTotal = 49.99m, IsDemoData = true });
+            // Order 5001: Woven Sofa Cover (Large/Beige) x1 + Printed Cushion Set (Beige) x1
+            new OrderItem { Id = 6001, OrderId = 5001, ProductId = 101, VariantId = 1002, ProductNameSnapshot = "Woven Sofa Cover (Large, Beige)", SizeSnapshot = "Large", ColorSnapshot = "Beige", UnitPrice = 69.99m, Quantity = 1, LineTotal = 69.99m, IsDemoData = true },
+            new OrderItem { Id = 6002, OrderId = 5001, ProductId = 107, VariantId = 1008, ProductNameSnapshot = "Printed Cushion Set (Beige)", SizeSnapshot = null, ColorSnapshot = "Beige", UnitPrice = 54.99m, Quantity = 1, LineTotal = 54.99m, IsDemoData = true },
+            // Order 5002: Textured Area Rug (Large) x1
+            new OrderItem { Id = 6003, OrderId = 5002, ProductId = 111, VariantId = 1011, ProductNameSnapshot = "Textured Area Rug (Large)", SizeSnapshot = "Large", ColorSnapshot = null, UnitPrice = 159.99m, Quantity = 1, LineTotal = 159.99m, IsDemoData = true },
+            // Order 5003: Macramé Wall Hanging (no variant) x1
+            new OrderItem { Id = 6004, OrderId = 5003, ProductId = 109, VariantId = null, ProductNameSnapshot = "Macramé Wall Hanging", SizeSnapshot = null, ColorSnapshot = null, UnitPrice = 49.99m, Quantity = 1, LineTotal = 49.99m, IsDemoData = true });
     }
 }

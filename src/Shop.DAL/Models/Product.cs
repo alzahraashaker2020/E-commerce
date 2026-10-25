@@ -1,7 +1,9 @@
 namespace Shop.DAL.Models;
 
 /// <summary>
-/// A sellable catalog product. May have variants, images, and inventory rows.
+/// A sellable catalog product. May have variants and images. Stock is tracked
+/// on the product itself (<see cref="StockQuantity"/>) when it has no variants,
+/// otherwise on each <see cref="ProductVariant"/>.
 /// </summary>
 public class Product
 {
@@ -26,17 +28,17 @@ public class Product
     /// <summary>Foreign key to the owning <see cref="Category"/>.</summary>
     public int CategoryId { get; set; }
 
-    /// <summary>Optional colour attribute.</summary>
-    public string? Colour { get; set; }
+    /// <summary>Whether this product sells through <see cref="ProductVariant"/> rows.</summary>
+    public bool HasVariants { get; set; }
 
-    /// <summary>Optional size attribute.</summary>
-    public string? Size { get; set; }
+    /// <summary>Whether the remaining stock quantity is shown on the storefront.</summary>
+    public bool ShowStockQuantity { get; set; }
 
-    /// <summary>Optional width in centimetres (cm).</summary>
-    public decimal? Width { get; set; }
+    /// <summary>Product-level units available (used when <see cref="HasVariants"/> is false).</summary>
+    public int StockQuantity { get; set; }
 
-    /// <summary>Optional height in centimetres (cm).</summary>
-    public decimal? Height { get; set; }
+    /// <summary>Product-level low-stock threshold (used when <see cref="HasVariants"/> is false).</summary>
+    public int LowStockThreshold { get; set; }
 
     /// <summary>Whether the product is active and visible in the storefront.</summary>
     public bool IsActive { get; set; }
@@ -50,12 +52,9 @@ public class Product
     /// <summary>Owning category navigation.</summary>
     public Category? Category { get; set; }
 
-    /// <summary>Variants of this product (size/color/etc.).</summary>
+    /// <summary>Variants of this product (size/color combinations).</summary>
     public ICollection<ProductVariant> Variants { get; set; } = new List<ProductVariant>();
 
     /// <summary>Images attached to this product.</summary>
     public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
-
-    /// <summary>Inventory rows for this product (per variant or product-level).</summary>
-    public ICollection<InventoryItem> InventoryItems { get; set; } = new List<InventoryItem>();
 }

@@ -19,7 +19,8 @@ public class RepoWrapper : IRepoWrapper
     private IOrderRepo? _orderRepo;
     private ICustomerRepo? _customerRepo;
     private IDiscountRepo? _discountRepo;
-    private IInventoryItemRepo? _inventoryItemRepo;
+    private ISizeRepo? _sizeRepo;
+    private IColorRepo? _colorRepo;
     private IAdminUserRepo? _adminUserRepo;
     private IRoleRepo? _roleRepo;
     private ICartRepo? _cartRepo;
@@ -53,7 +54,10 @@ public class RepoWrapper : IRepoWrapper
     public IDiscountRepo _Discount => _discountRepo ??= new DiscountRepo(_context);
 
     /// <inheritdoc />
-    public IInventoryItemRepo _InventoryItem => _inventoryItemRepo ??= new InventoryItemRepo(_context);
+    public ISizeRepo _Size => _sizeRepo ??= new SizeRepo(_context);
+
+    /// <inheritdoc />
+    public IColorRepo _Color => _colorRepo ??= new ColorRepo(_context);
 
     /// <inheritdoc />
     public IAdminUserRepo _AdminUser => _adminUserRepo ??= new AdminUserRepo(_context);

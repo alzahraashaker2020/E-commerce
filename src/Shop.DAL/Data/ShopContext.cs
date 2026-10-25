@@ -32,8 +32,11 @@ public class ShopContext : DbContext
     /// <summary>Product images.</summary>
     public DbSet<ProductImage> ProductImages => Set<ProductImage>();
 
-    /// <summary>Inventory items.</summary>
-    public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
+    /// <summary>Sizes (admin-managed variant dimension).</summary>
+    public DbSet<Size> Sizes => Set<Size>();
+
+    /// <summary>Colors (admin-managed variant dimension).</summary>
+    public DbSet<Color> Colors => Set<Color>();
 
     /// <summary>Customers.</summary>
     public DbSet<Customer> Customers => Set<Customer>();
@@ -99,12 +102,27 @@ public class ShopContext : DbContext
             e.Property(p => p.Name).HasMaxLength(200);
             e.Property(p => p.Slug).HasMaxLength(200);
             e.Property(p => p.BasePrice).HasPrecision(18, 2);
-            e.Property(p => p.Width).HasPrecision(18, 2);
-            e.Property(p => p.Height).HasPrecision(18, 2);
             e.HasOne(p => p.Category)
                 .WithMany(c => c.Products)
                 .HasForeignKey(p => p.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // --- Size (admin-managed variant dimension) ---
+        modelBuilder.Entity<Size>(e =>
+        {
+            e.HasKey(s => s.Id);
+            e.Property(s => s.Name).HasMaxLength(100);
+            e.HasIndex(s => s.Name).IsUnique();
+        });
+
+        // --- Color (admin-managed variant dimension) ---
+        modelBuilder.Entity<Color>(e =>
+        {
+            e.HasKey(c => c.Id);
+            e.Property(c => c.Name).HasMaxLength(100);
+            e.HasIndex(c => c.Name).IsUnique();
+            e.Property(c => c.HexCode).HasMaxLength(9);
         });
 
         // --- ProductVariant ---
@@ -113,11 +131,20 @@ public class ShopContext : DbContext
             e.HasKey(v => v.Id);
             e.Property(v => v.Sku).HasMaxLength(100);
             e.Property(v => v.Price).HasPrecision(18, 2);
-            e.Property(v => v.CompareAtPrice).HasPrecision(18, 2);
             e.HasOne(v => v.Product)
                 .WithMany(p => p.Variants)
                 .HasForeignKey(v => v.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
+            // Size/Color are restricted on delete so a referenced attribute
+            // cannot be silently removed (admin delete returns 409 instead).
+            e.HasOne(v => v.Size)
+                .WithMany(s => s.Variants)
+                .HasForeignKey(v => v.SizeId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(v => v.Color)
+                .WithMany(c => c.Variants)
+                .HasForeignKey(v => v.ColorId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // --- ProductImage ---
@@ -129,20 +156,6 @@ public class ShopContext : DbContext
                 .WithMany(p => p.Images)
                 .HasForeignKey(i => i.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        // --- InventoryItem ---
-        modelBuilder.Entity<InventoryItem>(e =>
-        {
-            e.HasKey(i => i.Id);
-            e.HasOne(i => i.Product)
-                .WithMany(p => p.InventoryItems)
-                .HasForeignKey(i => i.ProductId)
-                .OnDelete(DeleteBehavior.Cascade);
-            e.HasOne(i => i.Variant)
-                .WithMany()
-                .HasForeignKey(i => i.VariantId)
-                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // --- Customer ---
@@ -233,6 +246,8 @@ public class ShopContext : DbContext
         {
             e.HasKey(oi => oi.Id);
             e.Property(oi => oi.ProductNameSnapshot).HasMaxLength(200);
+            e.Property(oi => oi.SizeSnapshot).HasMaxLength(100);
+            e.Property(oi => oi.ColorSnapshot).HasMaxLength(100);
             e.Property(oi => oi.UnitPrice).HasPrecision(18, 2);
             e.Property(oi => oi.LineTotal).HasPrecision(18, 2);
             e.HasOne(oi => oi.Order)

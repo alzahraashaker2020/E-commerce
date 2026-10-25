@@ -62,7 +62,8 @@ public class CheckoutController : ControllerBase
         foreach (CartLineRequest line in request.Lines)
         {
             Product? product = await _repo._Product.Query()
-                .Include(p => p.Variants)
+                .Include(p => p.Variants).ThenInclude(v => v.Size)
+                .Include(p => p.Variants).ThenInclude(v => v.Color)
                 .FirstOrDefaultAsync(p => p.Id == line.ProductId);
             if (product is null)
             {
@@ -72,6 +73,8 @@ public class CheckoutController : ControllerBase
 
             decimal unitPrice = product.BasePrice;
             string nameSnapshot = product.Name;
+            string? sizeSnapshot = null;
+            string? colorSnapshot = null;
 
             if (line.VariantId.HasValue)
             {
@@ -84,7 +87,23 @@ public class CheckoutController : ControllerBase
                 }
 
                 unitPrice = variant.Price;
-                nameSnapshot = $"{product.Name} ({variant.OptionName}: {variant.OptionValue})";
+                sizeSnapshot = variant.Size?.Name;
+                colorSnapshot = variant.Color?.Name;
+
+                var parts = new List<string>();
+                if (sizeSnapshot is not null)
+                {
+                    parts.Add(sizeSnapshot);
+                }
+
+                if (colorSnapshot is not null)
+                {
+                    parts.Add(colorSnapshot);
+                }
+
+                nameSnapshot = parts.Count == 0
+                    ? product.Name
+                    : $"{product.Name} ({string.Join(", ", parts)})";
             }
 
             items.Add(new OrderItem
@@ -92,6 +111,8 @@ public class CheckoutController : ControllerBase
                 ProductId = product.Id,
                 VariantId = line.VariantId,
                 ProductNameSnapshot = nameSnapshot,
+                SizeSnapshot = sizeSnapshot,
+                ColorSnapshot = colorSnapshot,
                 UnitPrice = unitPrice,
                 Quantity = line.Quantity,
                 LineTotal = unitPrice * line.Quantity,

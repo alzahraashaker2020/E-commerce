@@ -34,27 +34,17 @@ public class ProductUpsertRequest
     /// <summary>Whether the product is active.</summary>
     public bool IsActive { get; set; }
 
-    /// <summary>Optional colour attribute.</summary>
-    [StringLength(80)]
-    public string? Colour { get; set; }
+    /// <summary>Whether the product sells through variants.</summary>
+    public bool HasVariants { get; set; }
 
-    /// <summary>Optional size attribute.</summary>
-    [StringLength(80)]
-    public string? Size { get; set; }
+    /// <summary>Whether remaining stock is shown on the storefront.</summary>
+    public bool ShowStockQuantity { get; set; }
 
-    /// <summary>Optional width in centimetres (cm).</summary>
-    [Range(0, double.MaxValue)]
-    public decimal? Width { get; set; }
-
-    /// <summary>Optional height in centimetres (cm).</summary>
-    [Range(0, double.MaxValue)]
-    public decimal? Height { get; set; }
-
-    /// <summary>Units available for the product-level inventory row.</summary>
+    /// <summary>Product-level units available (used when the product has no variants).</summary>
     [Range(0, int.MaxValue)]
-    public int QuantityOnHand { get; set; }
+    public int StockQuantity { get; set; }
 
-    /// <summary>Low-stock threshold for the product-level inventory row.</summary>
+    /// <summary>Product-level low-stock threshold.</summary>
     [Range(0, int.MaxValue)]
     public int LowStockThreshold { get; set; }
 }

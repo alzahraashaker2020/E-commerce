@@ -26,23 +26,25 @@ public class MappingProfile : Profile
         CreateMap<Product, ProductListItemVM>()
             .ForMember(d => d.CategoryName, o => o.MapFrom(s => s.Category != null ? s.Category.Name : null))
             .ForMember(d => d.PrimaryImageUrl, o => o.MapFrom(s =>
-                s.Images.OrderBy(i => i.SortOrder).Select(i => i.Url).FirstOrDefault()))
-            // Admin-list stock: units from the product-level inventory row(s).
-            .ForMember(d => d.QuantityOnHand, o => o.MapFrom(s =>
-                s.InventoryItems.Where(i => i.VariantId == null).Sum(i => i.QuantityOnHand)));
+                s.Images.OrderBy(i => i.SortOrder).Select(i => i.Url).FirstOrDefault()));
+        // HasVariants/ShowStockQuantity/StockQuantity/LowStockThreshold map by name
+        // from the normalized product columns.
 
-        // Product -> detail: carry variants + images and sum inventory on hand.
+        // Product -> detail: carry variants + images; stock maps from the
+        // product-level columns by name (variant stock lives on each variant).
         CreateMap<Product, ProductDetailVM>()
-            .ForMember(d => d.CategoryName, o => o.MapFrom(s => s.Category != null ? s.Category.Name : null))
-            .ForMember(d => d.TotalQuantityOnHand, o => o.MapFrom(s =>
-                s.InventoryItems.Sum(i => i.QuantityOnHand)))
-            // Admin-list stock: units from the product-level inventory row(s).
-            .ForMember(d => d.QuantityOnHand, o => o.MapFrom(s =>
-                s.InventoryItems.Where(i => i.VariantId == null).Sum(i => i.QuantityOnHand)));
+            .ForMember(d => d.CategoryName, o => o.MapFrom(s => s.Category != null ? s.Category.Name : null));
 
-        CreateMap<ProductVariant, ProductVariantVM>();
+        // Variant -> VM: carry the size/color ids and resolved names from the navs.
+        CreateMap<ProductVariant, ProductVariantVM>()
+            .ForMember(d => d.SizeName, o => o.MapFrom(s => s.Size != null ? s.Size.Name : null))
+            .ForMember(d => d.ColorName, o => o.MapFrom(s => s.Color != null ? s.Color.Name : null));
         CreateMap<ProductImage, ProductImageVM>();
         CreateMap<Category, CategoryVM>();
+
+        // ---- Size / Color read maps ----
+        CreateMap<Size, SizeVM>();
+        CreateMap<Color, ColorVM>();
 
         // ---- Settings read map ----
         CreateMap<StoreSettings, StoreSettingsVM>();
@@ -82,15 +84,6 @@ public class MappingProfile : Profile
             .ForMember(d => d.AuthorName, o => o.MapFrom(s => s.Customer != null ? s.Customer.FullName : "Customer"))
             .ForMember(d => d.ProductName, o => o.MapFrom(s => s.Product != null ? s.Product.Name : string.Empty));
 
-        // ---- Inventory read map ----
-
-        // InventoryItem -> low-stock row: compose the optional variant label
-        // from the variant's option name/value via a resolver expression.
-        CreateMap<InventoryItem, LowStockItemVM>()
-            .ForMember(d => d.ProductName, o => o.MapFrom(s => s.Product != null ? s.Product.Name : string.Empty))
-            .ForMember(d => d.VariantLabel, o => o.MapFrom(s =>
-                s.Variant != null ? s.Variant.OptionName + ": " + s.Variant.OptionValue : null));
-
         // ---- Write maps (ignore server-owned destination members) ----
 
         // ProductUpsertRequest -> Product: map the client-editable fields only.
@@ -103,8 +96,7 @@ public class MappingProfile : Profile
             .ForMember(d => d.IsDemoData, o => o.Ignore())
             .ForMember(d => d.Category, o => o.Ignore())
             .ForMember(d => d.Variants, o => o.Ignore())
-            .ForMember(d => d.Images, o => o.Ignore())
-            .ForMember(d => d.InventoryItems, o => o.Ignore());
+            .ForMember(d => d.Images, o => o.Ignore());
 
         // DiscountUpsertRequest -> Discount: map Code/Type/Value/IsActive/
         // StartsAt/EndsAt; Id and IsDemoData are server-owned.

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Shop.BLL.IRepositories;
 using Shop.BLL.Response_VM;
 using Shop.DAL.Models;
+using Shop.DAL.Data;
 using Shop.DAL.ViewModels;
 
 namespace Shop.Api.Controllers.Admin;
@@ -14,22 +15,24 @@ namespace Shop.Api.Controllers.Admin;
 /// update endpoint. JWT-protected under the <c>api/admin/products</c> route.
 /// </summary>
 [ApiController]
-[Authorize]
+[Authorize(Roles = "Admin")]
 [Route("api/admin/products")]
 public class AdminProductsController : ControllerBase
 {
     private readonly IRepoWrapper _repo;
     private readonly IMapper _mapper;
+    private readonly ShopContext _db;
 
     /// <summary>
     /// Creates a new <see cref="AdminProductsController"/>.
     /// </summary>
     /// <param name="repo">Unit-of-work repository wrapper.</param>
     /// <param name="mapper">AutoMapper instance.</param>
-    public AdminProductsController(IRepoWrapper repo, IMapper mapper)
+    public AdminProductsController(IRepoWrapper repo, IMapper mapper, ShopContext db)
     {
         _repo = repo;
         _mapper = mapper;
+        _db = db;
     }
 
     /// <summary>
@@ -80,13 +83,15 @@ public class AdminProductsController : ControllerBase
         [FromBody] ProductUpsertRequest request)
     {
         Product product = _mapper.Map<Product>(request);
-        product.Slug = Slugify(request.Slug ?? request.Name);
+        product.Slug = Slugify(string.IsNullOrWhiteSpace(request.Slug) ? request.Name : request.Slug);
         product.CreatedAt = DateTime.UtcNow;
         product.IsDemoData = false;
 
         // Persist the chosen variant rows (only when the product has variants);
         // they are added as part of the same Save() as the product.
         product.Variants = BuildVariants(request);
+        SetPrimaryImage(product, request.ImageUrl);
+        SetGallery(product, request.ImageUrls);
 
         _repo._Product.Add(product);
         _repo.Save();
@@ -105,10 +110,10 @@ public class AdminProductsController : ControllerBase
         int id,
         [FromBody] ProductUpsertRequest request)
     {
-        // Load the tracked product with its variants so EF can diff the
-        // replacement set (removed rows get deleted, new rows inserted).
+        // Keep existing variant identifiers so saved order/cart references remain valid.
         Product? product = await _repo._Product.Query()
             .Include(p => p.Variants)
+            .Include(p => p.Images)
             .FirstOrDefaultAsync(p => p.Id == id);
         if (product is null)
         {
@@ -118,15 +123,44 @@ public class AdminProductsController : ControllerBase
         // Map the editable fields onto the tracked entity; server-owned members
         // are ignored by the write map, so copy them explicitly.
         _mapper.Map(request, product);
-        product.Slug = Slugify(request.Slug ?? request.Name);
+        product.Slug = Slugify(string.IsNullOrWhiteSpace(request.Slug) ? request.Name : request.Slug);
 
-        // Replace-all: drop the existing variants and add the submitted set, so
-        // the single Save() both removes the old rows and inserts the new ones.
-        product.Variants.Clear();
-        foreach (ProductVariant variant in BuildVariants(request))
+        var rows = request.HasVariants ? request.Variants : new List<ProductVariantUpsert>();
+        if (rows.Where(v => v.Id.HasValue).GroupBy(v => v.Id).Any(g => g.Count() > 1) ||
+            rows.Any(v => v.Id.HasValue && !product.Variants.Any(old => old.Id == v.Id)))
+            return BadRequest(ApiResponse<ProductDetailVM>.Fail("Invalid or repeated variant identifier.", 400));
+        foreach (var old in product.Variants.ToList())
         {
-            product.Variants.Add(variant);
+            // Match dimensions for older clients that did not send identifiers.
+            var row = rows.FirstOrDefault(v => v.Id == old.Id ||
+                (!v.Id.HasValue && v.SizeId == old.SizeId && v.ColorId == old.ColorId));
+            if (row is null)
+            {
+                if (await _db.OrderItems.AnyAsync(i => i.VariantId == old.Id) ||
+                    await _db.CartItems.AnyAsync(i => i.VariantId == old.Id))
+                    return Conflict(ApiResponse<ProductDetailVM>.Fail("A used variant cannot be removed. Mark it inactive instead.", 409));
+                product.Variants.Remove(old);
+            }
+            else
+            {
+                if ((old.SizeId != row.SizeId || old.ColorId != row.ColorId) &&
+                    await _db.OrderItems.AnyAsync(i => i.VariantId == old.Id))
+                    return Conflict(ApiResponse<ProductDetailVM>.Fail("The size/color of a sold variant cannot change. Add a new variant instead.", 409));
+                row.Id = old.Id;
+                old.SizeId = row.SizeId; old.ColorId = row.ColorId; old.Sku = row.Sku;
+                old.Price = row.Price; old.StockQuantity = row.StockQuantity;
+                old.LowStockThreshold = row.LowStockThreshold; old.IsActive = row.IsActive; old.ImageUrl = row.ImageUrl;
+                if (row.ImageUrls is not null)
+                {
+                    old.ImageUrls = CleanImages(row.ImageUrls);
+                    old.ImageUrl = old.ImageUrls.FirstOrDefault();
+                }
+            }
         }
+        foreach (var row in rows.Where(v => !v.Id.HasValue))
+            product.Variants.Add(BuildVariants(new ProductUpsertRequest { HasVariants = true, Variants = new() { row } })[0]);
+        SetPrimaryImage(product, request.ImageUrl);
+        SetGallery(product, request.ImageUrls);
 
         _repo._Product.Update(product);
         _repo.Save();
@@ -237,9 +271,34 @@ public class AdminProductsController : ControllerBase
             StockQuantity = v.StockQuantity,
             LowStockThreshold = v.LowStockThreshold,
             IsActive = v.IsActive,
-            ImageUrl = v.ImageUrl,
+            ImageUrl = v.ImageUrls is null ? v.ImageUrl : CleanImages(v.ImageUrls).FirstOrDefault(),
+            ImageUrls = v.ImageUrls is null ? new List<string>() : CleanImages(v.ImageUrls),
             IsDemoData = false
         }).ToList();
+    }
+
+    private static void SetPrimaryImage(Product product, string? imageUrl)
+    {
+        if (imageUrl is null) return;
+        var primary = product.Images.OrderBy(i => i.SortOrder).FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(imageUrl))
+        {
+            if (primary is not null) product.Images.Remove(primary);
+        }
+        else if (primary is not null) primary.Url = imageUrl;
+        else product.Images.Add(new ProductImage { Url = imageUrl, AltText = product.Name, SortOrder = 0 });
+    }
+
+    private static List<string> CleanImages(IEnumerable<string> images) =>
+        images.Where(i => !string.IsNullOrWhiteSpace(i)).Select(i => i.Trim()).Distinct().ToList();
+
+    private static void SetGallery(Product product, List<string>? images)
+    {
+        if (images is null) return;
+        product.Images.Clear();
+        int position = 0;
+        foreach (var url in CleanImages(images))
+            product.Images.Add(new ProductImage { Url = url, AltText = product.Name, SortOrder = position++ });
     }
 
     /// <summary>

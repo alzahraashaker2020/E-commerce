@@ -16,7 +16,7 @@
   <div class="sub-grid" *ngIf="category.children.length">
     <button class="sub-card" *ngFor="let sub of category.children" (click)="openSubcategory(sub)">
       <div class="sub-media">
-        <img *ngIf="sub.imageUrl" [src]="sub.imageUrl" [alt]="sub.name" loading="lazy" />
+        <img *ngIf="sub.imageUrl" [src]="sub.imageUrl | imageUrl" [alt]="sub.name" loading="lazy" />
       </div>
       <div class="sub-label">{{ sub.name }}</div>
     </button>

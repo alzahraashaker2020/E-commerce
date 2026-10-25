@@ -4,6 +4,7 @@ using Shop.BLL.Email;
 using Shop.BLL.IRepositories;
 using Shop.BLL.Response_VM;
 using Shop.DAL.Models;
+using Shop.DAL.Data;
 using Shop.DAL.ViewModels;
 
 namespace Shop.Api.Controllers;
@@ -21,6 +22,7 @@ public class CheckoutController : ControllerBase
     private const int OrderNumberMaxAttempts = 3;
 
     private readonly IRepoWrapper _repo;
+    private readonly ShopContext _db;
     private readonly IEmailService _emailService;
     private readonly ILogger<CheckoutController> _logger;
 
@@ -33,11 +35,13 @@ public class CheckoutController : ControllerBase
     public CheckoutController(
         IRepoWrapper repo,
         IEmailService emailService,
-        ILogger<CheckoutController> logger)
+        ILogger<CheckoutController> logger,
+        ShopContext db)
     {
         _repo = repo;
         _emailService = emailService;
         _logger = logger;
+        _db = db;
     }
 
     /// <summary>
@@ -71,6 +75,15 @@ public class CheckoutController : ControllerBase
                     $"Product {line.ProductId} not found", 400));
             }
 
+            if (!product.IsActive || (product.HasVariants && !line.VariantId.HasValue))
+                return BadRequest(ApiResponse<OrderConfirmationResponse>.Fail("Select an available product and its size/color variant.", 400));
+
+            long requestedQuantity = request.Lines
+                .Where(l => l.ProductId == line.ProductId && l.VariantId == line.VariantId)
+                .Sum(l => (long)l.Quantity);
+            if (!line.VariantId.HasValue && requestedQuantity > product.StockQuantity)
+                return Conflict(ApiResponse<OrderConfirmationResponse>.Fail("The requested product quantity exceeds available stock.", 409));
+
             decimal unitPrice = product.BasePrice;
             string nameSnapshot = product.Name;
             string? sizeSnapshot = null;
@@ -85,6 +98,9 @@ public class CheckoutController : ControllerBase
                     return BadRequest(ApiResponse<OrderConfirmationResponse>.Fail(
                         $"Variant {line.VariantId.Value} not found for product {line.ProductId}", 400));
                 }
+
+                if (!variant.IsActive || requestedQuantity > variant.StockQuantity)
+                    return Conflict(ApiResponse<OrderConfirmationResponse>.Fail("The selected size/color has insufficient stock or is unavailable.", 409));
 
                 unitPrice = variant.Price;
                 sizeSnapshot = variant.Size?.Name;
@@ -142,18 +158,28 @@ public class CheckoutController : ControllerBase
         // the single settings row is somehow missing).
         StoreSettings settings = await _repo._StoreSettings.Query().FirstOrDefaultAsync()
             ?? new StoreSettings { Id = 1, CurrencyCode = "USD", CurrencySymbol = "$" };
+        var area = await AvailableArea(request.AreaId, settings.CurrencyCode);
+        if (area is null) return BadRequest(ApiResponse<OrderConfirmationResponse>.Fail("Delivery is unavailable for this area or store currency. Please select another area.", 400));
+        total += area.ShippingFee;
+        if ((request.ExpectedTotal.HasValue && request.ExpectedTotal.Value != total) ||
+            (request.ExpectedCurrencyCode is not null && request.ExpectedCurrencyCode != settings.CurrencyCode))
+            return Conflict(ApiResponse<OrderConfirmationResponse>.Fail("The total changed. Review the updated shipping and order total before placing the order again.", 409));
 
         var now = DateTime.UtcNow;
+        var initialStatus = await _db.OrderStatusDefinitions.FirstAsync(s => s.IsDefault && s.IsActive);
         var order = new Order
         {
             CustomerId = null,
             GuestName = request.GuestName,
             GuestEmail = request.GuestEmail,
             Status = OrderStatus.Pending,
+            StatusDefinitionId = initialStatus.Id,
+            StatusDefinition = initialStatus,
             Subtotal = subtotal,
             DiscountTotal = discountTotal,
             Tax = 0m,
-            ShippingTotal = 0m,
+            ShippingTotal = area.ShippingFee,
+            DeliveryAreaId = area.Id,
             Total = total,
             CurrencyCode = settings.CurrencyCode,
             PaymentMethod = request.PaymentMethod,
@@ -163,8 +189,8 @@ public class CheckoutController : ControllerBase
                 : PaymentStatus.CashOnDelivery,
             AddressLine1 = request.AddressLine1,
             AddressLine2 = request.AddressLine2,
-            City = request.City,
-            StateRegion = request.StateRegion,
+            City = area.Name,
+            StateRegion = area.Governorate!.Name,
             PostalCode = request.PostalCode,
             Country = request.Country,
             ContactPhone = request.ContactPhone,
@@ -215,8 +241,11 @@ public class CheckoutController : ControllerBase
         var confirmation = new OrderConfirmationResponse
         {
             OrderNumber = order.OrderNumber,
+            Subtotal = order.Subtotal,
+            DiscountTotal = order.DiscountTotal,
+            ShippingTotal = order.ShippingTotal,
             Total = order.Total,
-            Status = order.Status.ToString(),
+            Status = initialStatus.Name,
             PlacedAt = order.PlacedAt,
             CurrencyCode = order.CurrencyCode,
             PaymentMethod = order.PaymentMethod.ToString(),
@@ -231,6 +260,37 @@ public class CheckoutController : ControllerBase
         };
 
         return Ok(ApiResponse<OrderConfirmationResponse>.Ok(confirmation, message));
+    }
+
+    private Task<DeliveryArea?> AvailableArea(int areaId, string currency) => _db.DeliveryAreas.AsNoTracking()
+        .Include(a => a.Governorate).FirstOrDefaultAsync(a => a.Id == areaId && a.IsActive && a.Governorate!.IsActive && a.CurrencyCode == currency);
+
+    [HttpPost("quote")]
+    public async Task<ActionResult<ApiResponse<CheckoutQuote>>> Quote(CheckoutQuoteRequest request)
+    {
+        var currency = (await _db.StoreSettings.FirstAsync()).CurrencyCode;
+        var area = await AvailableArea(request.AreaId, currency);
+        if (area is null) return BadRequest(ApiResponse<CheckoutQuote>.Fail("Delivery is unavailable for the selected area.", 400));
+        decimal subtotal = 0;
+        foreach (var line in request.Lines.GroupBy(l => new { l.ProductId, l.VariantId }))
+        {
+            var product = await _db.Products.AsNoTracking().Include(p => p.Variants).FirstOrDefaultAsync(p => p.Id == line.Key.ProductId && p.IsActive);
+            if (product is null) return BadRequest(ApiResponse<CheckoutQuote>.Fail("Product is unavailable.", 400));
+            long quantity = line.Sum(l => (long)l.Quantity);
+            decimal price = product.BasePrice;
+            if (line.Key.VariantId.HasValue)
+            {
+                var variant = product.Variants.FirstOrDefault(v => v.Id == line.Key.VariantId && v.IsActive);
+                if (variant is null || variant.StockQuantity < quantity) return Conflict(ApiResponse<CheckoutQuote>.Fail("Selected size/color has insufficient stock.", 409));
+                price = variant.Price;
+            }
+            else if (product.HasVariants || product.StockQuantity < quantity)
+                return Conflict(ApiResponse<CheckoutQuote>.Fail("Select an available product size/color and quantity.", 409));
+            subtotal += price * quantity;
+        }
+        var discount = string.IsNullOrWhiteSpace(request.DiscountCode) ? (0m, (string?)null) : await ResolveDiscountAsync(request.DiscountCode, subtotal);
+        return Ok(ApiResponse<CheckoutQuote>.Ok(new CheckoutQuote { Subtotal = subtotal, DiscountTotal = discount.Item1,
+            ShippingTotal = area.ShippingFee, Total = Math.Max(0, subtotal - discount.Item1) + area.ShippingFee, CurrencyCode = currency }, discount.Item2));
     }
 
     /// <summary>

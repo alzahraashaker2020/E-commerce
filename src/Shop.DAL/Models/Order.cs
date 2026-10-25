@@ -24,6 +24,13 @@ public class Order
 
     /// <summary>Current lifecycle status.</summary>
     public OrderStatus Status { get; set; }
+    /// <summary>Admin-configured status identifier.</summary>
+    public int? StatusDefinitionId { get; set; }
+    /// <summary>Status presentation and safe fulfillment behavior.</summary>
+    public OrderStatusDefinition? StatusDefinition { get; set; }
+
+    /// <summary>Whether this order has already consumed stock at confirmation.</summary>
+    public bool StockDeducted { get; set; }
 
     /// <summary>Sum of line totals before discount/tax/shipping.</summary>
     public decimal Subtotal { get; set; }
@@ -36,6 +43,8 @@ public class Order
 
     /// <summary>Shipping charge.</summary>
     public decimal ShippingTotal { get; set; }
+    /// <summary>Selected delivery area; address names and fee are stored separately as snapshots.</summary>
+    public int? DeliveryAreaId { get; set; }
 
     /// <summary>Grand total charged.</summary>
     public decimal Total { get; set; }

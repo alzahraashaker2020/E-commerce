@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../core/services/admin.service';
@@ -24,6 +25,9 @@ export class AdminProductsComponent implements OnInit {
   sizes: any[] = [];
   colors: any[] = [];
   loading = false;
+  uploading = false;
+  saving = false;
+  savedNotice: string | null = null;
   error: string | null = null;
 
   // Inline create/edit form model.
@@ -61,6 +65,7 @@ export class AdminProductsComponent implements OnInit {
       stockQuantity: 0,
       lowStockThreshold: 0,
       imageUrl: '',
+      imageUrls: [],
       variants: []
     };
   }
@@ -93,12 +98,14 @@ export class AdminProductsComponent implements OnInit {
   }
 
   startCreate(): void {
+    if (this.uploading) return;
     this.editing = null;
     this.parentCategoryId = null;
     this.form = this.blankForm();
   }
 
   startEdit(p: any): void {
+    if (this.uploading) return;
     this.editing = p;
     this.form = {
       name: p.name,
@@ -113,7 +120,9 @@ export class AdminProductsComponent implements OnInit {
       stockQuantity: p.stockQuantity ?? 0,
       lowStockThreshold: p.lowStockThreshold ?? 0,
       imageUrl: (p.images && p.images.length) ? p.images[0].url : '',
+      imageUrls: (p.images || []).slice().sort((a: any, b: any) => a.sortOrder - b.sortOrder).map((img: any) => img.url),
       variants: (p.variants || []).map((v: any) => ({
+        id: v.id,
         sizeId: v.sizeId ?? null,
         colorId: v.colorId ?? null,
         sku: v.sku ?? '',
@@ -121,7 +130,8 @@ export class AdminProductsComponent implements OnInit {
         stockQuantity: v.stockQuantity,
         lowStockThreshold: v.lowStockThreshold ?? 0,
         isActive: v.isActive,
-        imageUrl: v.imageUrl ?? ''
+        imageUrl: v.imageUrl ?? '',
+        imageUrls: v.imageUrls?.length ? [...v.imageUrls] : (v.imageUrl ? [v.imageUrl] : [])
       }))
     };
     // Resolve the parent dropdown so the dependent subcategory list loads: if
@@ -141,12 +151,14 @@ export class AdminProductsComponent implements OnInit {
       stockQuantity: 0,
       lowStockThreshold: 0,
       isActive: true,
-      imageUrl: ''
+      imageUrl: '',
+      imageUrls: []
     });
   }
 
   /** Removes the variant row at the given index. */
   removeVariant(index: number): void {
+    if (this.uploading) return;
     this.form.variants.splice(index, 1);
   }
 
@@ -163,68 +175,83 @@ export class AdminProductsComponent implements OnInit {
     return path.startsWith('/') ? origin + path : origin + '/' + path;
   }
 
-  /** Uploads the selected file and stores the returned path on the product. */
-  onProductImage(event: Event): void {
+  onProductImage(event: Event): void { void this.uploadImages(event, this.form); }
+  onVariantImage(event: Event, variant: any): void { void this.uploadImages(event, variant); }
+
+  private async uploadImages(event: Event, target: any): Promise<void> {
     const input = event.target as HTMLInputElement;
-    const file = input.files && input.files[0];
-    if (!file) {
+    const files = Array.from(input.files || []);
+    if (!files.length || this.uploading) return;
+    if (target.imageUrls.length + files.length > 20) {
+      this.error = 'Maximum 20 images per product or variant.';
+      input.value = '';
       return;
     }
+    this.uploading = true;
     this.error = null;
-    this.admin.uploadImage(file).subscribe({
-      next: res => {
-        if (res.success) {
-          this.form.imageUrl = res.data;
-        } else {
-          this.error = res.message ?? 'Upload failed.';
-        }
-      },
-      error: err => (this.error = err?.error?.message ?? 'Upload failed.')
-    });
-  }
-
-  /** Uploads the selected file and stores the returned path on a variant row. */
-  onVariantImage(event: Event, variant: any): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files && input.files[0];
-    if (!file) {
-      return;
+    try {
+      for (const file of files) {
+        const res = await firstValueFrom(this.admin.uploadImage(file));
+        if (!res.success || !res.data) throw new Error(res.message || 'Upload failed.');
+        target.imageUrls.push(res.data);
+      }
+    } catch (err: any) {
+      this.error = err?.error?.message || err?.message || 'Upload failed. Already uploaded images are retained.';
+    } finally {
+      target.imageUrl = target.imageUrls[0] || '';
+      this.uploading = false;
+      input.value = '';
     }
-    this.error = null;
-    this.admin.uploadImage(file).subscribe({
-      next: res => {
-        if (res.success) {
-          variant.imageUrl = res.data;
-        } else {
-          this.error = res.message ?? 'Upload failed.';
-        }
-      },
-      error: err => (this.error = err?.error?.message ?? 'Upload failed.')
-    });
   }
 
-  /** Clears the product-level image. */
-  removeProductImage(): void {
-    this.form.imageUrl = '';
+  removeImage(target: any, index: number): void {
+    target.imageUrls.splice(index, 1);
+    target.imageUrl = target.imageUrls[0] || '';
   }
 
-  /** Clears a variant image. */
-  removeVariantImage(variant: any): void {
-    variant.imageUrl = '';
+  makePrimary(target: any, index: number): void {
+    const [image] = target.imageUrls.splice(index, 1);
+    target.imageUrls.unshift(image);
+    target.imageUrl = image;
   }
-
   save(): void {
+    if (this.uploading || this.saving) return;
     this.error = null;
+    this.savedNotice = null;
+    this.saving = true;
     const body = this.buildPayload();
     const op = this.editing
       ? this.admin.updateProduct(this.editing.id, body)
       : this.admin.createProduct(body);
     op.subscribe({
-      next: () => {
+      next: saved => {
+        this.saving = false;
+        if (!saved?.id) {
+          this.error = 'The server did not confirm saving the product. Your form has been kept.';
+          return;
+        }
+        // Keep the saved ID on failure so retrying cannot create another product.
+        this.editing = { id: saved.id };
+        const actualImages = (saved.images || []).slice().sort((a: any, b: any) => a.sortOrder - b.sortOrder).map((i: any) => i.url);
+        const matches = (a: string[], b: string[]) => JSON.stringify(a) === JSON.stringify(b);
+        let imagesSaved = matches(actualImages, body.imageUrls);
+        for (const variant of this.form.variants) {
+          const actual = (saved.variants || []).find((v: any) => variant.id ? v.id === variant.id : v.sizeId === variant.sizeId && v.colorId === variant.colorId);
+          if (actual) variant.id = actual.id;
+          if (body.hasVariants && (!actual || !matches(actual.imageUrls || [], variant.imageUrls))) imagesSaved = false;
+        }
+        if (!imagesSaved) {
+          this.error = 'The server did not save all selected images. Your selections have been kept. Restart the backend with the latest version, then click Update.';
+          return;
+        }
         this.startCreate();
+        this.savedNotice = 'Product and images saved successfully.';
         this.refresh();
       },
-      error: err => (this.error = err?.error?.message ?? 'Save failed.')
+      error: err => {
+        this.saving = false;
+        this.error = err?.error?.message ?? 'Save failed. Your images and form have been kept.';
+      }
     });
   }
 
@@ -240,6 +267,8 @@ export class AdminProductsComponent implements OnInit {
       basePrice: this.form.basePrice,
       categoryId: this.form.categoryId,
       descriptionHtml: this.form.descriptionHtml,
+      imageUrl: this.form.imageUrl || '',
+      imageUrls: [...this.form.imageUrls],
       isActive: this.form.isActive,
       hasVariants: this.form.hasVariants,
       showStockQuantity: this.form.showStockQuantity,
@@ -247,6 +276,7 @@ export class AdminProductsComponent implements OnInit {
       lowStockThreshold: this.form.hasVariants ? 0 : this.form.lowStockThreshold,
       variants: this.form.hasVariants
         ? this.form.variants.map((v: any) => ({
+            id: v.id || null,
             sizeId: v.sizeId || null,
             colorId: v.colorId || null,
             sku: v.sku || null,
@@ -254,13 +284,15 @@ export class AdminProductsComponent implements OnInit {
             stockQuantity: v.stockQuantity,
             lowStockThreshold: v.lowStockThreshold,
             isActive: v.isActive,
-            imageUrl: v.imageUrl || null
+            imageUrl: v.imageUrl || null,
+            imageUrls: [...v.imageUrls]
           }))
         : []
     };
   }
 
   remove(p: any): void {
+    if (this.uploading) return;
     this.admin.deleteProduct(p.id).subscribe({
       next: () => this.refresh(),
       error: () => (this.error = 'Delete failed.')

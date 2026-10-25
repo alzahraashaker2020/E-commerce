@@ -143,6 +143,14 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// Initialize the static-file provider even on a fresh install with no uploads yet.
+// Otherwise a missing wwwroot at startup leaves a null provider after the first upload.
+string webRoot = builder.Environment.WebRootPath
+    ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
+Directory.CreateDirectory(webRoot);
+builder.Environment.WebRootPath = webRoot;
+builder.Environment.WebRootFileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(webRoot);
+
 var app = builder.Build();
 
 // On the SQLite demo path, create and seed the local database on startup if it
@@ -155,6 +163,7 @@ if (string.Equals(dbProvider, "Sqlite", StringComparison.OrdinalIgnoreCase))
     using IServiceScope scope = app.Services.CreateScope();
     ShopContext db = scope.ServiceProvider.GetRequiredService<ShopContext>();
     db.Database.EnsureCreated();
+    SqliteSchemaUpgrade.Apply(db);
 }
 
 // Pipeline (outermost first).

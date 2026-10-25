@@ -21,14 +21,15 @@
         <tr *ngFor="let item of o.items">
           <td>{{ item.productNameSnapshot }}</td>
           <td class="muted">×{{ item.quantity }}</td>
-          <td class="right">{{ item.lineTotal | storeCurrency }}</td>
+          <td class="right">{{ item.lineTotal | storeCurrency:o.currencyCode }}</td>
         </tr>
       </tbody>
     </table>
 
     <div class="spread order-total">
+      <span>Shipping: {{ o.shippingTotal | storeCurrency:o.currencyCode }}</span>
       <span>Total</span>
-      <span class="price">{{ o.total | storeCurrency }}</span>
+      <span class="price">{{ o.total | storeCurrency:o.currencyCode }}</span>
     </div>
   </div>
 </div>

@@ -13,7 +13,7 @@ namespace Shop.Api.Controllers.Admin;
 /// Admin inventory endpoint. JWT-protected under <c>api/admin/inventory</c>.
 /// </summary>
 [ApiController]
-[Authorize]
+[Authorize(Roles = "Admin")]
 [Route("api/admin/inventory")]
 public class AdminInventoryController : ControllerBase
 {

@@ -5,6 +5,14 @@ namespace Shop.DAL.ViewModels;
 /// </summary>
 public class OrderTrackingVM
 {
+    /// <summary>Shipping charge snapshot.</summary>
+    public decimal ShippingTotal { get; set; }
+    /// <summary>Product subtotal snapshot.</summary>
+    public decimal Subtotal { get; set; }
+    /// <summary>Discount snapshot.</summary>
+    public decimal DiscountTotal { get; set; }
+    /// <summary>The currency recorded when the order was placed.</summary>
+    public string CurrencyCode { get; set; } = "";
     /// <summary>Order/tracking number.</summary>
     public string OrderNumber { get; set; } = string.Empty;
 

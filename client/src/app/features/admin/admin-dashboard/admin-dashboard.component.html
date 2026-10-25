@@ -1,11 +1,21 @@
 <h1 class="admin-title">Sales Overview</h1>
+<nav class="card" aria-label="Store management" style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+  <a routerLink="/admin/colors">Manage colors</a>
+  <a routerLink="/admin/sizes">Manage sizes</a>
+  <a routerLink="/admin/currencies">Manage currencies</a>
+  <a routerLink="/admin/order-statuses">Manage order statuses</a>
+  <a routerLink="/admin/delivery">Manage delivery and shipping</a>
+</nav>
 
 <div class="loading" *ngIf="loading">Loading…</div>
 <div class="alert alert-error" *ngIf="error">{{ error }}</div>
 
 <div *ngIf="overview && !loading">
+  <p class="muted">Sales totals below include orders in {{ overview.currencyCode }} only. Different currencies are not added together.</p>
   <!-- KPI cards -->
   <div class="kpi-grid">
+    <div class="kpi card"><span class="kpi-label">Product sales after discounts</span><span class="kpi-value">{{ overview.productRevenue | storeCurrency:overview.currencyCode }}</span></div>
+    <div class="kpi card"><span class="kpi-label">Shipping collected</span><span class="kpi-value">{{ overview.shippingRevenue | storeCurrency:overview.currencyCode }}</span></div>
     <div class="kpi card">
       <span class="kpi-label">Total revenue</span>
       <span class="kpi-value">{{ overview.totalRevenue | storeCurrency }}</span>

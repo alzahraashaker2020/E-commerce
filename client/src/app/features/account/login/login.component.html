@@ -19,18 +19,7 @@
       </button>
     </form>
 
-    <div class="divider"><span>or continue with</span></div>
-
-    <!-- Social login (Google / Facebook). Instagram is intentionally not a
-         login provider — it is not a general-purpose identity provider. -->
-    <div class="social-buttons">
-      <button class="btn social google" (click)="social('Google')" [disabled]="submitting">
-        <span class="g">G</span> Google
-      </button>
-      <button class="btn social facebook" (click)="social('Facebook')" [disabled]="submitting">
-        <span class="f">f</span> Facebook
-      </button>
-    </div>
+    <p class="muted small">Google and Facebook sign-in are currently unavailable. Please use email and password.</p>
 
     <p class="auth-foot muted small">
       New here? <a routerLink="/register">Create an account</a>

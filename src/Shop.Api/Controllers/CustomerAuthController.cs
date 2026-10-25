@@ -9,8 +9,8 @@ using Shop.SL.TokenManager;
 namespace Shop.Api.Controllers;
 
 /// <summary>
-/// Customer authentication: local registration/login plus social login
-/// (Google/Facebook). Lives at <c>api/account</c> and is deliberately NOT
+/// Customer authentication: local registration/login. Social sign-in is unavailable
+/// until provider verification is implemented. Lives at <c>api/account</c> and is deliberately NOT
 /// <c>[Authorize]</c> so visitors can create a session.
 /// </summary>
 [ApiController]
@@ -94,65 +94,17 @@ public class CustomerAuthController : ControllerBase
     }
 
     /// <summary>
-    /// Social login (Google/Facebook). This is the server-side plumbing: a real
-    /// deployment verifies <paramref name="request"/>.Credential with the
-    /// provider and extracts the verified email + subject id. Here, for the
-    /// demonstration, the credential is treated as "provider:externalId:email"
-    /// so the full account-linking flow can be exercised without live provider
-    /// secrets. Find-or-create links the external identity to a customer.
+    /// Rejects social sign-in until provider token verification is implemented.
+    /// Never accepts client-supplied identity data as proof of authentication.
     /// </summary>
-    /// <param name="request">The social login payload.</param>
     [HttpPost("social")]
-    public async Task<ActionResult<ApiResponse<CustomerAuthResponse>>> SocialLogin(
+    public ActionResult<ApiResponse<CustomerAuthResponse>> SocialLogin(
         [FromBody] SocialLoginRequest request)
     {
-        // Only providers we actually support (Instagram is intentionally not a
-        // login provider — see docs). Reject anything else.
-        if (request.Provider != "Google" && request.Provider != "Facebook")
-        {
-            return BadRequest(ApiResponse<CustomerAuthResponse>.Fail("Unsupported provider", 400));
-        }
-
-        // DEMO credential parsing. REAL implementation: verify the provider
-        // token server-side (Google tokeninfo / Facebook debug_token) and read
-        // the verified subject id + email from the provider's response.
-        (string externalId, string email, string name) = ParseDemoCredential(request.Credential, request.Provider);
-        if (string.IsNullOrWhiteSpace(externalId) || string.IsNullOrWhiteSpace(email))
-        {
-            return BadRequest(ApiResponse<CustomerAuthResponse>.Fail("Invalid social credential", 400));
-        }
-
-        // Find-or-create: match on the external identity first, then by email
-        // (to link a social login to an existing local account), else create.
-        Customer? customer = await _repo._Customer.GetByExternalAsync(request.Provider, externalId)
-            ?? await _repo._Customer.GetByEmailAsync(email);
-
-        if (customer is null)
-        {
-            customer = new Customer
-            {
-                Email = email,
-                FullName = name,
-                ExternalProvider = request.Provider,
-                ExternalId = externalId,
-                IsRegistered = true,
-                CreatedAt = DateTime.UtcNow,
-                IsDemoData = false
-            };
-            _repo._Customer.Add(customer);
-            _repo.Save();
-        }
-        else if (string.IsNullOrEmpty(customer.ExternalProvider))
-        {
-            // Link the external identity to the existing account.
-            customer.ExternalProvider = request.Provider;
-            customer.ExternalId = externalId;
-            customer.IsRegistered = true;
-            _repo._Customer.Update(customer);
-            _repo.Save();
-        }
-
-        return Ok(ApiResponse<CustomerAuthResponse>.Ok(BuildAuthResponse(customer)));
+        return StatusCode(StatusCodes.Status503ServiceUnavailable,
+            ApiResponse<CustomerAuthResponse>.Fail(
+                "Social sign-in is currently unavailable. Please sign in with email and password.",
+                StatusCodes.Status503ServiceUnavailable));
     }
 
     /// <summary>
@@ -172,18 +124,4 @@ public class CustomerAuthController : ControllerBase
         };
     }
 
-    /// <summary>
-    /// DEMO-ONLY credential parser. Accepts "externalId:email:name" (name
-    /// optional). Replace with real provider token verification in production.
-    /// </summary>
-    private static (string ExternalId, string Email, string Name) ParseDemoCredential(string credential, string provider)
-    {
-        string[] parts = credential.Split(':');
-        string externalId = parts.Length > 0 ? parts[0] : string.Empty;
-        string email = parts.Length > 1 ? parts[1] : string.Empty;
-        string name = parts.Length > 2 && !string.IsNullOrWhiteSpace(parts[2])
-            ? parts[2]
-            : $"{provider} User";
-        return (externalId, email, name);
-    }
 }

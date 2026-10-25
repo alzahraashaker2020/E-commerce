@@ -12,7 +12,7 @@ namespace Shop.Api.Controllers.Admin;
 /// serves. JWT-protected under the <c>api/admin/uploads</c> route.
 /// </summary>
 [ApiController]
-[Authorize]
+[Authorize(Roles = "Admin")]
 [Route("api/admin/uploads")]
 public class UploadsController : ControllerBase
 {

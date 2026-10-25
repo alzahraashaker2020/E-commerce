@@ -8,6 +8,14 @@ namespace Shop.DAL.ViewModels;
 /// </summary>
 public class PlaceOrderRequest
 {
+    /// <summary>Selected delivery area; fee and location names are resolved server-side.</summary>
+    [Range(1, int.MaxValue)]
+    public int AreaId { get; set; }
+    /// <summary>Optional final quote total accepted by the customer.</summary>
+    public decimal? ExpectedTotal { get; set; }
+    /// <summary>Currency displayed in the accepted quote.</summary>
+    [StringLength(10)]
+    public string? ExpectedCurrencyCode { get; set; }
     /// <summary>Guest name (required, 1-120 chars).</summary>
     [Required]
     [StringLength(120, MinimumLength = 1)]
@@ -37,12 +45,10 @@ public class PlaceOrderRequest
     public string? AddressLine2 { get; set; }
 
     /// <summary>Shipping city (required).</summary>
-    [Required]
     [StringLength(120, MinimumLength = 1)]
     public string City { get; set; } = string.Empty;
 
     /// <summary>Shipping state, region, or governorate (required).</summary>
-    [Required]
     [StringLength(120, MinimumLength = 1)]
     public string StateRegion { get; set; } = string.Empty;
 
@@ -72,6 +78,12 @@ public class PlaceOrderRequest
 /// </summary>
 public class OrderConfirmationResponse
 {
+    /// <summary>Product subtotal.</summary>
+    public decimal Subtotal { get; set; }
+    /// <summary>Discount charged.</summary>
+    public decimal DiscountTotal { get; set; }
+    /// <summary>Shipping charge snapshot.</summary>
+    public decimal ShippingTotal { get; set; }
     /// <summary>Generated order/tracking number.</summary>
     public string OrderNumber { get; set; } = string.Empty;
 

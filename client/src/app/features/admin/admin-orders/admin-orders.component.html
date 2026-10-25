@@ -17,18 +17,19 @@
           <td>{{ o.orderNumber }}</td>
           <td>{{ o.customerName || o.guestEmail || '—' }}</td>
           <td>{{ o.placedAt | date: 'short' }}</td>
-          <td>{{ o.total | storeCurrency }} <span class="muted">({{ o.currencyCode }})</span></td>
+          <td>{{ o.total | storeCurrency:o.currencyCode }} <span class="muted">({{ o.currencyCode }})</span></td>
           <td>{{ o.paymentMethod }} · {{ o.paymentStatus }}</td>
-          <td><span class="badge" [ngClass]="statusClass(o.status)">{{ o.status }}</span></td>
+          <td><span class="badge" [style.color]="o.statusColor">{{ o.status }}</span></td>
           <td>
-            <select [ngModel]="o.status" [name]="'status' + o.id" (ngModelChange)="changeStatus(o, $event)">
-              <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+            <select [ngModel]="o.statusId" [name]="'status' + o.id" (ngModelChange)="changeStatus(o, $event)">
+              <ng-container *ngFor="let s of statuses"><option *ngIf="s.isActive || s.id === o.statusId" [ngValue]="s.id" [disabled]="!s.isActive">{{ s.name }}</option></ng-container>
             </select>
           </td>
         </tr>
         <tr class="detail-row">
           <td colspan="7">
             <span class="muted">Ship to:</span>
+            <span>Shipping: {{ o.shippingTotal | storeCurrency:o.currencyCode }} · </span>
             {{ o.addressLine1 }}<ng-container *ngIf="o.addressLine2">, {{ o.addressLine2 }}</ng-container>,
             {{ o.city }}, {{ o.stateRegion }} {{ o.postalCode }}, {{ o.country }}
             <ng-container *ngIf="o.contactPhone"> · {{ o.contactPhone }}</ng-container>

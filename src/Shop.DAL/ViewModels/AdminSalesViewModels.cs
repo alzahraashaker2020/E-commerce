@@ -5,8 +5,14 @@ namespace Shop.DAL.ViewModels;
 /// </summary>
 public class SalesOverviewVM
 {
+    /// <summary>Currency used by the monetary totals in this overview.</summary>
+    public string CurrencyCode { get; set; } = "";
     /// <summary>Total revenue over the window.</summary>
     public decimal TotalRevenue { get; set; }
+    /// <summary>Shipping charges included in total revenue.</summary>
+    public decimal ShippingRevenue { get; set; }
+    /// <summary>Product sales after discounts, excluding shipping and tax.</summary>
+    public decimal ProductRevenue { get; set; }
 
     /// <summary>Number of orders over the window.</summary>
     public int OrderCount { get; set; }

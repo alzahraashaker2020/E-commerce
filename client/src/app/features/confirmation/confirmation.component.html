@@ -11,9 +11,12 @@
   <div class="alert alert-info" *ngIf="message">{{ message }}</div>
 
   <div class="order-details" *ngIf="confirmation">
+    <div class="spread"><span>Products</span><span>{{ confirmation.subtotal | storeCurrency:confirmation.currencyCode }}</span></div>
+    <div class="spread"><span>Discount</span><span>−{{ confirmation.discountTotal | storeCurrency:confirmation.currencyCode }}</span></div>
+    <div class="spread"><span>Shipping</span><span>{{ confirmation.shippingTotal | storeCurrency:confirmation.currencyCode }}</span></div>
     <div class="spread">
       <span class="muted small">Total</span>
-      <strong>{{ confirmation.total | storeCurrency }}</strong>
+      <strong>{{ confirmation.total | storeCurrency:confirmation.currencyCode }}</strong>
     </div>
     <div class="spread">
       <span class="muted small">Payment</span>

@@ -26,3 +26,6 @@
 @media (max-width: 760px) {
   .form-grid { grid-template-columns: 1fr; }
 }
+
+.gallery-item { display: flex; flex-direction: column; gap: .3rem; max-width: 110px; }
+.image-picker { flex-wrap: wrap; }

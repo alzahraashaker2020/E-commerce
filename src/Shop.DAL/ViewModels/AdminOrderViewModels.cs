@@ -8,6 +8,16 @@ namespace Shop.DAL.ViewModels;
 /// </summary>
 public class AdminOrderListItemVM
 {
+    /// <summary>Shipping fee charged at checkout.</summary>
+    public decimal ShippingTotal { get; set; }
+    /// <summary>Subtotal before shipping and discounts.</summary>
+    public decimal Subtotal { get; set; }
+    /// <summary>Discount charged.</summary>
+    public decimal DiscountTotal { get; set; }
+    /// <summary>Configured status identifier.</summary>
+    public int? StatusId { get; set; }
+    /// <summary>Configured badge color.</summary>
+    public string? StatusColor { get; set; }
     /// <summary>Order identifier.</summary>
     public int Id { get; set; }
 
@@ -66,7 +76,8 @@ public class AdminOrderListItemVM
 public class UpdateOrderStatusRequest
 {
     /// <summary>New order status (must be a defined value).</summary>
-    [Required]
     [EnumDataType(typeof(OrderStatus))]
-    public OrderStatus Status { get; set; }
+    public OrderStatus? Status { get; set; }
+    /// <summary>Configured target status; preferred over the legacy behavior field.</summary>
+    public int? StatusId { get; set; }
 }

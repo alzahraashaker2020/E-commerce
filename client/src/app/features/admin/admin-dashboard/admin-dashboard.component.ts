@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AdminService } from '../../../core/services/admin.service';
 import { StoreCurrencyPipe } from '../../../core/pipes/store-currency.pipe';
+import { RouterLink } from '@angular/router';
 
 /**
  * Admin sales overview dashboard: revenue, order count, average order value,
@@ -10,7 +11,7 @@ import { StoreCurrencyPipe } from '../../../core/pipes/store-currency.pipe';
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, StoreCurrencyPipe],
+  imports: [CommonModule, StoreCurrencyPipe, RouterLink],
   templateUrl: './admin-dashboard.component.html',
   styleUrl: './admin-dashboard.component.css'
 })

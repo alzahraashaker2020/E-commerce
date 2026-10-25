@@ -6,6 +6,7 @@ import { CartService } from '../../core/services/cart.service';
 import { CatalogStateService } from '../../core/services/catalog-state.service';
 import { Category, PagedResult, ProductListItem } from '../../core/models/api.models';
 import { StoreCurrencyPipe } from '../../core/pipes/store-currency.pipe';
+import { ImageUrlPipe } from '../../core/pipes/image-url.pipe';
 
 /**
  * Storefront home/catalog page.
@@ -23,7 +24,7 @@ import { StoreCurrencyPipe } from '../../core/pipes/store-currency.pipe';
 @Component({
   selector: 'app-catalog',
   standalone: true,
-  imports: [CommonModule, RouterLink, StoreCurrencyPipe],
+  imports: [CommonModule, RouterLink, StoreCurrencyPipe, ImageUrlPipe],
   templateUrl: './catalog.component.html',
   styleUrl: './catalog.component.css'
 })

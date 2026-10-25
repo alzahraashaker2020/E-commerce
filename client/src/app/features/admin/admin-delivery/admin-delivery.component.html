@@ -1,0 +1,24 @@
+<h1>Delivery and shipping fees</h1>
+<div class="alert alert-error" *ngIf="error" role="alert">{{ error }}</div>
+<div class="alert alert-info" *ngIf="notice" role="status">{{ notice }}</div>
+<p>Define governorates, then areas and their shipping fees. Only active areas priced in the store currency ({{ storeCode }}) are offered at checkout. Updating a rate does not change existing orders.</p>
+<form class="card" (ngSubmit)="save('governorates')" #govForm="ngForm">
+  <h3>{{ governorate.id ? 'Edit' : 'Add' }} governorate</h3>
+  <div class="form-grid"><div class="field"><label for="gov-name">Name</label><input id="gov-name" name="name" [(ngModel)]="governorate.name" required maxlength="100" /></div>
+    <div class="field"><label for="gov-active">Delivery available</label><select id="gov-active" name="active" [(ngModel)]="governorate.isActive"><option [ngValue]="true">Yes</option><option [ngValue]="false">No</option></select></div></div>
+  <button class="btn btn-primary" [disabled]="busy || govForm.invalid">Save governorate</button>
+  <button type="button" class="btn btn-outline" [disabled]="busy" (click)="governorate = { name: '', isActive: true }">Clear</button>
+</form>
+<div class="card table-wrap"><table class="data"><thead><tr><th>Governorate</th><th>Delivery</th><th>Actions</th></tr></thead><tbody><tr *ngFor="let g of governorates"><td>{{ g.name }}</td><td>{{ g.isActive ? 'Available' : 'Unavailable' }}</td><td class="actions"><button class="btn btn-outline btn-sm" [disabled]="busy" (click)="editGovernorate(g)">Edit</button><button class="btn btn-danger btn-sm" [disabled]="busy" (click)="remove('governorates', g.id)">Delete</button></td></tr></tbody></table></div>
+<form class="card" (ngSubmit)="save('areas')" #areaForm="ngForm">
+  <h3>{{ area.id ? 'Edit' : 'Add' }} area</h3>
+  <div class="form-grid">
+    <div class="field"><label for="area-governorate">Governorate</label><select id="area-governorate" name="governorateId" [(ngModel)]="area.governorateId" required><option [ngValue]="null">Select governorate</option><option *ngFor="let g of governorates" [ngValue]="g.id">{{ g.name }}</option></select></div>
+    <div class="field"><label for="area-name">Area name</label><input id="area-name" name="name" [(ngModel)]="area.name" required maxlength="100" /></div>
+    <div class="field"><label for="area-fee">Shipping fee (0 = free)</label><input id="area-fee" name="shippingFee" type="number" min="0" max="1000000" step="0.01" [(ngModel)]="area.shippingFee" required /></div>
+    <div class="field"><label for="area-currency">Rate currency</label><select id="area-currency" name="currencyCode" [(ngModel)]="area.currencyCode" required><option *ngFor="let c of currencies" [value]="c.code">{{ c.name }} ({{ c.code }})</option></select></div>
+    <div class="field"><label for="area-active">Delivery available</label><select id="area-active" name="active" [(ngModel)]="area.isActive"><option [ngValue]="true">Yes</option><option [ngValue]="false">No</option></select></div>
+  </div>
+  <button class="btn btn-primary" [disabled]="busy || areaForm.invalid">Save area</button><button type="button" class="btn btn-outline" [disabled]="busy" (click)="resetArea()">Clear</button>
+</form>
+<div class="card table-wrap"><table class="data"><thead><tr><th>Governorate</th><th>Area</th><th>Shipping</th><th>Delivery</th><th>Actions</th></tr></thead><tbody><tr *ngFor="let a of areas"><td>{{ a.governorate?.name }}</td><td>{{ a.name }}</td><td>{{ a.shippingFee | number:'1.2-2' }} {{ a.currencyCode }}</td><td>{{ a.isActive && a.governorate?.isActive ? 'Available' : 'Unavailable' }}</td><td class="actions"><button class="btn btn-outline btn-sm" [disabled]="busy" (click)="editArea(a)">Edit</button><button class="btn btn-danger btn-sm" [disabled]="busy" (click)="remove('areas', a.id)">Delete</button></td></tr></tbody></table></div>

@@ -39,6 +39,7 @@ public class EmailService : IEmailService
     /// <inheritdoc />
     public Task SendOrderSummaryAsync(Order order, StoreSettings settings)
     {
+        if (settings.CurrencyCode != order.CurrencyCode) settings = new StoreSettings { CurrencyCode = order.CurrencyCode, CurrencySymbol = order.CurrencyCode + " " };
         string to = RecipientFor(order);
         string subject = $"Order {order.OrderNumber} confirmation";
         string body = BuildSummaryBody(order, settings);
@@ -48,11 +49,12 @@ public class EmailService : IEmailService
     /// <inheritdoc />
     public Task SendStatusUpdateAsync(Order order, StoreSettings settings)
     {
+        if (settings.CurrencyCode != order.CurrencyCode) settings = new StoreSettings { CurrencyCode = order.CurrencyCode, CurrencySymbol = order.CurrencyCode + " " };
         string to = RecipientFor(order);
-        string subject = $"Order {order.OrderNumber} status update: {order.Status}";
+        string subject = $"Order {order.OrderNumber} status update: {order.StatusDefinition?.Name ?? order.Status.ToString()}";
         var sb = new StringBuilder();
         sb.AppendLine($"Order {order.OrderNumber}");
-        sb.AppendLine($"Status: {order.Status}");
+        sb.AppendLine($"Status: {order.StatusDefinition?.Name ?? order.Status.ToString()}");
         sb.AppendLine($"Total: {FormatMoney(order.Total, settings)}");
         return DispatchAsync(to, subject, sb.ToString(), order.OrderNumber);
     }
@@ -81,7 +83,7 @@ public class EmailService : IEmailService
     {
         var sb = new StringBuilder();
         sb.AppendLine($"Order {order.OrderNumber}");
-        sb.AppendLine($"Status: {order.Status}");
+        sb.AppendLine($"Status: {order.StatusDefinition?.Name ?? order.Status.ToString()}");
         sb.AppendLine();
         sb.AppendLine("Items:");
         foreach (OrderItem item in order.Items)

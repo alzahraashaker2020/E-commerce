@@ -48,9 +48,16 @@ public class ProductUpsertRequest
     [Range(0, int.MaxValue)]
     public int LowStockThreshold { get; set; }
 
+    /// <summary>Primary product image. Null preserves existing images; empty removes the primary image.</summary>
+    public string? ImageUrl { get; set; }
+
+    /// <summary>Ordered product gallery. Null preserves the legacy single-image contract.</summary>
+    [MaxLength(20)]
+    public List<string>? ImageUrls { get; set; }
+
     /// <summary>
     /// The specific variant rows to persist when <see cref="HasVariants"/> is
-    /// true. On update these replace the product's existing variants entirely.
+    /// true. Updates preserve existing identifiers and protect referenced variants.
     /// </summary>
     public List<ProductVariantUpsert> Variants { get; set; } = new List<ProductVariantUpsert>();
 }
@@ -61,6 +68,11 @@ public class ProductUpsertRequest
 /// </summary>
 public class ProductVariantUpsert
 {
+    /// <summary>Ordered variant gallery, up to twenty images.</summary>
+    [MaxLength(20)]
+    public List<string>? ImageUrls { get; set; }
+    /// <summary>Existing variant identifier; omitted for new variants.</summary>
+    public int? Id { get; set; }
     /// <summary>Optional size identifier for this variant.</summary>
     public int? SizeId { get; set; }
 

@@ -26,14 +26,17 @@ public class MappingProfile : Profile
         CreateMap<Product, ProductListItemVM>()
             .ForMember(d => d.CategoryName, o => o.MapFrom(s => s.Category != null ? s.Category.Name : null))
             .ForMember(d => d.PrimaryImageUrl, o => o.MapFrom(s =>
-                s.Images.OrderBy(i => i.SortOrder).Select(i => i.Url).FirstOrDefault()));
+                s.Images.OrderBy(i => i.SortOrder).Select(i => i.Url).FirstOrDefault()
+                ?? s.Variants.Where(v => v.IsActive && v.ImageUrl != null && v.ImageUrl != "")
+                    .OrderBy(v => v.Id).Select(v => v.ImageUrl).FirstOrDefault()));
         // HasVariants/ShowStockQuantity/StockQuantity/LowStockThreshold map by name
         // from the normalized product columns.
 
         // Product -> detail: carry variants + images; stock maps from the
         // product-level columns by name (variant stock lives on each variant).
         CreateMap<Product, ProductDetailVM>()
-            .ForMember(d => d.CategoryName, o => o.MapFrom(s => s.Category != null ? s.Category.Name : null));
+            .ForMember(d => d.CategoryName, o => o.MapFrom(s => s.Category != null ? s.Category.Name : null))
+            .ForMember(d => d.Images, o => o.MapFrom(s => s.Images.OrderBy(i => i.SortOrder)));
 
         // Variant -> VM: carry the size/color ids and resolved names from the navs.
         CreateMap<ProductVariant, ProductVariantVM>()
@@ -56,14 +59,16 @@ public class MappingProfile : Profile
         CreateMap<Order, AdminOrderListItemVM>()
             .ForMember(d => d.CustomerName, o => o.MapFrom(s =>
                 s.Customer != null ? s.Customer.FullName : s.GuestName))
-            .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
+            .ForMember(d => d.Status, o => o.MapFrom(s => s.StatusDefinition != null ? s.StatusDefinition.Name : s.Status.ToString()))
+            .ForMember(d => d.StatusId, o => o.MapFrom(s => s.StatusDefinitionId))
+            .ForMember(d => d.StatusColor, o => o.MapFrom(s => s.StatusDefinition != null ? s.StatusDefinition.Color : null))
             .ForMember(d => d.PaymentMethod, o => o.MapFrom(s => s.PaymentMethod.ToString()))
             .ForMember(d => d.PaymentStatus, o => o.MapFrom(s => s.PaymentStatus.ToString()));
         // CurrencyCode, GuestEmail and the address fields map by name.
 
         // Order -> tracking view: string status + line items.
         CreateMap<Order, OrderTrackingVM>()
-            .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
+            .ForMember(d => d.Status, o => o.MapFrom(s => s.StatusDefinition != null ? s.StatusDefinition.Name : s.Status.ToString()))
             .ForMember(d => d.Items, o => o.MapFrom(s => s.Items));
 
         CreateMap<OrderItem, OrderItemVM>();

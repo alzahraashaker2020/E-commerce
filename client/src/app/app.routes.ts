@@ -81,6 +81,9 @@ export const routes: Routes = [
     loadComponent: () => import('./features/admin/admin-shell/admin-shell.component').then(m => m.AdminShellComponent),
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      { path: 'delivery', loadComponent: () => import('./features/admin/admin-delivery/admin-delivery.component').then(m => m.AdminDeliveryComponent) },
+      { path: 'currencies', data: { kind: 'currencies' }, loadComponent: () => import('./features/admin/admin-configuration/admin-configuration.component').then(m => m.AdminConfigurationComponent) },
+      { path: 'order-statuses', data: { kind: 'statuses' }, loadComponent: () => import('./features/admin/admin-configuration/admin-configuration.component').then(m => m.AdminConfigurationComponent) },
       {
         path: 'dashboard',
         loadComponent: () => import('./features/admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent)

@@ -2,6 +2,7 @@
 
 <div class="loading" *ngIf="loading">Loading…</div>
 <div class="alert alert-error" *ngIf="error">{{ error }}</div>
+<div class="alert alert-info" *ngIf="savedNotice" role="status">{{ savedNotice }}</div>
 
 <!-- Create / edit form -->
 <div class="card form-card">
@@ -41,11 +42,14 @@
 
     <!-- Product image upload with preview/replace/remove. -->
     <div class="field full">
-      <label>Product image</label>
+      <label>Product images (up to 20)</label>
       <div class="image-picker">
-        <img *ngIf="form.imageUrl" class="preview" [src]="previewUrl(form.imageUrl)" alt="Preview" />
-        <input type="file" accept="image/*" (change)="onProductImage($event)" />
-        <button type="button" class="btn btn-outline btn-sm" *ngIf="form.imageUrl" (click)="removeProductImage()">Remove</button>
+        <div class="gallery-item" *ngFor="let image of form.imageUrls; let j = index">
+          <img class="preview" [src]="previewUrl(image)" [alt]="'Product image ' + (j + 1)" />
+          <button type="button" class="btn btn-outline btn-sm" [disabled]="uploading || j === 0" (click)="makePrimary(form, j)">{{ j === 0 ? 'Primary' : 'Make primary' }}</button>
+          <button type="button" class="btn btn-outline btn-sm" [disabled]="uploading" (click)="removeImage(form, j)">Remove</button>
+        </div>
+        <input type="file" accept="image/*" multiple [disabled]="uploading" (change)="onProductImage($event)" />
       </div>
     </div>
   </div>
@@ -79,9 +83,12 @@
           <td><input type="checkbox" [(ngModel)]="v.isActive" [name]="'vactive' + i" /></td>
           <td>
             <div class="image-picker image-picker-sm">
-              <img *ngIf="v.imageUrl" class="preview preview-sm" [src]="previewUrl(v.imageUrl)" alt="Variant" />
-              <input type="file" accept="image/*" (change)="onVariantImage($event, v)" />
-              <button type="button" class="btn btn-outline btn-sm" *ngIf="v.imageUrl" (click)="removeVariantImage(v)">Remove</button>
+              <div class="gallery-item" *ngFor="let image of v.imageUrls; let j = index">
+                <img class="preview preview-sm" [src]="previewUrl(image)" [alt]="'Variant image ' + (j + 1)" />
+                <button type="button" class="btn btn-outline btn-sm" [disabled]="uploading || j === 0" (click)="makePrimary(v, j)">{{ j === 0 ? 'Primary' : 'Make primary' }}</button>
+                <button type="button" class="btn btn-outline btn-sm" [disabled]="uploading" (click)="removeImage(v, j)">Remove</button>
+              </div>
+              <input type="file" accept="image/*" multiple [disabled]="uploading" (change)="onVariantImage($event, v)" />
             </div>
           </td>
           <td><button type="button" class="btn btn-danger btn-sm" (click)="removeVariant(i)">Remove</button></td>
@@ -92,8 +99,8 @@
   </div>
 
   <div class="form-actions">
-    <button class="btn btn-primary" (click)="save()">{{ editing ? 'Update' : 'Create' }}</button>
-    <button class="btn btn-outline" *ngIf="editing" (click)="startCreate()">Cancel</button>
+    <button class="btn btn-primary" [disabled]="uploading || saving" (click)="save()">{{ saving ? 'Saving…' : (uploading ? 'Uploading images…' : (editing ? 'Update' : 'Create')) }}</button>
+    <button class="btn btn-outline" [disabled]="uploading" *ngIf="editing" (click)="startCreate()">Cancel</button>
   </div>
 </div>
 

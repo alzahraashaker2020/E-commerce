@@ -18,7 +18,7 @@
   <div class="cards-grid">
     <a class="cat-card" *ngFor="let c of topCategories" [routerLink]="['/category', c.slug]">
       <div class="cat-media">
-        <img *ngIf="c.imageUrl" [src]="c.imageUrl" [alt]="c.name" loading="lazy" />
+        <img *ngIf="c.imageUrl" [src]="c.imageUrl | imageUrl" [alt]="c.name" loading="lazy" />
       </div>
       <div class="cat-label">{{ c.name }}</div>
     </a>
@@ -55,7 +55,7 @@
     <div class="product-media">
       <img
         *ngIf="p.primaryImageUrl"
-        [src]="p.primaryImageUrl"
+        [src]="p.primaryImageUrl | imageUrl"
         [alt]="p.name"
         loading="lazy"
       />

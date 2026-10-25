@@ -16,7 +16,7 @@ namespace Shop.Api.Controllers.Admin;
 /// <c>api/admin/categories</c> route.
 /// </summary>
 [ApiController]
-[Authorize]
+[Authorize(Roles = "Admin")]
 [Route("api/admin/categories")]
 public class AdminCategoriesController : ControllerBase
 {

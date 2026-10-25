@@ -65,15 +65,16 @@
     <tbody>
       <tr *ngFor="let item of order.items">
         <td>{{ item.productNameSnapshot }}</td>
-        <td>{{ item.unitPrice | storeCurrency }}</td>
+        <td>{{ item.unitPrice | storeCurrency:order.currencyCode }}</td>
         <td>{{ item.quantity }}</td>
-        <td class="right">{{ item.lineTotal | storeCurrency }}</td>
+        <td class="right">{{ item.lineTotal | storeCurrency:order.currencyCode }}</td>
       </tr>
     </tbody>
   </table>
 
   <div class="spread grand-total">
+    <span>Shipping: {{ order.shippingTotal | storeCurrency:order.currencyCode }} · </span>
     <span>Total</span>
-    <span class="price">{{ order.total | storeCurrency }}</span>
+    <span class="price">{{ order.total | storeCurrency:order.currencyCode }}</span>
   </div>
 </div>

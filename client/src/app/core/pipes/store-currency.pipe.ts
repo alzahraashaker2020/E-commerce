@@ -11,7 +11,7 @@ import { SettingsService } from '../services/settings.service';
 @Pipe({
   name: 'storeCurrency',
   standalone: true,
-  pure: true
+  pure: false
 })
 export class StoreCurrencyPipe implements PipeTransform {
   private readonly currencyPipe = new CurrencyPipe('en-US');
@@ -25,15 +25,16 @@ export class StoreCurrencyPipe implements PipeTransform {
   /**
    * Formats the supplied value with the store currency code.
    * @param value The numeric amount (or null/undefined).
-   * @param display Symbol display mode passed through to CurrencyPipe.
+   * @param currencyCode Optional recorded order currency; otherwise the current store currency.
    * @param digits Optional digits info passed through to CurrencyPipe.
    */
   transform(
     value: number | null | undefined,
-    display: string | boolean = 'symbol',
+    currencyCode?: string | null,
     digits?: string
   ): string | null {
-    const code = this.settings.currencyCode() || 'USD';
+    const code = currencyCode || this.settings.currencyCode() || 'USD';
+    const display = code === this.settings.currencyCode() ? this.settings.currencySymbol() : 'symbol';
     return this.currencyPipe.transform(value, code, display, digits);
   }
 }

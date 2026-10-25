@@ -13,7 +13,7 @@ namespace Shop.Api.Controllers.Admin;
 /// duplicate code is rejected with HTTP 409 (checked via <c>GetByCodeAsync</c>).
 /// </summary>
 [ApiController]
-[Authorize]
+[Authorize(Roles = "Admin")]
 [Route("api/admin/discounts")]
 public class AdminDiscountsController : ControllerBase
 {

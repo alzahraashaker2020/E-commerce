@@ -58,6 +58,7 @@ export interface ProductDetail {
 
 /** A purchasable size/color variant of a product (normalized shape). */
 export interface ProductVariant {
+  imageUrls: string[];
   id: number;
   sizeId?: number | null;
   sizeName?: string | null;
@@ -128,6 +129,9 @@ export interface CartLine {
 
 /** Guest checkout request payload. */
 export interface PlaceOrderRequest {
+  areaId: number;
+  expectedTotal?: number;
+  expectedCurrencyCode?: string;
   guestName: string;
   guestEmail: string;
   lines: CartLineRequest[];
@@ -144,6 +148,9 @@ export interface PlaceOrderRequest {
 
 /** Order confirmation returned after a successful checkout. */
 export interface OrderConfirmation {
+  subtotal: number;
+  discountTotal: number;
+  shippingTotal: number;
   orderNumber: string;
   total: number;
   status: string;
@@ -162,6 +169,10 @@ export interface OrderConfirmation {
 
 /** Order tracking view returned for a given order number. */
 export interface OrderTracking {
+  subtotal: number;
+  discountTotal: number;
+  shippingTotal: number;
+  currencyCode: string;
   orderNumber: string;
   status: string;
   placedAt: string;

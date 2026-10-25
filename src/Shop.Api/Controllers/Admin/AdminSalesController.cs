@@ -13,7 +13,7 @@ namespace Shop.Api.Controllers.Admin;
 /// <c>api/admin/sales</c>.
 /// </summary>
 [ApiController]
-[Authorize]
+[Authorize(Roles = "Admin")]
 [Route("api/admin/sales")]
 public class AdminSalesController : ControllerBase
 {
@@ -54,7 +54,8 @@ public class AdminSalesController : ControllerBase
             orders = orders.Where(o => o.PlacedAt <= to.Value);
         }
 
-        List<Order> windowOrders = await orders.ToListAsync();
+        string currencyCode = (await _repo._StoreSettings.Query().FirstAsync()).CurrencyCode;
+        List<Order> windowOrders = await orders.Where(o => o.CurrencyCode == currencyCode).ToListAsync();
 
         decimal totalRevenue = windowOrders.Sum(o => o.Total);
         int orderCount = windowOrders.Count;
@@ -86,7 +87,10 @@ public class AdminSalesController : ControllerBase
 
         var overview = new SalesOverviewVM
         {
+            CurrencyCode = currencyCode,
             TotalRevenue = totalRevenue,
+            ShippingRevenue = windowOrders.Sum(o => o.ShippingTotal),
+            ProductRevenue = windowOrders.Sum(o => o.Subtotal - o.DiscountTotal),
             OrderCount = orderCount,
             AverageOrderValue = averageOrderValue,
             LowStockCount = lowStockCount,

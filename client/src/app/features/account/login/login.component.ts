@@ -5,8 +5,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AccountService } from '../../../core/services/account.service';
 
 /**
- * Customer login page: local email/password login plus Google/Facebook social
- * login buttons. On success, navigates to the intended destination (returnUrl)
+ * Customer login page: local email/password login. Social
+ * sign-in remains unavailable until provider verification is configured. Navigates to the intended destination (returnUrl)
  * or the account area.
  */
 @Component({
@@ -33,25 +33,6 @@ export class LoginComponent {
       error: () => {
         this.submitting = false;
         this.error = 'Invalid email or password.';
-      }
-    });
-  }
-
-  /**
-   * Social login. In this demo the provider credential is simulated as
-   * "externalId:email:name" (the real integration verifies a provider token
-   * server-side). The buttons exercise the full find-or-create account flow.
-   */
-  social(provider: 'Google' | 'Facebook'): void {
-    this.submitting = true;
-    this.error = null;
-    // Demo credential: a stable external id + an email derived from the provider.
-    const demoCredential = `${provider.toLowerCase()}-uid-1001:${provider.toLowerCase()}.user@demo.local:${provider} User`;
-    this.account.socialLogin({ provider, credential: demoCredential }).subscribe({
-      next: () => this.redirect(),
-      error: () => {
-        this.submitting = false;
-        this.error = `${provider} sign-in failed.`;
       }
     });
   }

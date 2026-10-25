@@ -132,6 +132,8 @@ public class CategoryVM
 /// </summary>
 public class ProductVariantVM
 {
+    /// <summary>Ordered variant gallery.</summary>
+    public List<string> ImageUrls { get; set; } = new();
     /// <summary>Variant identifier.</summary>
     public int Id { get; set; }
 

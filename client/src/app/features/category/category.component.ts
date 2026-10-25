@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { switchMap } from 'rxjs';
 import { CatalogService } from '../../core/services/catalog.service';
 import { Category } from '../../core/models/api.models';
+import { ImageUrlPipe } from '../../core/pipes/image-url.pipe';
 
 /**
  * Subcategory drill-down page. Given a top-level category slug (e.g.
@@ -14,7 +15,7 @@ import { Category } from '../../core/models/api.models';
 @Component({
   selector: 'app-category',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, ImageUrlPipe],
   templateUrl: './category.component.html',
   styleUrl: './category.component.css'
 })

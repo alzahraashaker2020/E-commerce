@@ -24,6 +24,7 @@ public class OrderRepo : GenericRepo<Order>, IOrderRepo
         // Include the order's line items so tracking can show a line summary.
         return _context.Orders
             .Include(o => o.Items)
+            .Include(o => o.StatusDefinition)
             .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
     }
 
@@ -35,6 +36,7 @@ public class OrderRepo : GenericRepo<Order>, IOrderRepo
         string normalized = email.ToLower();
         return _context.Orders
             .Include(o => o.Items)
+            .Include(o => o.StatusDefinition)
             .Where(o => o.GuestEmail != null && o.GuestEmail.ToLower() == normalized)
             .OrderByDescending(o => o.PlacedAt)
             .FirstOrDefaultAsync();

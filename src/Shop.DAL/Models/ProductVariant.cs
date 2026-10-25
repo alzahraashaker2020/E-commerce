@@ -37,6 +37,9 @@ public class ProductVariant
     /// <summary>Optional variant-specific image URL.</summary>
     public string? ImageUrl { get; set; }
 
+    /// <summary>Ordered gallery; the first image is the primary image.</summary>
+    public List<string> ImageUrls { get; set; } = new();
+
     /// <summary>Marks rows created as demonstration data.</summary>
     public bool IsDemoData { get; set; }
 

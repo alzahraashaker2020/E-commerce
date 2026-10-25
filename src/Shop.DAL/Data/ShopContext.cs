@@ -67,6 +67,14 @@ public class ShopContext : DbContext
 
     /// <summary>Store-wide settings (single row).</summary>
     public DbSet<StoreSettings> StoreSettings => Set<StoreSettings>();
+    /// <summary>Admin-managed currencies.</summary>
+    public DbSet<Currency> Currencies => Set<Currency>();
+    /// <summary>Admin-managed order status definitions.</summary>
+    public DbSet<OrderStatusDefinition> OrderStatusDefinitions => Set<OrderStatusDefinition>();
+    /// <summary>Delivery governorates.</summary>
+    public DbSet<Governorate> Governorates => Set<Governorate>();
+    /// <summary>Delivery areas and rates.</summary>
+    public DbSet<DeliveryArea> DeliveryAreas => Set<DeliveryArea>();
 
     /// <summary>
     /// Configures the model: keys, relationships, unique indexes, decimal
@@ -76,6 +84,33 @@ public class ShopContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<Governorate>(e => { e.HasIndex(g => g.Name).IsUnique(); e.Property(g => g.Name).HasMaxLength(100); });
+        modelBuilder.Entity<DeliveryArea>(e =>
+        {
+            e.HasIndex(a => new { a.GovernorateId, a.Name }).IsUnique();
+            e.Property(a => a.Name).HasMaxLength(100);
+            e.Property(a => a.ShippingFee).HasPrecision(18, 2);
+            e.Property(a => a.CurrencyCode).HasMaxLength(10);
+            e.HasOne(a => a.Governorate).WithMany().HasForeignKey(a => a.GovernorateId).OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<Order>().HasOne<DeliveryArea>().WithMany().HasForeignKey(o => o.DeliveryAreaId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Currency>(e =>
+        {
+            e.HasIndex(c => c.Code).IsUnique();
+            e.Property(c => c.Code).HasMaxLength(10);
+            e.Property(c => c.Name).HasMaxLength(100);
+            e.Property(c => c.Symbol).HasMaxLength(8);
+            e.HasData(new Currency { Id = 1, Code = "EGP", Name = "Egyptian Pound", Symbol = "E£" },
+                new Currency { Id = 2, Code = "USD", Name = "US Dollar", Symbol = "$" });
+        });
+        modelBuilder.Entity<OrderStatusDefinition>(e =>
+        {
+            e.HasIndex(s => s.Name).IsUnique();
+            e.Property(s => s.Name).HasMaxLength(100);
+            foreach (OrderStatus behavior in Enum.GetValues<OrderStatus>())
+                e.HasData(new OrderStatusDefinition { Id = (int)behavior + 1, Name = behavior.ToString(),
+                    Behavior = behavior, DisplayOrder = (int)behavior, IsDefault = behavior == OrderStatus.Pending });
+        });
 
         // --- Category (self-referencing two-level tree) ---
         modelBuilder.Entity<Category>(e =>
@@ -128,6 +163,13 @@ public class ShopContext : DbContext
         // --- ProductVariant ---
         modelBuilder.Entity<ProductVariant>(e =>
         {
+            e.Property(v => v.ImageUrls).HasConversion(
+                images => System.Text.Json.JsonSerializer.Serialize(images, (System.Text.Json.JsonSerializerOptions?)null),
+                json => System.Text.Json.JsonSerializer.Deserialize<List<string>>(json, (System.Text.Json.JsonSerializerOptions?)null) ?? new List<string>())
+                .Metadata.SetValueComparer(new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<List<string>>(
+                    (a, b) => a!.SequenceEqual(b!),
+                    a => a.Aggregate(0, (hash, value) => HashCode.Combine(hash, value.GetHashCode())),
+                    a => a.ToList()));
             e.HasKey(v => v.Id);
             e.Property(v => v.Sku).HasMaxLength(100);
             e.Property(v => v.Price).HasPrecision(18, 2);
@@ -220,6 +262,10 @@ public class ShopContext : DbContext
             e.HasIndex(o => o.OrderNumber).IsUnique();
             e.Property(o => o.OrderNumber).HasMaxLength(40);
             e.Property(o => o.Status).HasConversion<int>();
+            e.Property(o => o.Status).IsConcurrencyToken();
+            e.Property(o => o.StockDeducted).IsConcurrencyToken();
+            e.Property(o => o.StatusDefinitionId).IsConcurrencyToken();
+            e.HasOne(o => o.StatusDefinition).WithMany().HasForeignKey(o => o.StatusDefinitionId).OnDelete(DeleteBehavior.Restrict);
             e.Property(o => o.PaymentMethod).HasConversion<int>();
             e.Property(o => o.PaymentStatus).HasConversion<int>();
             e.Property(o => o.Subtotal).HasPrecision(18, 2);

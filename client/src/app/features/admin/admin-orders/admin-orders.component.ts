@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../core/services/admin.service';
+import { ApiService } from '../../../core/services/api.service';
 import { StoreCurrencyPipe } from '../../../core/pipes/store-currency.pipe';
 
 /**
@@ -20,21 +21,12 @@ export class AdminOrdersComponent implements OnInit {
   loading = false;
   error: string | null = null;
 
-  /** The status options an admin can set (mirrors the backend OrderStatus). */
-  readonly statuses = [
-    'Pending',
-    'Confirmed',
-    'Paid',
-    'Processing',
-    'ReadyToShip',
-    'Shipped',
-    'Delivered',
-    'Cancelled'
-  ];
+  statuses: any[] = [];
 
-  constructor(private admin: AdminService) {}
+  constructor(private admin: AdminService, private api: ApiService) {}
 
   ngOnInit(): void {
+    this.api.get<any[]>('admin/order-statuses').subscribe({ next: rows => this.statuses = rows, error: () => this.error = 'Could not load order statuses.' });
     this.refresh();
   }
 
@@ -53,28 +45,11 @@ export class AdminOrdersComponent implements OnInit {
     });
   }
 
-  /** Persists a status change for an order. */
-  changeStatus(order: any, status: string): void {
-    this.admin.updateOrderStatus(order.id, status).subscribe({
-      next: () => (order.status = status),
-      error: () => (this.error = 'Status update failed.')
+  changeStatus(order: any, statusId: number): void {
+    this.error = null;
+    this.api.put(`admin/orders/${order.id}/status`, { statusId }).subscribe({
+      next: () => this.refresh(),
+      error: err => { this.error = err?.error?.message || 'Status update failed.'; this.refresh(); }
     });
-  }
-
-  statusClass(status: string): string {
-    switch (status) {
-      case 'Delivered':
-      case 'Paid':
-        return 'badge-ok';
-      case 'Confirmed':
-      case 'Processing':
-      case 'ReadyToShip':
-      case 'Shipped':
-        return 'badge-info';
-      case 'Cancelled':
-        return 'badge-warn';
-      default:
-        return 'badge-muted';
-    }
   }
 }

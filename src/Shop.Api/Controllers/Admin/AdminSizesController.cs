@@ -16,7 +16,7 @@ namespace Shop.Api.Controllers.Admin;
 /// <c>api/admin/sizes</c> route.
 /// </summary>
 [ApiController]
-[Authorize]
+[Authorize(Roles = "Admin")]
 [Route("api/admin/sizes")]
 public class AdminSizesController : ControllerBase
 {

@@ -12,9 +12,17 @@
 
   <div class="pdp-grid">
     <!-- Media -->
-    <div class="pdp-media">
-      <img *ngIf="product.images.length" [src]="product.images[0].url" [alt]="product.images[0].altText || product.name" />
-      <div class="pdp-media-placeholder" *ngIf="!product.images.length">{{ product.name.charAt(0) }}</div>
+    <div class="pdp-gallery">
+      <div class="pdp-media">
+      <img *ngIf="currentImage" [src]="currentImage | imageUrl" [alt]="product.name" />
+      <div class="pdp-media-placeholder" *ngIf="!currentImage">{{ product.name.charAt(0) }}</div>
+      </div>
+      <div class="gallery-thumbnails" *ngIf="gallery.length > 1" aria-label="Product images">
+        <button type="button" *ngFor="let image of gallery; let i = index" (click)="imageIndex = i"
+          [class.active]="imageIndex === i" [attr.aria-pressed]="imageIndex === i" [attr.aria-label]="'View image ' + (i + 1)">
+          <img [src]="image | imageUrl" alt="" />
+        </button>
+      </div>
     </div>
 
     <!-- Info -->
@@ -41,6 +49,7 @@
             class="variant-btn"
             *ngFor="let v of product.variants"
             [class.active]="selectedVariant?.id === v.id"
+            [disabled]="!v.isActive || v.stockQuantity === 0"
             (click)="selectVariant(v)"
           >
             {{ v.sizeName || '' }}{{ v.sizeName && v.colorName ? ' / ' : '' }}{{ v.colorName || '' }}
@@ -53,9 +62,9 @@
         <div class="qty">
           <button (click)="quantity = quantity > 1 ? quantity - 1 : 1">−</button>
           <span>{{ quantity }}</span>
-          <button (click)="quantity = quantity + 1">+</button>
+          <button (click)="quantity = quantity + 1" [disabled]="quantity >= availableQuantity">+</button>
         </div>
-        <button class="btn btn-primary" [disabled]="!inStock" (click)="addToCart()">Add to cart</button>
+        <button class="btn btn-primary" [disabled]="!inStock || quantity > availableQuantity" (click)="addToCart()">Add to cart</button>
       </div>
 
       <div class="alert alert-info" *ngIf="added">

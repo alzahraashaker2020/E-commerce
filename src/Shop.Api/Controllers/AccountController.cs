@@ -94,6 +94,7 @@ public class AccountController : ControllerBase
     {
         List<Order> orders = await _repo._Order.Query()
             .Include(o => o.Items)
+            .Include(o => o.StatusDefinition)
             .Where(o => o.CustomerId == CurrentCustomerId)
             .OrderByDescending(o => o.PlacedAt)
             .ToListAsync();

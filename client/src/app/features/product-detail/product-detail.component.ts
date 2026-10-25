@@ -8,6 +8,7 @@ import { AccountService } from '../../core/services/account.service';
 import { ProductDetail, ProductVariant } from '../../core/models/api.models';
 import { ProductReviewSummary } from '../../core/models/account.models';
 import { StoreCurrencyPipe } from '../../core/pipes/store-currency.pipe';
+import { ImageUrlPipe } from '../../core/pipes/image-url.pipe';
 
 /**
  * Product detail page. Shows media, description, variant selector, stock, and
@@ -16,13 +17,14 @@ import { StoreCurrencyPipe } from '../../core/pipes/store-currency.pipe';
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, StoreCurrencyPipe],
+  imports: [CommonModule, FormsModule, RouterLink, StoreCurrencyPipe, ImageUrlPipe],
   templateUrl: './product-detail.component.html',
   styleUrl: './product-detail.component.css'
 })
 export class ProductDetailComponent implements OnInit {
   product: ProductDetail | null = null;
   selectedVariant: ProductVariant | null = null;
+  imageIndex = 0;
   quantity = 1;
   added = false;
   loading = false;
@@ -53,7 +55,8 @@ export class ProductDetailComponent implements OnInit {
       next: p => {
         this.product = p;
         // Default to the first variant when the product has variants.
-        this.selectedVariant = p.variants.length ? p.variants[0] : null;
+        this.selectedVariant = p.variants.find(v => v.isActive && v.stockQuantity > 0)
+          ?? p.variants.find(v => v.isActive) ?? null;
         this.loading = false;
       },
       error: () => {
@@ -117,6 +120,17 @@ export class ProductDetailComponent implements OnInit {
     return this.product?.basePrice ?? 0;
   }
 
+  get currentImage(): string | null {
+    return this.gallery[this.imageIndex] || this.gallery[0] || null;
+  }
+
+  get gallery(): string[] {
+    const variant = this.selectedVariant;
+    if (variant?.imageUrls?.length) return variant.imageUrls;
+    if (variant?.imageUrl) return [variant.imageUrl];
+    return (this.product?.images || []).slice().sort((a, b) => a.sortOrder - b.sortOrder).map(i => i.url);
+  }
+
   /**
    * Whether the product has any stock on hand. For variant products this reads
    * the selected variant's stock; otherwise the product-level stock. (FEAT-004
@@ -130,12 +144,19 @@ export class ProductDetailComponent implements OnInit {
   }
 
   selectVariant(v: ProductVariant): void {
+    if (!v.isActive) return;
     this.selectedVariant = v;
+    this.imageIndex = 0;
+    this.quantity = 1;
+  }
+
+  get availableQuantity(): number {
+    return this.product?.hasVariants ? (this.selectedVariant?.stockQuantity ?? 0) : (this.product?.stockQuantity ?? 0);
   }
 
   /** Adds the chosen product/variant/quantity to the cart. */
   addToCart(): void {
-    if (!this.product) {
+    if (!this.product || !this.inStock || this.quantity > this.availableQuantity) {
       return;
     }
     this.cart.add(this.product.id, this.quantity, this.selectedVariant?.id ?? null);

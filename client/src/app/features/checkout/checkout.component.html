@@ -63,6 +63,10 @@
       </label>
     </div>
 
+    <div class="alert alert-error" *ngIf="submitted && missingFields.length">
+      Please complete: {{ missingFields.join(', ') }}
+    </div>
+
     <button class="btn btn-primary full" type="submit" [disabled]="!canSubmit">
       {{ submitting ? 'Placing order…' : 'Place order' }}
     </button>

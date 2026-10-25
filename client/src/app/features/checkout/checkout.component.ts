@@ -33,6 +33,7 @@ export class CheckoutComponent implements OnInit {
   contactPhone = '';
   paymentMethod: 'Cash' | 'Card' = 'Cash';
   submitting = false;
+  submitted = false;
   error: string | null = null;
 
   constructor(
@@ -68,8 +69,24 @@ export class CheckoutComponent implements OnInit {
     );
   }
 
+  /** Labels of the required fields that are still empty, for inline validation. */
+  get missingFields(): string[] {
+    const missing: string[] = [];
+    if (this.guestName.trim().length === 0) missing.push('Full name');
+    if (this.guestEmail.trim().length === 0) missing.push('Email');
+    if (this.addressLine1.trim().length === 0) missing.push('Address line 1');
+    if (this.city.trim().length === 0) missing.push('City');
+    if (this.stateRegion.trim().length === 0) missing.push('State/region');
+    if (this.postalCode.trim().length === 0) missing.push('Postal code');
+    if (this.country.trim().length === 0) missing.push('Country');
+    if (this.contactPhone.trim().length === 0) missing.push('Contact phone');
+    if (this.paymentMethod !== 'Cash' && this.paymentMethod !== 'Card') missing.push('Payment method');
+    return missing;
+  }
+
   /** Places the guest order and navigates to the confirmation page. */
   placeOrder(): void {
+    this.submitted = true;
     if (!this.canSubmit) {
       return;
     }
@@ -105,9 +122,9 @@ export class CheckoutComponent implements OnInit {
           this.error = res.message ?? 'Order could not be placed.';
         }
       },
-      error: () => {
+      error: (err) => {
         this.submitting = false;
-        this.error = 'Order could not be placed. Please try again.';
+        this.error = err?.error?.message ?? 'Order could not be placed. Please try again.';
       }
     });
   }

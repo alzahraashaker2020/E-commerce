@@ -25,6 +25,8 @@ b1.txt
 build_out.txt
 ng_out.txt
 sent-emails/
+store-data/
+src/Shop.Api/email-secrets.json
 
 # --- OS noise ---
 Thumbs.db

@@ -1,3 +1,4 @@
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,7 +13,7 @@ import { AccountService } from '../../../core/services/account.service';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [TranslatePipe,CommonModule, FormsModule, RouterLink],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
@@ -39,6 +40,6 @@ export class LoginComponent {
 
   private redirect(): void {
     const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/account';
-    this.router.navigateByUrl(returnUrl);
+    this.router.navigateByUrl(/^\/(?:account(?:\/|$)|checkout(?:[?#]|$)|cart(?:[?#]|$))/.test(returnUrl) && !returnUrl.includes('..') ? returnUrl : '/account/orders');
   }
 }

@@ -1,6 +1,6 @@
 # MakaniShop — E-Commerce Demo Platform
 
-A full-stack e-commerce demonstration platform: an **Angular 18** storefront + admin
+A full-stack e-commerce demonstration platform: an **Angular 18** storefront + merchant console
 console, an **ASP.NET Core 7 Web API** backend, and **EF Core 7** over **PostgreSQL**
 (with a zero-install **SQLite** demo mode). Built to showcase a purpose-built
 alternative to a hosted store, with a clean N-layer architecture.
@@ -23,7 +23,7 @@ The backend follows an N-layer solution (`Shop.sln`) with four projects:
 | `Shop.Api` | Web API host: controllers, AutoMapper profile, middleware, DI composition (`Program.cs`) |
 
 **Patterns:** Repository + Unit-of-Work, DTO/ViewModel separation, AutoMapper,
-JWT bearer auth (separate **Admin** and **Customer** roles), a standard
+JWT bearer auth (separate **Merchant**, **PlatformAdmin** and **Customer** roles), a standard
 `ApiResponse<T>` envelope.
 
 The frontend (`client/`) is Angular 18 standalone components with a `core/`
@@ -77,10 +77,10 @@ CORS for `http://localhost:4200` is enabled in the API).
 
 | Role | Login | Password |
 |---|---|---|
-| **Admin** | `admin` | `Admin@12345` |
+| **Merchant (original demo store)** | `admin` | `Admin@12345` |
 | **Customer** | `jordan@demo.local` | `Admin@12345` |
 
-Admin signs in at `/admin/login`; customers at `/login` (or register a new account).
+Merchant signs in at `/merchant/login`; customers at `/login` (or register a new account).
 
 ---
 
@@ -97,13 +97,13 @@ PostgreSQL is the intended production database. To use it:
 3. Apply the EF migration (repo-local `dotnet-ef` tool, pinned to 7.0.20):
    ```bash
    dotnet tool restore
-   dotnet dotnet-ef database update -p src/Shop.DAL -s src/Shop.Api
+   dotnet dotnet-ef database update --context ShopContext -p src/Shop.DAL -s src/Shop.Api
    ```
 
 After changing entities, regenerate the migration:
 
 ```bash
-dotnet dotnet-ef migrations add <Name> -p src/Shop.DAL -s src/Shop.Api
+dotnet dotnet-ef migrations add <Name> --context ShopContext -p src/Shop.DAL -s src/Shop.Api
 ```
 
 (The SQLite demo path does not require migrations — it uses `EnsureCreated()`.)
@@ -139,14 +139,14 @@ without external accounts. Each has a documented path to production.
   delivered orders require a return workflow, which is still pending.
 - Restart the API after updating. Existing SQLite databases receive an additive
   StockDeducted column without reseeding/deleting data. Historical orders are not
-  automatically debited. PostgreSQL still requires the broader schema migration
-  work documented in the backlog, in addition to the new marker migration.
+  automatically debited. The reconciled PostgreSQL migration chain is covered by
+  isolated fresh/legacy database checks; see the database foundation progress document.
 - To run the image/stock regression checks after building, use:
   `pwsh -File tests/security-smoke.ps1 -AdditionalChecks tests/product-order-checks.ps1`.
   These checks create their own temporary database and upload directory.
 
 ### Product and variant photo galleries
-- Admins can select multiple files, up to 20 photos for the product and 20 for
+- Merchants can select multiple files, up to 20 photos for the product and 20 for
   each size/color variant. The first photo is primary; use Make primary or Remove
   before saving. Save is unavailable while files are uploading.
 - The storefront gallery switches to the selected variant's photos, falling back
@@ -155,18 +155,18 @@ without external accounts. Each has a documented path to production.
   without deleting data, then refresh the frontend.
 
 ### Currency
-- A single **store-level currency** (code + symbol) is chosen by the admin in the
+- A single **store-level currency** (code + symbol) is chosen by the merchant in the
   Settings page (default `USD` / `$`) and applied to all displayed prices; each
   order stores its currency code.
 - This is a display/label currency, **not** live foreign-exchange conversion.
 
-### Admin-managed configuration
+### Merchant-managed configuration
 - Manage colors and sizes from the dashboard shortcuts or sidebar.
-- `/admin/currencies` manages currency names, codes, symbols and availability,
+- `/merchant/currencies` manages currency names, codes, symbols and availability,
   and selects the store currency. Changing it does not convert catalog prices;
   existing orders retain their recorded currency. Sales totals cover the selected
   store currency only, rather than combining currencies.
-- `/admin/order-statuses` manages status names, badge colors, order and availability.
+- `/merchant/order-statuses` manages status names, badge colors, order and availability.
   New statuses map to protected fulfillment behaviors so stock still deducts or
   restores once. In-use statuses cannot be deleted or have their behavior changed.
 - Status names flow through order management, tracking and email. A configurable
@@ -174,7 +174,7 @@ without external accounts. Each has a documented path to production.
 - See [admin configuration roadmap](docs/16-admin-managed-configuration.md).
 
 ### Delivery locations and shipping
-- Open `/admin/delivery`, add governorates, then their areas, shipping charges,
+- Open `/merchant/delivery`, add governorates, then their areas, shipping charges,
   currency and availability. No delivery rates are automatically invented or seeded.
 - New checkout requires an available area with a rate in the current store
   currency. A configured zero rate explicitly means free delivery. The server
@@ -184,11 +184,11 @@ without external accounts. Each has a documented path to production.
 - Orders retain the shipping charge and address names recorded at checkout.
   Editing/deactivating an area does not recalculate old orders. Used locations
   cannot be deleted; disable them instead.
-- Shipping appears in order confirmation, admin orders, tracking and account
+- Shipping appears in order confirmation, merchant orders, tracking and account
   history. Sales overview separates shipping collected from product sales.
 - Existing SQLite databases receive additive delivery tables and a nullable
   order-area reference on API restart; old orders are not repriced. The separate
-  PostgreSQL migration path still needs its previously documented schema work.
+  PostgreSQL migration path is covered by the isolated schema checks documented below.
 
 ### Social login
 - Google / Facebook sign-in is currently unavailable. The API returns 503 and
@@ -196,11 +196,11 @@ without external accounts. Each has a documented path to production.
 - Email/password registration and login remain available. Social sign-in must
   verify provider-issued credentials server-side before it can be enabled.
 
-### Admin access and security checks
-- All `api/admin/*` controllers require the `Admin` role. Customer tokens are
+### Merchant access and security checks
+- All `api/merchant/*` controllers require the `Merchant` role (except the public merchant sign-in action). Customer tokens are
   rejected with 403; unauthenticated requests are rejected with 401.
 - After building the backend, run `pwsh -File tests/security-smoke.ps1` to check
-  admin access, local authentication, and rejection of fabricated social credentials.
+  merchant access, local authentication, and rejection of fabricated social credentials.
   The script starts its own API on loopback with a fresh temporary SQLite database,
   keeps test logs in that temporary directory, and stops only its own API process.
 - The consolidated implementation plan is in [docs/15-product-backlog.md](docs/15-product-backlog.md).
@@ -216,7 +216,7 @@ address + payment method), order confirmation, order tracking (by order number
 **or** email), customer accounts (register / login / social / profile / order
 history / reviews).
 
-**Admin console:** sales overview dashboard, product management (incl. attributes
+**Merchant console:** sales overview dashboard, product management (incl. attributes
 and stock quantity), inventory low-stock alerts, order management (full status
 workflow), discount management, category/subcategory management, customer list,
 and store settings (currency).
@@ -224,6 +224,10 @@ and store settings (currency).
 ---
 
 ## Related documents
+
+SQLite startup now records schema versions and backs up an existing database
+before upgrading it. See [database foundation progress](docs/18-database-foundation-progress.md)
+for guarantees, schema checks, test commands and remaining PostgreSQL/SaaS work.
 
 Business and strategy documents live in [`docs/`](./docs):
 
@@ -243,6 +247,29 @@ online_shopping/
 │  ├─ Shop.BLL/        # repositories, unit-of-work, email, security, ApiResponse
 │  ├─ Shop.SL/         # JWT token service
 │  └─ Shop.Api/        # controllers, mapping, middleware, Program.cs
-├─ client/             # Angular 18 storefront + admin
+├─ client/             # Angular 18 storefront + merchant console
 └─ docs/               # strategy documents
 ```
+
+Merchant management now lives at /merchant; platform store administration lives at /platform with separate credentials and permissions. Store hosts resolve through the central registry, and tokens/uploads are store-bound. See [platform and merchant isolation](docs/19-platform-merchant-isolation.md) for setup, URL changes and operational limits.
+
+Merchant subscription plans are managed at /platform/plans; merchants view their terms at /merchant/subscription. Draft Starter/Growth/Pro plans are disabled until configured. Activation and renewal are manual, with request-time expiry checks and a product quota. See [merchant subscriptions](docs/20-merchant-subscriptions.md).
+
+Checkout now supports signed-in customers and guests, requires a durable idempotency key, and accepts cash on delivery only until a payment provider is connected. See [checkout integrity](docs/21-checkout-integrity.md) for retries, account ownership and database upgrade requirements.
+
+Uploads accept PNG/JPEG/WebP and are decoded, bounded and re-encoded as static WebP. Tracking requires the owning customer session or a private per-order code; email-only lookup is disabled. Merchants can retrieve codes for existing orders from their orders screen. See [upload and tracking security](docs/22-upload-tracking-security.md).
+
+Customer email verification, password recovery and merchant notification preferences are available. Gmail requires private local sender configuration; actual delivery is not yet verified. See [email and account security](docs/23-email-account-security.md).
+
+Notifications now use a store-isolated encrypted outbox with durable attempts and automatic/manual retries. Partial returns, merchant inspection and one-time stock restoration are available at `/merchant/returns`, with customer/guest requests from order history or tracking. Refunds are manually recorded external payments, not automatic transfers. See [returns and inspection](docs/24-order-returns.md).
+
+Platform backup scheduling, isolated SQLite/PostgreSQL restore rehearsals and error/activity history are available at `/platform/operations`; merchants see only their store activity. Actual local SQLite recovery uses the offline recovery script and revokes prior store sessions. PostgreSQL production cutover and off-server backup storage remain operator tasks. See [backups and operations](docs/25-backups-operations.md).
+
+An isolated Little Days kids clothing demo, merchant-managed themes and home-page content are available. See [kids storefront demo](docs/26-kids-storefront-demo.md) for URLs, local access and setup.
+
+The same code supports SaaS or a standalone installation and independent Commerce/Catalog store activity. Existing behavior defaults to SaaS + Commerce. See [deployment profiles](docs/27-deployment-profiles.md) for configuration, owner operations and migration boundaries.
+Arabic/English UI, merchant-managed Arabic content and responsive kids/merchant layouts are available. See [languages and responsive UI](docs/28-localization-responsive.md).
+
+Merchant application review and free-trial registration: [workflow and validation](docs/29-merchant-registration.md).
+
+Public Matjark platform, package entitlements and multi-store shopping: [implementation and validation](docs/30-platform-website-marketplace.md).

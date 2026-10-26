@@ -1,0 +1,4 @@
+import { Component } from '@angular/core';
+import { LanguageService } from './language.service';
+@Component({selector:'app-language-switch',standalone:true,template:`<button type="button" (click)="language.toggle()" [attr.aria-label]="language.arabic?'Switch to English':'التبديل إلى العربية'" [attr.lang]="language.arabic?'en':'ar'"><span aria-hidden="true">◎</span> {{language.arabic?'English':'العربية'}}</button>`,styles:[`:host{display:inline-block}button{font:inherit;font-size:13px;font-weight:700;color:inherit;border:1px solid currentColor;border-radius:24px;background:transparent;padding:9px 14px;cursor:pointer;min-height:40px;white-space:nowrap}button:focus-visible{outline:3px solid #e7ad3f;outline-offset:3px}span{margin-inline-end:5px}`]})
+export class LanguageSwitchComponent{constructor(public language:LanguageService){}}

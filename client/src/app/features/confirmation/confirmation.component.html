@@ -1,34 +1,38 @@
 <div class="confirm card">
   <div class="check">✓</div>
-  <h1>Thank you for your order!</h1>
-  <p class="muted">Your order has been placed. Keep your order number to track it.</p>
+  <h1>{{ 'Thank you for your order!' | t }}</h1>
+  <p class="muted">{{ 'Your order has been placed. Keep your order number to track it.' | t }}</p>
 
   <div class="order-number">
-    <span class="muted small">Order number</span>
+    <span class="muted small">{{ 'Order number' | t }}</span>
     <strong>{{ orderNumber }}</strong>
   </div>
 
-  <div class="alert alert-info" *ngIf="message">{{ message }}</div>
+  <div class="alert alert-info" *ngIf="message">{{ (message) | t }}</div>
+  <div *ngIf="confirmation?.trackingToken" class="alert alert-info">
+    {{ 'Private tracking code — keep it with your order number and share it only with someone allowed to view this order.' | t }}
+    <p><code style="overflow-wrap:anywhere">{{ confirmation?.trackingToken }}</code></p>
+  </div>
 
   <div class="order-details" *ngIf="confirmation">
-    <div class="spread"><span>Products</span><span>{{ confirmation.subtotal | storeCurrency:confirmation.currencyCode }}</span></div>
-    <div class="spread"><span>Discount</span><span>−{{ confirmation.discountTotal | storeCurrency:confirmation.currencyCode }}</span></div>
-    <div class="spread"><span>Shipping</span><span>{{ confirmation.shippingTotal | storeCurrency:confirmation.currencyCode }}</span></div>
+    <div class="spread"><span>{{ 'Products' | t }}</span><span>{{ confirmation.subtotal | storeCurrency:confirmation.currencyCode }}</span></div>
+    <div class="spread"><span>{{ 'Discount' | t }}</span><span>−{{ confirmation.discountTotal | storeCurrency:confirmation.currencyCode }}</span></div>
+    <div class="spread"><span>{{ 'Shipping' | t }}</span><span>{{ confirmation.shippingTotal | storeCurrency:confirmation.currencyCode }}</span></div>
     <div class="spread">
-      <span class="muted small">Total</span>
+      <span class="muted small">{{ 'Total' | t }}</span>
       <strong>{{ confirmation.total | storeCurrency:confirmation.currencyCode }}</strong>
     </div>
     <div class="spread">
-      <span class="muted small">Payment</span>
-      <span>{{ confirmation.paymentMethod }} ({{ confirmation.paymentStatus }})</span>
+      <span class="muted small">{{ 'Payment' | t }}</span>
+      <span>{{ (confirmation.paymentMethod) | t }} ({{ (confirmation.paymentStatus) | t }})</span>
     </div>
     <div class="spread">
-      <span class="muted small">Currency</span>
+      <span class="muted small">{{ 'Currency' | t }}</span>
       <span>{{ confirmation.currencyCode }}</span>
     </div>
 
     <div class="address">
-      <span class="muted small">Shipping to</span>
+      <span class="muted small">{{ 'Shipping to' | t }}</span>
       <p>
         {{ confirmation.addressLine1 }}<br />
         <ng-container *ngIf="confirmation.addressLine2">{{ confirmation.addressLine2 }}<br /></ng-container>
@@ -40,7 +44,7 @@
   </div>
 
   <div class="confirm-actions">
-    <button class="btn btn-primary" (click)="track()">Track this order</button>
-    <a class="btn btn-outline" routerLink="/catalog">Continue shopping</a>
+    <button class="btn btn-primary" (click)="track()">{{ 'Track this order' | t }}</button>
+    <a class="btn btn-outline" routerLink="/catalog">{{ 'Continue shopping' | t }}</a>
   </div>
 </div>

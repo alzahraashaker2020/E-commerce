@@ -1,3 +1,5 @@
+import { LocalDatePipe } from '../../../core/i18n/format.pipe';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -10,7 +12,7 @@ import { Review } from '../../../core/models/account.models';
 @Component({
   selector: 'app-my-reviews',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [LocalDatePipe,TranslatePipe,CommonModule, RouterLink],
   templateUrl: './my-reviews.component.html',
   styleUrl: './my-reviews.component.css'
 })

@@ -1,0 +1,54 @@
+<h1 class="merchant-title">{{ 'Colors' | t }}</h1>
+
+<div class="loading" *ngIf="loading">{{ 'Loading…' | t }}</div>
+<div class="alert alert-error" *ngIf="error">{{ (error) | t }}</div>
+
+<!-- Create / edit form -->
+<div class="card form-card">
+  <h3>{{ (editing ? 'Edit color' : 'Create color') | t }}</h3>
+  <div class="form-grid">
+    <div class="field"><label>{{ 'Name' | t }}</label><input name="name" [(ngModel)]="form.name" [attr.placeholder]="'Beige' | t" /></div>
+    <div class="field">
+      <label>{{ 'Hex code' | t }}</label>
+      <div class="hex-row">
+        <input name="hexCode" [(ngModel)]="form.hexCode" placeholder="#D8C3A5" />
+        <span class="swatch" [style.background]="form.hexCode"></span>
+      </div>
+    </div>
+    <div class="field"><label>{{ 'Display order' | t }}</label><input name="displayOrder" type="number" [(ngModel)]="form.displayOrder" /></div>
+    <div class="field">
+      <label>{{ 'Active' | t }}</label>
+      <select name="active" [(ngModel)]="form.isActive">
+        <option [ngValue]="true">{{ 'Yes' | t }}</option>
+        <option [ngValue]="false">{{ 'No' | t }}</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-primary" (click)="save()">{{ (editing ? 'Save' : 'Create') | t }}</button>
+    <button class="btn btn-outline" *ngIf="editing" (click)="cancel()">{{ 'Cancel' | t }}</button>
+  </div>
+</div>
+
+<!-- Color table -->
+<div class="card">
+  <div class="table-scroll" tabindex="0" role="region" [attr.aria-label]="'Data table'|t" *ngIf="colors.length"><table class="data">
+    <thead>
+      <tr><th>{{ 'Swatch' | t }}</th><th>{{ 'Name' | t }}</th><th>{{ 'Hex' | t }}</th><th>{{ 'Order' | t }}</th><th>{{ 'Active' | t }}</th><th></th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let c of colors">
+        <td><span class="swatch" [style.background]="c.hexCode || 'transparent'"></span></td>
+        <td><strong>{{ (c.name) | t }}</strong></td>
+        <td><span class="muted small">{{ (c.hexCode || '—') | t }}</span></td>
+        <td>{{ (c.displayOrder) | t }}</td>
+        <td><span class="badge" [class.badge-ok]="c.isActive" [class.badge-muted]="!c.isActive">{{ (c.isActive ? 'Yes' : 'No') | t }}</span></td>
+        <td class="row-actions">
+          <button class="btn btn-outline btn-sm" (click)="startEdit(c)">{{ 'Edit' | t }}</button>
+          <button class="btn btn-danger btn-sm" (click)="remove(c)">{{ 'Delete' | t }}</button>
+        </td>
+      </tr>
+    </tbody>
+  </table></div>
+  <p class="muted" *ngIf="!colors.length && !loading">{{ 'No colors.' | t }}</p>
+</div>

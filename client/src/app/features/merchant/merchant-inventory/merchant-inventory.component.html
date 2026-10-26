@@ -1,0 +1,23 @@
+<h1 class="merchant-title">{{ 'Inventory Alerts' | t }}</h1>
+<p class="muted">{{ 'Items at or below their low-stock threshold.' | t }}</p>
+
+<div class="loading" *ngIf="loading">{{ 'Loading…' | t }}</div>
+<div class="alert alert-error" *ngIf="error">{{ (error) | t }}</div>
+
+<div class="card" *ngIf="!loading">
+  <div class="table-scroll" tabindex="0" role="region" [attr.aria-label]="'Data table'|t" *ngIf="items.length"><table class="data">
+    <thead>
+      <tr><th>{{ 'Product' | t }}</th><th>{{ 'Variant' | t }}</th><th>{{ 'On hand' | t }}</th><th>{{ 'Threshold' | t }}</th><th>{{ 'Status' | t }}</th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let i of items">
+        <td>{{ (i.productName) | t }}</td>
+        <td>{{ (i.variantLabel || '—') | t }}</td>
+        <td>{{ (i.stockQuantity) | t }}</td>
+        <td>{{ (i.lowStockThreshold) | t }}</td>
+        <td><span class="badge badge-warn">{{ 'Reorder' | t }}</span></td>
+      </tr>
+    </tbody>
+  </table></div>
+  <p class="muted ok-msg" *ngIf="!items.length">{{ 'All stock levels are healthy. 🎉' | t }}</p>
+</div>

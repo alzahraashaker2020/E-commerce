@@ -1,6 +1,6 @@
 /* Customer order history styling. */
-.right { text-align: right; }
-.small { font-size: 0.78rem; margin-left: 0.6rem; }
+.right { text-align: end; }
+.small { font-size: 0.78rem; margin-inline-start: 0.6rem; }
 .empty { text-align: center; padding: 2rem; }
 .empty p { margin-bottom: 1rem; }
 .order { margin-bottom: 1rem; }

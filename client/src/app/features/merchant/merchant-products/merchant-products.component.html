@@ -1,0 +1,141 @@
+<h1 class="merchant-title">{{ 'Products' | t }}</h1>
+
+<div class="loading" *ngIf="loading">{{ 'Loading…' | t }}</div>
+<div class="alert alert-error" *ngIf="error">{{ (error) | t }}</div>
+<div class="alert alert-info" *ngIf="savedNotice" role="status">{{ (savedNotice) | t }}</div>
+
+<!-- Create / edit form -->
+<div class="card form-card">
+  <h3>{{ (editing ? 'Edit product' : 'Add product') | t }}</h3>
+  <div class="form-grid">
+    <div class="field"><label>{{ 'Name' | t }}</label><input name="name" [(ngModel)]="form.name" /></div>
+    <div class="field"><label>{{ 'Brand' | t }}</label><input name="brand" [(ngModel)]="form.brand" /></div>
+    <div class="field"><label>{{ 'Base price' | t }}</label><input name="basePrice" type="number" [(ngModel)]="form.basePrice" /></div>
+
+    <!-- Category + dependent subcategory dropdowns (bind category id). -->
+    <div class="field">
+      <label>{{ 'Category' | t }}</label>
+      <select name="parentCategory" [(ngModel)]="parentCategoryId" (ngModelChange)="form.categoryId = parentCategoryId">
+        <option [ngValue]="null">{{ '— Select —' | t }}</option>
+        <option *ngFor="let c of topLevelCategories" [ngValue]="c.id">{{ (c.name) | t }}</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>{{ 'Subcategory' | t }}</label>
+      <select name="subCategory" [(ngModel)]="form.categoryId" [disabled]="!subCategories.length">
+        <option [ngValue]="parentCategoryId">{{ '— Use parent —' | t }}</option>
+        <option *ngFor="let s of subCategories" [ngValue]="s.id">{{ (s.name) | t }}</option>
+      </select>
+    </div>
+
+    <div class="field"><label>{{ 'Active' | t }}</label><select name="active" [(ngModel)]="form.isActive"><option [ngValue]="true">{{ 'Yes' | t }}</option><option [ngValue]="false">{{ 'No' | t }}</option></select></div>
+    <div class="field"><label>{{ 'Show stock on storefront' | t }}</label><select name="showStock" [(ngModel)]="form.showStockQuantity"><option [ngValue]="true">{{ 'Yes' | t }}</option><option [ngValue]="false">{{ 'No' | t }}</option></select></div>
+    <div class="field"><label>{{ 'Has variants' | t }}</label><select name="hasVariants" [(ngModel)]="form.hasVariants"><option [ngValue]="false">{{ 'No' | t }}</option><option [ngValue]="true">{{ 'Yes' | t }}</option></select></div>
+
+    <div class="field full"><label>{{ 'Description (HTML)' | t }}</label><textarea name="desc" rows="2" [(ngModel)]="form.descriptionHtml"></textarea></div>
+
+    <!-- Product-level stock shown only when the product has no variants. -->
+    <ng-container *ngIf="!form.hasVariants">
+      <div class="field"><label>{{ 'Stock quantity' | t }}</label><input name="stockQuantity" type="number" [(ngModel)]="form.stockQuantity" /></div>
+      <div class="field"><label>{{ 'Low-stock threshold' | t }}</label><input name="lowStockThreshold" type="number" [(ngModel)]="form.lowStockThreshold" /></div>
+    </ng-container>
+
+    <!-- Product image upload with preview/replace/remove. -->
+    <div class="field full">
+      <label>{{ 'Product images (up to 20)' | t }}</label>
+      <div class="image-picker">
+        <div class="gallery-item" *ngFor="let image of form.imageUrls; let j = index">
+          <img class="preview" [src]="previewUrl(image)" [alt]="('Product image ' + (j + 1)) | t" />
+          <button type="button" class="btn btn-outline btn-sm" [disabled]="uploading || j === 0" (click)="makePrimary(form, j)">{{ (j === 0 ? 'Primary' : 'Make primary') | t }}</button>
+          <button type="button" class="btn btn-outline btn-sm" [disabled]="uploading" (click)="removeImage(form, j)">{{ 'Remove' | t }}</button>
+        </div>
+        <input type="file" accept="image/png,image/jpeg,image/webp" multiple [disabled]="uploading" (change)="onProductImage($event)" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Variant rows (only specific chosen combos; no auto matrix). -->
+  <div class="variants" *ngIf="form.hasVariants">
+    <h4>{{ 'Variants' | t }}</h4>
+    <p class="muted small">{{ 'Add only the specific size/color combinations you sell.' | t }}</p>
+    <div class="table-scroll" tabindex="0" role="region" [attr.aria-label]="'Data table'|t" *ngIf="form.variants.length"><table class="data">
+      <thead>
+        <tr><th>{{ 'Size' | t }}</th><th>{{ 'Color' | t }}</th><th>{{ 'SKU' | t }}</th><th>{{ 'Price' | t }}</th><th>{{ 'Stock' | t }}</th><th>{{ 'Low thr.' | t }}</th><th>{{ 'Active' | t }}</th><th>{{ 'Image' | t }}</th><th></th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let v of form.variants; let i = index">
+          <td>
+            <select [(ngModel)]="v.sizeId" [name]="'vsize' + i">
+              <option [ngValue]="null">—</option>
+              <option *ngFor="let s of sizes" [ngValue]="s.id">{{ (s.name) | t }}</option>
+            </select>
+          </td>
+          <td>
+            <select [(ngModel)]="v.colorId" [name]="'vcolor' + i">
+              <option [ngValue]="null">—</option>
+              <option *ngFor="let c of colors" [ngValue]="c.id">{{ (c.name) | t }}</option>
+            </select>
+          </td>
+          <td><input [(ngModel)]="v.sku" [name]="'vsku' + i" class="narrow" /></td>
+          <td><input type="number" [(ngModel)]="v.price" [name]="'vprice' + i" class="narrow" /></td>
+          <td><input type="number" [(ngModel)]="v.stockQuantity" [name]="'vstock' + i" class="narrow" /></td>
+          <td><input type="number" [(ngModel)]="v.lowStockThreshold" [name]="'vthr' + i" class="narrow" /></td>
+          <td><input type="checkbox" [(ngModel)]="v.isActive" [name]="'vactive' + i" /></td>
+          <td>
+            <div class="image-picker image-picker-sm">
+              <div class="gallery-item" *ngFor="let image of v.imageUrls; let j = index">
+                <img class="preview preview-sm" [src]="previewUrl(image)" [alt]="('Variant image ' + (j + 1)) | t" />
+                <button type="button" class="btn btn-outline btn-sm" [disabled]="uploading || j === 0" (click)="makePrimary(v, j)">{{ (j === 0 ? 'Primary' : 'Make primary') | t }}</button>
+                <button type="button" class="btn btn-outline btn-sm" [disabled]="uploading" (click)="removeImage(v, j)">{{ 'Remove' | t }}</button>
+              </div>
+              <input type="file" accept="image/png,image/jpeg,image/webp" multiple [disabled]="uploading" (change)="onVariantImage($event, v)" />
+            </div>
+          </td>
+          <td><button type="button" class="btn btn-danger btn-sm" (click)="removeVariant(i)">{{ 'Remove' | t }}</button></td>
+        </tr>
+      </tbody>
+    </table></div>
+    <button type="button" class="btn btn-outline btn-sm" (click)="addVariant()">{{ '+ Add variant' | t }}</button>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn btn-primary" [disabled]="uploading || saving" (click)="save()">{{ (saving ? 'Saving…' : (uploading ? 'Uploading images…' : (editing ? 'Update' : 'Create'))) | t }}</button>
+    <button class="btn btn-outline" [disabled]="uploading" *ngIf="editing" (click)="startCreate()">{{ 'Cancel' | t }}</button>
+  </div>
+</div>
+
+<!-- Bulk price update -->
+<div class="card bulk-card">
+  <h3>{{ 'Bulk price update' | t }}</h3>
+  <p class="muted small">{{ 'Tick products below, set a price, and apply.' | t }}</p>
+  <div class="bulk-row">
+    <input type="number" [attr.placeholder]="'New price' | t" [(ngModel)]="bulkPrice" name="bulkPrice" />
+    <button class="btn btn-secondary" (click)="applyBulk()">{{ 'Apply to selected' | t }}</button>
+  </div>
+</div>
+
+<!-- Product table -->
+<div class="card">
+  <div class="table-scroll" tabindex="0" role="region" [attr.aria-label]="'Data table'|t" *ngIf="products.length"><table class="data">
+    <thead>
+      <tr><th></th><th>{{ 'Name' | t }}</th><th>{{ 'Brand' | t }}</th><th>{{ 'Price' | t }}</th><th>{{ 'Category' | t }}</th><th>{{ 'Variants' | t }}</th><th>{{ 'Stock' | t }}</th><th>{{ 'Active' | t }}</th><th></th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let p of products">
+        <td><input type="checkbox" [(ngModel)]="selectedIds[p.id]" [name]="'sel' + p.id" /></td>
+        <td>{{ (p.name) | t }}</td>
+        <td>{{ (p.brand) | t }}</td>
+        <td>{{ (p.basePrice | storeCurrency) | t }}</td>
+        <td>{{ (p.categoryName || p.categoryId) | t }}</td>
+        <td>{{ (p.hasVariants ? (p.variants?.length || 0) : '—') | t }}</td>
+        <td>{{ (stockLabel(p)) | t }}</td>
+        <td><span class="badge" [class.badge-ok]="p.isActive" [class.badge-muted]="!p.isActive">{{ (p.isActive ? 'Yes' : 'No') | t }}</span></td>
+        <td class="actions">
+          <button class="btn btn-outline btn-sm" (click)="startEdit(p)">{{ 'Edit' | t }}</button>
+          <button class="btn btn-danger btn-sm" (click)="remove(p)">{{ 'Delete' | t }}</button>
+        </td>
+      </tr>
+    </tbody>
+  </table></div>
+  <p class="muted" *ngIf="!products.length && !loading">{{ 'No products.' | t }}</p>
+</div>

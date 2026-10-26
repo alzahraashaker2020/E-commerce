@@ -8,6 +8,7 @@ namespace Shop.SL.TokenManager;
 /// </summary>
 public interface ITokenService
 {
+    TokenVM GeneratePlatformToken(int id, string username);
     /// <summary>
     /// Generates a signed JWT for the supplied admin user and returns it,
     /// together with its UTC expiry, as a <see cref="TokenVM"/>.

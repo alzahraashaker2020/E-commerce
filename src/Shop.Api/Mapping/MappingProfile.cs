@@ -56,7 +56,7 @@ public class MappingProfile : Profile
 
         // Order -> admin list row: show the customer name when present,
         // otherwise the guest name; render the status enum as its string name.
-        CreateMap<Order, AdminOrderListItemVM>()
+        CreateMap<Order, MerchantOrderListItemVM>()
             .ForMember(d => d.CustomerName, o => o.MapFrom(s =>
                 s.Customer != null ? s.Customer.FullName : s.GuestName))
             .ForMember(d => d.Status, o => o.MapFrom(s => s.StatusDefinition != null ? s.StatusDefinition.Name : s.Status.ToString()))

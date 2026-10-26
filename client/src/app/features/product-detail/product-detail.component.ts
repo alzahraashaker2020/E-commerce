@@ -1,3 +1,5 @@
+import { LocalDatePipe, LocalNumberPipe } from '../../core/i18n/format.pipe';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -9,6 +11,7 @@ import { ProductDetail, ProductVariant } from '../../core/models/api.models';
 import { ProductReviewSummary } from '../../core/models/account.models';
 import { StoreCurrencyPipe } from '../../core/pipes/store-currency.pipe';
 import { ImageUrlPipe } from '../../core/pipes/image-url.pipe';
+import { RuntimeService } from '../../core/services/runtime.service';
 
 /**
  * Product detail page. Shows media, description, variant selector, stock, and
@@ -17,7 +20,7 @@ import { ImageUrlPipe } from '../../core/pipes/image-url.pipe';
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, StoreCurrencyPipe, ImageUrlPipe],
+  imports: [LocalDatePipe, LocalNumberPipe,TranslatePipe,CommonModule, FormsModule, RouterLink, StoreCurrencyPipe, ImageUrlPipe],
   templateUrl: './product-detail.component.html',
   styleUrl: './product-detail.component.css'
 })
@@ -44,7 +47,8 @@ export class ProductDetailComponent implements OnInit {
     private cart: CartService,
     private account: AccountService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    public runtime:RuntimeService
   ) {}
 
   ngOnInit(): void {

@@ -3,10 +3,8 @@ using Shop.DAL.Models;
 namespace Shop.BLL.Email;
 
 /// <summary>
-/// Sends transactional emails. In demo mode (SMTP disabled) messages are logged
-/// and persisted to disk; when SMTP is enabled they are delivered via
-/// <see cref="System.Net.Mail.SmtpClient"/>. Every send is best-effort: failures
-/// are logged and swallowed so e-mailing never breaks the caller's flow.
+/// Queues transactional messages in the current store's durable outbox.
+/// SMTP delivery and retries occur in a background worker after commit.
 /// </summary>
 public interface IEmailService
 {

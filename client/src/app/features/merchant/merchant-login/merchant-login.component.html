@@ -1,0 +1,23 @@
+<div class="login-wrap">
+  <form class="login-card card" (ngSubmit)="login()">
+    <h1>{{ 'Merchant sign in' | t }}</h1>
+    <p class="muted small">{{ 'Use the merchant account assigned to this store.' | t }}</p>
+
+    <div class="alert alert-error" *ngIf="error">{{ (error) | t }}</div>
+
+    <div class="field">
+      <label for="username">{{ 'Username' | t }}</label>
+      <input id="username" name="username" [(ngModel)]="username" required autocomplete="username" />
+    </div>
+    <div class="field">
+      <label for="password">{{ 'Password' | t }}</label>
+      <input id="password" name="password" type="password" [(ngModel)]="password" required autocomplete="current-password" />
+    </div>
+
+    <button class="btn btn-primary full" type="submit" [disabled]="submitting">
+      {{ (submitting ? 'Signing in…' : 'Sign in') | t }}
+    </button>
+    <p><a routerLink="/merchant/register">{{ 'How to create a merchant account' | t }}</a></p>
+    <p><a routerLink="/login">{{ 'Customer sign in' | t }}</a></p>
+  </form>
+</div>

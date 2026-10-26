@@ -3,7 +3,8 @@
 param(
     [string]$ApiDll,
     [string]$AdditionalChecks,
-    [string]$SeedDatabase
+    [string]$SeedDatabase,
+    [switch]$PostgresTenants
 )
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path $PSScriptRoot -Parent
@@ -25,14 +26,40 @@ $envValues = @{
     'ConnectionStrings__SqliteConnection' = 'Data Source=' + (Join-Path $runDir 'test.db')
     'ASPNETCORE_URLS' = $base
     'ASPNETCORE_ENVIRONMENT' = 'Development'
+    'Platform__DefaultStoreHost' = '127.0.0.1'
+    'ConnectionStrings__PlatformConnection' = 'Data Source=' + (Join-Path $runDir 'platform.db')
+    'Platform__BootstrapUsername' = 'platform-test'
+    'Platform__BootstrapPassword' = 'Platform-test-' + [guid]::NewGuid().ToString('N')
+    'StoreConnections__Alpha__Provider' = 'Sqlite'
+    'StoreConnections__Alpha__ConnectionString' = 'Data Source=' + (Join-Path $runDir 'alpha.db')
+    'StoreConnections__Beta__Provider' = 'Sqlite'
+    'StoreConnections__Beta__ConnectionString' = 'Data Source=' + (Join-Path $runDir 'beta.db')
+    'StoreConnections__Alias__Provider' = 'Sqlite'
+    'StoreConnections__Alias__ConnectionString' = 'Data Source=' + (Join-Path $runDir 'alpha.db')
     'Email__Enabled' = 'false'
 }
 $previous = @{}
+if ($PostgresTenants) {
+    if (!$env:SHOP_TEST_POSTGRES) { throw 'An isolated PostgreSQL test cluster is required.' }
+    foreach ($key in @('Alpha','Beta')) {
+        $databaseName = 'shop_tenant_' + $key.ToLowerInvariant() + '_' + [guid]::NewGuid().ToString('N')
+        $connection = [regex]::Replace($env:SHOP_TEST_POSTGRES, '(?i)(^|;)Database=[^;]*', ('${1}Database=' + $databaseName))
+        $envValues["StoreConnections__${key}__Provider"] = 'Postgres'
+        $envValues["StoreConnections__${key}__ConnectionString"] = $connection
+    }
+    $envValues.StoreConnections__Alias__Provider = 'Postgres'
+    $envValues.StoreConnections__Alias__ConnectionString = $envValues.StoreConnections__Alpha__ConnectionString
+}
 $apiProcess = $null
 $script:checks = 0
 
-function Request($method, $path, $token = '', $body = $null) {
+function Request($method, $path, $token = '', $body = $null, $trackingCode = '') {
+    if ($path -eq '/api/checkout' -and $method -eq 'POST' -and $body -is [System.Collections.IDictionary] -and !$body.Contains('idempotencyKey')) {
+        $body = @{} + $body
+        $body.idempotencyKey = [guid]::NewGuid().ToString()
+    }
     $headers = @{}
+    if ($trackingCode) { $headers['X-Order-Tracking-Token']=$trackingCode }
     if ($token) { $headers.Authorization = 'Bearer ' + $token }
     $args = @{
         Uri = $base + $path; Method = $method; Headers = $headers
@@ -42,7 +69,7 @@ function Request($method, $path, $token = '', $body = $null) {
         $args.ContentType = 'application/json'
         $args.Body = $body | ConvertTo-Json -Depth 8 -Compress
     }
-    elseif ($path -eq '/api/admin/uploads' -and $method -eq 'POST') {
+    elseif ($path -eq '/api/merchant/uploads' -and $method -eq 'POST') {
         $args.ContentType = 'multipart/form-data; boundary=security-test-boundary'
         $args.Body = "--security-test-boundary--`r`n"
     }
@@ -55,7 +82,7 @@ function Request($method, $path, $token = '', $body = $null) {
 
 function ExpectStatus($response, $expected, $name) {
     if ([int]$response.StatusCode -ne $expected) {
-        throw "$name expected HTTP $expected, received $($response.StatusCode)"
+        throw "$name expected HTTP $expected, received $($response.StatusCode). Response: $($response.Content)"
     }
     $script:checks++
 }
@@ -83,14 +110,14 @@ try {
     ExpectStatus $customerLogin 200 'Customer login'
     $customerToken = ($customerLogin.Content | ConvertFrom-Json).data.token
     if (!$customerToken) { throw 'Customer login did not return a token.' }
-    $adminLogin = Request POST '/api/auth/login' '' @{username='admin';password='Admin@12345'}
+    $adminLogin = Request POST '/api/merchant/auth/login' '' @{username='admin';password='Admin@12345'}
     ExpectStatus $adminLogin 200 'Admin login'
     $adminToken = ($adminLogin.Content | ConvertFrom-Json).data.token
     if (!$adminToken) { throw 'Admin login did not return a token.' }
 
     # Exercise every documented admin action, including writes/uploads.
     # An empty payload must not reach validation or persistence for a customer.
-    $adminPaths = @($schema.paths.PSObject.Properties | Where-Object Name -Like '/api/admin/*')
+    $adminPaths = @($schema.paths.PSObject.Properties | Where-Object { $_.Name -like '/api/merchant/*' -and $_.Name -notlike '/api/merchant/auth/*' -and $_.Name -notlike '/api/merchant/operations/*' })
     if (!$adminPaths.Count) { throw 'No admin endpoints found in API schema.' }
     foreach ($entry in $adminPaths) {
         $path = $entry.Name -replace '\{[^}]+\}', '1'
@@ -102,13 +129,13 @@ try {
         }
     }
     foreach ($path in @('products','categories','sizes','colors','orders','customers','settings','discounts','inventory/low-stock','sales/overview')) {
-        ExpectStatus (Request GET "/api/admin/$path" $adminToken) 200 "Admin GET $path"
+        ExpectStatus (Request GET "/api/merchant/$path" $adminToken) 200 "Admin GET $path"
     }
-    ExpectStatus (Request POST '/api/admin/uploads' $adminToken) 400 'Admin upload reaches file validation'
+    ExpectStatus (Request POST '/api/merchant/uploads' $adminToken) 400 'Admin upload reaches file validation'
     ExpectStatus (Request GET '/api/account/profile' $customerToken) 200 'Customer can access own profile'
     ExpectStatus (Request GET '/api/account/profile' $adminToken) 403 'Admin cannot impersonate customer profile'
     ExpectStatus (Request GET '/api/catalog') 200 'Public catalog remains accessible'
-    ExpectStatus (Request POST '/api/auth/login' '' @{username='admin';password='incorrect'}) 401 'Invalid admin password'
+    ExpectStatus (Request POST '/api/merchant/auth/login' '' @{username='admin';password='incorrect'}) 401 'Invalid admin password'
     foreach ($provider in @('Google','Facebook')) {
         $social = Request POST '/api/account/social' '' @{provider=$provider;credential='attacker:jordan@demo.local:Fake User'}
         ExpectStatus $social 503 "$provider fabricated credential rejected"
@@ -121,7 +148,7 @@ try {
     ExpectStatus $registration 200 'Customer registration'
     $newToken = ($registration.Content | ConvertFrom-Json).data.token
     if (!$newToken) { throw 'Registration did not return a token.' }
-    ExpectStatus (Request GET '/api/admin/products' $newToken) 403 'New customer cannot access admin'
+    ExpectStatus (Request GET '/api/merchant/products' $newToken) 403 'New customer cannot access admin'
     if ($AdditionalChecks) { . (Resolve-Path -LiteralPath $AdditionalChecks).Path }
     Write-Output "PASS: $script:checks HTTP checks. Isolated test data: $runDir"
 } finally {

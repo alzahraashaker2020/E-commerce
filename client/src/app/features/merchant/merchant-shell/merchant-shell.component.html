@@ -1,0 +1,39 @@
+<div class="merchant-layout">
+  <!-- Sidebar navigation -->
+  <button type="button" class="merchant-menu-toggle" (click)="merchantMenuOpen=!merchantMenuOpen" [attr.aria-expanded]="merchantMenuOpen" aria-controls="merchant-navigation">☰ {{'Store management'|t}}</button>
+  <aside id="merchant-navigation" class="merchant-sidebar" [class.menu-open]="merchantMenuOpen">
+    <div class="merchant-brand">{{ '◆ Merchant' | t }}</div>
+    <nav (click)="merchantMenuOpen=false">
+      <a routerLink="/merchant/notifications" routerLinkActive="active">{{ 'Email notifications' | t }}</a>
+      <a routerLink="/merchant/returns" routerLinkActive="active">{{ 'Returns and refunds' | t }}</a>
+      <a routerLink="/merchant/activity" routerLinkActive="active">{{ 'Store activity' | t }}</a>
+      <a *ngIf="runtime.hasFeature('StorefrontDesign')" routerLink="/merchant/languages" routerLinkActive="active">{{'Languages & translations'|t}}</a>
+      <a *ngIf="runtime.hasFeature('StorefrontDesign')" routerLink="/merchant/storefront" routerLinkActive="active">{{ 'Storefront & design' | t }}</a>
+      <a *ngIf="runtime.saasEnabled" routerLink="/merchant/subscription" routerLinkActive="active">{{ 'My subscription' | t }}</a>
+      <a *ngIf="runtime.operationsEnabled" routerLink="/merchant/operations" routerLinkActive="active">{{ 'Backups and operations' | t }}</a>
+      <a routerLink="/merchant/dashboard" routerLinkActive="active">{{ 'Sales overview' | t }}</a>
+      <a routerLink="/merchant/products" routerLinkActive="active">{{ 'Products' | t }}</a>
+      <a routerLink="/merchant/categories" routerLinkActive="active">{{ 'Categories' | t }}</a>
+      <a routerLink="/merchant/sizes" routerLinkActive="active">{{ 'Sizes' | t }}</a>
+      <a routerLink="/merchant/colors" routerLinkActive="active">{{ 'Colors' | t }}</a>
+      <a routerLink="/merchant/currencies" routerLinkActive="active">{{ 'Currencies' | t }}</a>
+      <a routerLink="/merchant/order-statuses" routerLinkActive="active">{{ 'Order statuses' | t }}</a>
+      <a routerLink="/merchant/delivery" routerLinkActive="active">{{ 'Delivery and shipping' | t }}</a>
+      <a routerLink="/merchant/inventory" routerLinkActive="active">{{ 'Inventory alerts' | t }}</a>
+      <a routerLink="/merchant/orders" routerLinkActive="active">{{ 'Orders' | t }}</a>
+      <a *ngIf="runtime.hasFeature('Discounts')" routerLink="/merchant/discounts" routerLinkActive="active">{{ 'Discounts' | t }}</a>
+      <a routerLink="/merchant/customers" routerLinkActive="active">{{ 'Customers' | t }}</a>
+    </nav>
+    <div class="merchant-user">
+      <span class="muted small">{{ 'Signed in as' | t }}</span>
+      <strong>{{ username }}</strong>
+      <button class="btn btn-outline btn-sm" (click)="logout()">{{ 'Sign out' | t }}</button>
+    </div>
+  </aside>
+
+  <!-- Routed merchant content -->
+  <section class="merchant-content">
+    <p class="alert alert-error" *ngIf="sellingPaused">{{ 'Your subscription needs attention. New orders and management changes are paused.' | t }} <a routerLink="/merchant/subscription">{{ 'View subscription' | t }}</a></p>
+    <router-outlet></router-outlet>
+  </section>
+</div>

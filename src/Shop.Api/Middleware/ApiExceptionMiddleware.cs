@@ -40,11 +40,15 @@ public class ApiExceptionMiddleware
         {
             // Log the full exception (including stack) server-side only.
             _logger.LogError(ex, "Unhandled exception processing {Method} {Path}",
-                context.Request.Method, context.Request.Path);
+                context.Request.Method, (context.GetEndpoint() as Microsoft.AspNetCore.Routing.RouteEndpoint)?.RoutePattern.RawText??"unmatched-api-route");
+            if(!context.Items.ContainsKey("OperationErrorRecorded"))
+                await context.RequestServices.GetRequiredService<Shop.Api.Operations.OperationJournal>().WriteAsync(
+                    context.RequestServices.GetRequiredService<Shop.Api.Tenancy.StoreScope>().Store?.Id??"","anonymous","anonymous",(context.GetEndpoint() as Microsoft.AspNetCore.Routing.RouteEndpoint)?.RoutePattern.RawText??"unmatched-api-route",context.Request.Method,500,context.TraceIdentifier,ex.GetType().Name);
 
             // Return the standard ApiResponse 500 shape; never leak the stack.
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            context.Response.Headers["X-Error-Reference"]=context.TraceIdentifier;
 
             ApiResponse<object> body = ApiResponse<object>.Fail("Unexpected error", 500);
             await context.Response.WriteAsync(JsonSerializer.Serialize(body));

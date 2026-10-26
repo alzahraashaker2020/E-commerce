@@ -15,14 +15,14 @@ import { OrderTracking } from '../models/api.models';
 
 /**
  * Customer account access and session state. Stores the customer JWT in
- * localStorage (separate key from the admin token) and exposes a reactive
+ * localStorage (separate key from the merchant token) and exposes a reactive
  * logged-in flag and display name for the header. The customer token is
  * attached to protected requests by the customer auth interceptor.
  */
 @Injectable({ providedIn: 'root' })
 export class AccountService {
-  private static readonly TOKEN_KEY = 'shop_customer_token';
-  private static readonly USER_KEY = 'shop_customer_user';
+  private static readonly TOKEN_KEY = 'shop_customer_token:' + window.location.hostname;
+  private static readonly USER_KEY = 'shop_customer_user:' + window.location.hostname;
 
   private readonly loggedInSubject = new BehaviorSubject<boolean>(this.hasToken());
   private readonly nameSubject = new BehaviorSubject<string | null>(this.storedName());

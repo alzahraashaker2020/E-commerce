@@ -1,0 +1,6 @@
+{
+  "Deployment": {
+    "Mode": "Standalone",
+    "StandaloneStoreId": "default"
+  }
+}

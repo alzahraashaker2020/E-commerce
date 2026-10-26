@@ -1,3 +1,4 @@
+@import './management.css';
 /* Global design tokens and base styles for the MakaniShop demo. */
 :root {
   /* Palette derived from the reference site's footer: a warm terracotta/clay
@@ -84,7 +85,7 @@ a { color: var(--accent-dark); }
 
 /* Tables */
 table.data { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-table.data th, table.data td { text-align: left; padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--border); }
+table.data th, table.data td { text-align: start; padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--border); }
 table.data th { color: var(--muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; }
 
 /* Utility */
@@ -101,3 +102,31 @@ table.data th { color: var(--muted); font-weight: 600; font-size: 0.8rem; text-t
 .alert-error { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
 .alert-info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
 .loading { color: var(--muted); padding: 2rem; text-align: center; }
+.global-language{display:block;text-align:end;padding:8px 16px;background:var(--card);color:var(--accent-dark)}
+html[dir=rtl] body{font-family:'Segoe UI',Tahoma,Arial,sans-serif}html[dir=rtl] h1,html[dir=rtl] h2,html[dir=rtl] h3{letter-spacing:0}input[type=email],input[type=password],input[type=tel],code{direction:ltr;text-align:start}input,button,select,textarea{font-family:inherit}button:focus-visible,a:focus-visible{outline:3px solid #e4ad38;outline-offset:3px}.merchant-content{min-width:0}.table-scroll{max-width:100%;overflow:auto}
+@media(max-width:650px){.row,.spread{flex-wrap:wrap}.page{padding-inline:12px}.card{max-width:100%}input,select,textarea{max-width:100%}table.data{display:block;max-width:100%;overflow-x:auto}button.btn{min-height:42px}.merchant-sidebar nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.merchant-sidebar nav a{font-size:13px}.kids-theme button.add-button{min-height:44px}.kids-theme .options button{min-height:40px;min-width:42px}}
+
+/* Responsive kids header and navigation, scoped to its theme. */
+
+app-kids-shell .kids-theme .menu-toggle,app-kids-shell .kids-theme .mobile-language,app-kids-shell .kids-theme .menu-close,app-kids-shell .kids-theme .menu-backdrop{display:none}
+app-kids-shell .kids-theme .header-actions{margin-left:0;margin-inline-start:auto}
+@media(max-width:650px){
+ app-kids-shell .kids-theme .top-bar>div{height:auto;min-height:38px;padding:7px 0;text-align:center}app-kids-shell .kids-theme .desktop-language{display:none}app-kids-shell .kids-theme .top-bar a{display:none}
+ app-kids-shell .kids-theme .main-header{gap:12px;padding-block:18px}app-kids-shell .kids-theme .menu-toggle{display:grid;place-items:center;width:40px;height:44px;padding:7px;background:transparent;border:0;color:#233954;cursor:pointer}app-kids-shell .kids-theme .menu-toggle svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.8}
+ app-kids-shell .kids-theme .kids-logo{font-size:23px;gap:6px}app-kids-shell .kids-theme .logo-flower{font-size:36px}app-kids-shell .kids-theme .kids-logo small{font-size:8px;letter-spacing:3px}app-kids-shell .kids-theme .header-actions{gap:8px}app-kids-shell .kids-theme .header-actions a{min-width:40px;min-height:44px;justify-content:center}
+ app-kids-shell .kids-theme .search{order:3;flex:1 1 calc(100% - 118px);max-width:calc(100% - 110px);padding-inline:12px}app-kids-shell .kids-theme .search input{font-size:14px;min-height:48px}app-kids-shell .kids-theme .mobile-language{display:block;order:4;color:#426fb0}
+ app-kids-shell .kids-theme .collection-nav{display:none}app-kids-shell .kids-theme .collection-nav.menu-open{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:2px;position:fixed;inset-block:0;inset-inline-start:0;z-index:101;background:white;width:min(320px,85vw);padding:22px;overflow-y:auto;box-shadow:0 0 40px #182f4f35;margin:0}
+ app-kids-shell .kids-theme .menu-open a{padding:14px 4px;font-size:15px;border-bottom:1px solid #edf0f4}app-kids-shell .kids-theme .menu-open a span{float:inline-end}app-kids-shell .kids-theme .menu-close{display:block;border:0;background:#edf2f9;color:#28466c;padding:12px;font-size:14px;cursor:pointer;text-align:start;margin-bottom:14px}
+ app-kids-shell .kids-theme .menu-backdrop{display:block;position:fixed;inset:0;background:#152a4260;z-index:100;border:0;width:100%;height:100%}
+ app-kids-shell .kids-theme .shipping-pills{grid-template-columns:repeat(2,minmax(0,1fr))}app-kids-shell .kids-theme .shipping-pills a{padding:13px 9px;border:1px solid #ffffff70;min-height:76px;justify-content:center;gap:5px}app-kids-shell .kids-theme .shipping-pills strong{font-size:13px}app-kids-shell .kids-theme .shipping-pills a span{display:block;font-size:11px;line-height:1.4}
+}
+@media(max-width:360px){app-kids-shell .kids-theme .kids-width,app-kids-shell .kids-theme .top-bar>div{width:calc(100% - 24px)}app-kids-shell .kids-theme .kids-logo{font-size:20px}app-kids-shell .kids-theme .logo-flower{font-size:30px}app-kids-shell .kids-theme .header-actions{gap:2px}app-kids-shell .kids-theme .menu-toggle{width:32px}app-kids-shell .kids-theme .main-header{gap:9px}}
+[dir=rtl] app-kids-shell .kids-theme .kids-logo{letter-spacing:0}[dir=rtl] app-kids-shell .kids-theme .kids-logo small{letter-spacing:0}[dir=rtl] app-kids-shell .kids-theme .bag span{right:auto;inset-inline-end:-3px}
+@font-face{font-family:NotoArabic;src:url(/fonts/NotoSansArabic.ttf) format("truetype");font-weight:100 900;font-style:normal;font-display:swap}html[dir=rtl] body,html[dir=rtl] .kids-theme{font-family:NotoArabic,"Segoe UI",Arial,sans-serif}
+
+/* Shared customer/merchant access presentation. Fields differ; visual system is shared. */
+.access-page .auth-wrap,.access-page .login-wrap{min-height:0;padding:0;margin:0}
+.access-page .auth-card,.access-page .login-card{max-width:620px;width:100%;box-sizing:border-box;border:1px solid #dbe3e8;border-radius:18px;box-shadow:0 12px 40px #152e4010;background:#fff;padding:1.5rem}
+.access-page .onboarding{margin:0 auto;padding:0;max-width:620px}
+.access-page input:not([type=checkbox]):not([type=radio]),.access-page select,.access-page textarea{border:1px solid #cbd6df;border-radius:9px;padding:.8rem;background:#fbfcfd;box-sizing:border-box;color:#172b3a}
+.access-page .btn-primary{background:#163b45;color:white;border-radius:9px;border:0;padding:.85rem 1.2rem}

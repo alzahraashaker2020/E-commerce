@@ -301,6 +301,112 @@ namespace Shop.DAL.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Shop.DAL.Models.Color", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("HexCode")
+                        .HasMaxLength(9)
+                        .HasColumnType("character varying(9)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDemoData")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Colors");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            DisplayOrder = 1,
+                            HexCode = "#D8C3A5",
+                            IsActive = true,
+                            IsDemoData = true,
+                            Name = "Beige"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            DisplayOrder = 2,
+                            HexCode = "#808080",
+                            IsActive = true,
+                            IsDemoData = true,
+                            Name = "Grey"
+                        });
+                });
+
+            modelBuilder.Entity("Shop.DAL.Models.Currency", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Currencies");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Code = "EGP",
+                            IsActive = true,
+                            Name = "Egyptian Pound",
+                            Symbol = "E£"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Code = "USD",
+                            IsActive = true,
+                            Name = "US Dollar",
+                            Symbol = "$"
+                        });
+                });
+
             modelBuilder.Entity("Shop.DAL.Models.Customer", b =>
                 {
                     b.Property<int>("Id")
@@ -378,6 +484,42 @@ namespace Shop.DAL.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Shop.DAL.Models.DeliveryArea", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<int>("GovernorateId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<decimal>("ShippingFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GovernorateId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("DeliveryAreas");
+                });
+
             modelBuilder.Entity("Shop.DAL.Models.Discount", b =>
                 {
                     b.Property<int>("Id")
@@ -440,7 +582,7 @@ namespace Shop.DAL.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Shop.DAL.Models.InventoryItem", b =>
+            modelBuilder.Entity("Shop.DAL.Models.Governorate", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -448,202 +590,20 @@ namespace Shop.DAL.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("IsDemoData")
+                    b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("LowStockThreshold")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("QuantityOnHand")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("VariantId")
-                        .HasColumnType("integer");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("Name")
+                        .IsUnique();
 
-                    b.HasIndex("VariantId");
-
-                    b.ToTable("InventoryItems");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 3001,
-                            IsDemoData = true,
-                            LowStockThreshold = 5,
-                            ProductId = 101,
-                            QuantityOnHand = 40,
-                            VariantId = 1001
-                        },
-                        new
-                        {
-                            Id = 3002,
-                            IsDemoData = true,
-                            LowStockThreshold = 5,
-                            ProductId = 101,
-                            QuantityOnHand = 3,
-                            VariantId = 1002
-                        },
-                        new
-                        {
-                            Id = 3003,
-                            IsDemoData = true,
-                            LowStockThreshold = 5,
-                            ProductId = 101,
-                            QuantityOnHand = 18,
-                            VariantId = 1003
-                        },
-                        new
-                        {
-                            Id = 3004,
-                            IsDemoData = true,
-                            LowStockThreshold = 5,
-                            ProductId = 102,
-                            QuantityOnHand = 22,
-                            VariantId = 1004
-                        },
-                        new
-                        {
-                            Id = 3005,
-                            IsDemoData = true,
-                            LowStockThreshold = 5,
-                            ProductId = 102,
-                            QuantityOnHand = 2,
-                            VariantId = 1005
-                        },
-                        new
-                        {
-                            Id = 3006,
-                            IsDemoData = true,
-                            LowStockThreshold = 6,
-                            ProductId = 103,
-                            QuantityOnHand = 55
-                        },
-                        new
-                        {
-                            Id = 3007,
-                            IsDemoData = true,
-                            LowStockThreshold = 5,
-                            ProductId = 104,
-                            QuantityOnHand = 30
-                        },
-                        new
-                        {
-                            Id = 3008,
-                            IsDemoData = true,
-                            LowStockThreshold = 4,
-                            ProductId = 105,
-                            QuantityOnHand = 14,
-                            VariantId = 1006
-                        },
-                        new
-                        {
-                            Id = 3009,
-                            IsDemoData = true,
-                            LowStockThreshold = 4,
-                            ProductId = 105,
-                            QuantityOnHand = 4,
-                            VariantId = 1007
-                        },
-                        new
-                        {
-                            Id = 3010,
-                            IsDemoData = true,
-                            LowStockThreshold = 4,
-                            ProductId = 106,
-                            QuantityOnHand = 16
-                        },
-                        new
-                        {
-                            Id = 3011,
-                            IsDemoData = true,
-                            LowStockThreshold = 5,
-                            ProductId = 107,
-                            QuantityOnHand = 26,
-                            VariantId = 1008
-                        },
-                        new
-                        {
-                            Id = 3012,
-                            IsDemoData = true,
-                            LowStockThreshold = 5,
-                            ProductId = 107,
-                            QuantityOnHand = 20,
-                            VariantId = 1009
-                        },
-                        new
-                        {
-                            Id = 3013,
-                            IsDemoData = true,
-                            LowStockThreshold = 5,
-                            ProductId = 108,
-                            QuantityOnHand = 38
-                        },
-                        new
-                        {
-                            Id = 3014,
-                            IsDemoData = true,
-                            LowStockThreshold = 4,
-                            ProductId = 109,
-                            QuantityOnHand = 12
-                        },
-                        new
-                        {
-                            Id = 3015,
-                            IsDemoData = true,
-                            LowStockThreshold = 5,
-                            ProductId = 110,
-                            QuantityOnHand = 4
-                        },
-                        new
-                        {
-                            Id = 3016,
-                            IsDemoData = true,
-                            LowStockThreshold = 4,
-                            ProductId = 111,
-                            QuantityOnHand = 15,
-                            VariantId = 1010
-                        },
-                        new
-                        {
-                            Id = 3017,
-                            IsDemoData = true,
-                            LowStockThreshold = 4,
-                            ProductId = 111,
-                            QuantityOnHand = 9,
-                            VariantId = 1011
-                        },
-                        new
-                        {
-                            Id = 3018,
-                            IsDemoData = true,
-                            LowStockThreshold = 4,
-                            ProductId = 111,
-                            QuantityOnHand = 6,
-                            VariantId = 1012
-                        },
-                        new
-                        {
-                            Id = 3019,
-                            IsDemoData = true,
-                            LowStockThreshold = 5,
-                            ProductId = 112,
-                            QuantityOnHand = 28
-                        },
-                        new
-                        {
-                            Id = 3020,
-                            IsDemoData = true,
-                            LowStockThreshold = 5,
-                            ProductId = 113,
-                            QuantityOnHand = 33
-                        });
+                    b.ToTable("Governorates");
                 });
 
             modelBuilder.Entity("Shop.DAL.Models.Order", b =>
@@ -654,7 +614,39 @@ namespace Shop.DAL.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AddressLine1")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("AddressLine2")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ContactPhone")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
                     b.Property<int?>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("DeliveryAreaId")
                         .HasColumnType("integer");
 
                     b.Property<decimal>("DiscountTotal")
@@ -675,15 +667,40 @@ namespace Shop.DAL.Migrations
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
 
+                    b.Property<int>("PaymentMethod")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PaymentStatus")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("PlacedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PostalCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<decimal>("ShippingTotal")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
+                    b.Property<string>("StateRegion")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<int>("Status")
+                        .IsConcurrencyToken()
                         .HasColumnType("integer");
+
+                    b.Property<int?>("StatusDefinitionId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("StockDeducted")
+                        .IsConcurrencyToken()
+                        .HasColumnType("boolean");
 
                     b.Property<decimal>("Subtotal")
                         .HasPrecision(18, 2)
@@ -701,8 +718,12 @@ namespace Shop.DAL.Migrations
 
                     b.HasIndex("CustomerId");
 
+                    b.HasIndex("DeliveryAreaId");
+
                     b.HasIndex("OrderNumber")
                         .IsUnique();
+
+                    b.HasIndex("StatusDefinitionId");
 
                     b.ToTable("Orders");
 
@@ -710,13 +731,24 @@ namespace Shop.DAL.Migrations
                         new
                         {
                             Id = 5001,
+                            AddressLine1 = "100 Market Street",
+                            AddressLine2 = "Apt 4B",
+                            City = "Seattle",
+                            ContactPhone = "+1-555-0100",
+                            Country = "United States",
+                            CurrencyCode = "USD",
                             CustomerId = 1,
                             DiscountTotal = 12.50m,
                             IsDemoData = true,
                             OrderNumber = "ORD-20240210-A1B2C3",
+                            PaymentMethod = 1,
+                            PaymentStatus = 1,
                             PlacedAt = new DateTime(2024, 2, 10, 9, 30, 0, 0, DateTimeKind.Utc),
+                            PostalCode = "98101",
                             ShippingTotal = 0m,
+                            StateRegion = "WA",
                             Status = 1,
+                            StockDeducted = false,
                             Subtotal = 124.98m,
                             Tax = 0m,
                             Total = 112.48m
@@ -724,14 +756,24 @@ namespace Shop.DAL.Migrations
                         new
                         {
                             Id = 5002,
+                            AddressLine1 = "22 Elm Avenue",
+                            City = "Portland",
+                            ContactPhone = "+1-555-0150",
+                            Country = "United States",
+                            CurrencyCode = "USD",
                             DiscountTotal = 0m,
                             GuestEmail = "guest@demo.local",
                             GuestName = "Guest Shopper",
                             IsDemoData = true,
                             OrderNumber = "ORD-20240215-D4E5F6",
+                            PaymentMethod = 1,
+                            PaymentStatus = 1,
                             PlacedAt = new DateTime(2024, 2, 15, 14, 0, 0, 0, DateTimeKind.Utc),
+                            PostalCode = "97201",
                             ShippingTotal = 7.50m,
+                            StateRegion = "OR",
                             Status = 4,
+                            StockDeducted = false,
                             Subtotal = 159.99m,
                             Tax = 0m,
                             Total = 167.49m
@@ -739,13 +781,23 @@ namespace Shop.DAL.Migrations
                         new
                         {
                             Id = 5003,
+                            AddressLine1 = "7 Rose Court",
+                            City = "Austin",
+                            ContactPhone = "+1-555-0101",
+                            Country = "United States",
+                            CurrencyCode = "USD",
                             CustomerId = 2,
                             DiscountTotal = 0m,
                             IsDemoData = true,
                             OrderNumber = "ORD-20240301-G7H8J9",
+                            PaymentMethod = 0,
+                            PaymentStatus = 2,
                             PlacedAt = new DateTime(2024, 3, 1, 11, 15, 0, 0, DateTimeKind.Utc),
+                            PostalCode = "73301",
                             ShippingTotal = 5.00m,
+                            StateRegion = "TX",
                             Status = 0,
+                            StockDeducted = false,
                             Subtotal = 49.99m,
                             Tax = 0m,
                             Total = 54.99m
@@ -759,6 +811,10 @@ namespace Shop.DAL.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ColorSnapshot")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<bool>("IsDemoData")
                         .HasColumnType("boolean");
@@ -781,6 +837,10 @@ namespace Shop.DAL.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
+                    b.Property<string>("SizeSnapshot")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<decimal>("UnitPrice")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
@@ -802,23 +862,26 @@ namespace Shop.DAL.Migrations
                         new
                         {
                             Id = 6001,
+                            ColorSnapshot = "Beige",
                             IsDemoData = true,
                             LineTotal = 69.99m,
                             OrderId = 5001,
                             ProductId = 101,
-                            ProductNameSnapshot = "Woven Sofa Cover (Size: 3-Seater)",
+                            ProductNameSnapshot = "Woven Sofa Cover (Large, Beige)",
                             Quantity = 1,
+                            SizeSnapshot = "Large",
                             UnitPrice = 69.99m,
                             VariantId = 1002
                         },
                         new
                         {
                             Id = 6002,
+                            ColorSnapshot = "Beige",
                             IsDemoData = true,
                             LineTotal = 54.99m,
                             OrderId = 5001,
                             ProductId = 107,
-                            ProductNameSnapshot = "Printed Cushion Set (Pattern: Floral)",
+                            ProductNameSnapshot = "Printed Cushion Set (Beige)",
                             Quantity = 1,
                             UnitPrice = 54.99m,
                             VariantId = 1008
@@ -830,8 +893,9 @@ namespace Shop.DAL.Migrations
                             LineTotal = 159.99m,
                             OrderId = 5002,
                             ProductId = 111,
-                            ProductNameSnapshot = "Textured Area Rug (Size: 160x230)",
+                            ProductNameSnapshot = "Textured Area Rug (Large)",
                             Quantity = 1,
+                            SizeSnapshot = "Large",
                             UnitPrice = 159.99m,
                             VariantId = 1011
                         },
@@ -845,6 +909,125 @@ namespace Shop.DAL.Migrations
                             ProductNameSnapshot = "Macramé Wall Hanging",
                             Quantity = 1,
                             UnitPrice = 49.99m
+                        });
+                });
+
+            modelBuilder.Entity("Shop.DAL.Models.OrderStatusDefinition", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Behavior")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("OrderStatusDefinitions");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Behavior = 0,
+                            Color = "#8a776e",
+                            DisplayOrder = 0,
+                            IsActive = true,
+                            IsDefault = true,
+                            Name = "Pending"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Behavior = 1,
+                            Color = "#8a776e",
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Paid"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Behavior = 2,
+                            Color = "#8a776e",
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Processing"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Behavior = 3,
+                            Color = "#8a776e",
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Shipped"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Behavior = 4,
+                            Color = "#8a776e",
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Delivered"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Behavior = 5,
+                            Color = "#8a776e",
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Cancelled"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Behavior = 6,
+                            Color = "#8a776e",
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Confirmed"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Behavior = 7,
+                            Color = "#8a776e",
+                            DisplayOrder = 7,
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "ReadyToShip"
                         });
                 });
 
@@ -872,21 +1055,33 @@ namespace Shop.DAL.Migrations
                     b.Property<string>("DescriptionHtml")
                         .HasColumnType("text");
 
+                    b.Property<bool>("HasVariants")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsDemoData")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("LowStockThreshold")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<bool>("ShowStockQuantity")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<int>("StockQuantity")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -906,10 +1101,14 @@ namespace Shop.DAL.Migrations
                             CategoryId = 11,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DescriptionHtml = "<p>Soft woven cover that drapes any sofa in elegance.</p>",
+                            HasVariants = true,
                             IsActive = true,
                             IsDemoData = true,
+                            LowStockThreshold = 0,
                             Name = "Woven Sofa Cover",
-                            Slug = "woven-sofa-cover"
+                            ShowStockQuantity = true,
+                            Slug = "woven-sofa-cover",
+                            StockQuantity = 0
                         },
                         new
                         {
@@ -919,36 +1118,14 @@ namespace Shop.DAL.Migrations
                             CategoryId = 11,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DescriptionHtml = "<p>Form-fitting stretch slipcover for a tailored look.</p>",
+                            HasVariants = true,
                             IsActive = true,
                             IsDemoData = true,
+                            LowStockThreshold = 0,
                             Name = "Stretch Slipcover",
-                            Slug = "stretch-slipcover"
-                        },
-                        new
-                        {
-                            Id = 103,
-                            BasePrice = 39.99m,
-                            Brand = "Makani",
-                            CategoryId = 12,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DescriptionHtml = "<p>Cozy tasseled throw in warm neutral tones.</p>",
-                            IsActive = true,
-                            IsDemoData = true,
-                            Name = "Tasseled Throw Blanket",
-                            Slug = "tasseled-throw-blanket"
-                        },
-                        new
-                        {
-                            Id = 104,
-                            BasePrice = 44.99m,
-                            Brand = "Makani",
-                            CategoryId = 12,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DescriptionHtml = "<p>Chunky knitted throw for the sofa or bed.</p>",
-                            IsActive = true,
-                            IsDemoData = true,
-                            Name = "Knitted Throw",
-                            Slug = "knitted-throw"
+                            ShowStockQuantity = true,
+                            Slug = "stretch-slipcover",
+                            StockQuantity = 0
                         },
                         new
                         {
@@ -958,23 +1135,14 @@ namespace Shop.DAL.Migrations
                             CategoryId = 13,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DescriptionHtml = "<p>Set of handcrafted textured cushions.</p>",
+                            HasVariants = true,
                             IsActive = true,
                             IsDemoData = true,
+                            LowStockThreshold = 0,
                             Name = "Handmade Cushion Set",
-                            Slug = "handmade-cushion-set"
-                        },
-                        new
-                        {
-                            Id = 106,
-                            BasePrice = 84.99m,
-                            Brand = "Makani",
-                            CategoryId = 13,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DescriptionHtml = "<p>Three artisan pillows in complementary weaves.</p>",
-                            IsActive = true,
-                            IsDemoData = true,
-                            Name = "Artisan Pillow Trio",
-                            Slug = "artisan-pillow-trio"
+                            ShowStockQuantity = true,
+                            Slug = "handmade-cushion-set",
+                            StockQuantity = 0
                         },
                         new
                         {
@@ -984,49 +1152,14 @@ namespace Shop.DAL.Migrations
                             CategoryId = 14,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DescriptionHtml = "<p>Patterned printed cushion set to accent any sofa.</p>",
+                            HasVariants = true,
                             IsActive = true,
                             IsDemoData = true,
+                            LowStockThreshold = 0,
                             Name = "Printed Cushion Set",
-                            Slug = "printed-cushion-set"
-                        },
-                        new
-                        {
-                            Id = 108,
-                            BasePrice = 42.99m,
-                            Brand = "Makani",
-                            CategoryId = 14,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DescriptionHtml = "<p>Pair of floral-print pillows.</p>",
-                            IsActive = true,
-                            IsDemoData = true,
-                            Name = "Floral Print Pillows",
-                            Slug = "floral-print-pillows"
-                        },
-                        new
-                        {
-                            Id = 109,
-                            BasePrice = 49.99m,
-                            Brand = "Makani",
-                            CategoryId = 21,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DescriptionHtml = "<p>Hand-knotted macramé wall hanging.</p>",
-                            IsActive = true,
-                            IsDemoData = true,
-                            Name = "Macramé Wall Hanging",
-                            Slug = "macrame-wall-hanging"
-                        },
-                        new
-                        {
-                            Id = 110,
-                            BasePrice = 34.99m,
-                            Brand = "Makani",
-                            CategoryId = 22,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DescriptionHtml = "<p>Decorative boho wall frame.</p>",
-                            IsActive = true,
-                            IsDemoData = true,
-                            Name = "Boho Wall Frame",
-                            Slug = "boho-wall-frame"
+                            ShowStockQuantity = true,
+                            Slug = "printed-cushion-set",
+                            StockQuantity = 0
                         },
                         new
                         {
@@ -1036,10 +1169,116 @@ namespace Shop.DAL.Migrations
                             CategoryId = 31,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DescriptionHtml = "<p>Soft textured area rug in neutral tones.</p>",
+                            HasVariants = true,
                             IsActive = true,
                             IsDemoData = true,
+                            LowStockThreshold = 0,
                             Name = "Textured Area Rug",
-                            Slug = "textured-area-rug"
+                            ShowStockQuantity = true,
+                            Slug = "textured-area-rug",
+                            StockQuantity = 0
+                        },
+                        new
+                        {
+                            Id = 103,
+                            BasePrice = 39.99m,
+                            Brand = "Makani",
+                            CategoryId = 12,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DescriptionHtml = "<p>Cozy tasseled throw in warm neutral tones.</p>",
+                            HasVariants = false,
+                            IsActive = true,
+                            IsDemoData = true,
+                            LowStockThreshold = 6,
+                            Name = "Tasseled Throw Blanket",
+                            ShowStockQuantity = true,
+                            Slug = "tasseled-throw-blanket",
+                            StockQuantity = 55
+                        },
+                        new
+                        {
+                            Id = 104,
+                            BasePrice = 44.99m,
+                            Brand = "Makani",
+                            CategoryId = 12,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DescriptionHtml = "<p>Chunky knitted throw for the sofa or bed.</p>",
+                            HasVariants = false,
+                            IsActive = true,
+                            IsDemoData = true,
+                            LowStockThreshold = 5,
+                            Name = "Knitted Throw",
+                            ShowStockQuantity = true,
+                            Slug = "knitted-throw",
+                            StockQuantity = 30
+                        },
+                        new
+                        {
+                            Id = 106,
+                            BasePrice = 84.99m,
+                            Brand = "Makani",
+                            CategoryId = 13,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DescriptionHtml = "<p>Three artisan pillows in complementary weaves.</p>",
+                            HasVariants = false,
+                            IsActive = true,
+                            IsDemoData = true,
+                            LowStockThreshold = 4,
+                            Name = "Artisan Pillow Trio",
+                            ShowStockQuantity = true,
+                            Slug = "artisan-pillow-trio",
+                            StockQuantity = 16
+                        },
+                        new
+                        {
+                            Id = 108,
+                            BasePrice = 42.99m,
+                            Brand = "Makani",
+                            CategoryId = 14,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DescriptionHtml = "<p>Pair of floral-print pillows.</p>",
+                            HasVariants = false,
+                            IsActive = true,
+                            IsDemoData = true,
+                            LowStockThreshold = 5,
+                            Name = "Floral Print Pillows",
+                            ShowStockQuantity = true,
+                            Slug = "floral-print-pillows",
+                            StockQuantity = 38
+                        },
+                        new
+                        {
+                            Id = 109,
+                            BasePrice = 49.99m,
+                            Brand = "Makani",
+                            CategoryId = 21,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DescriptionHtml = "<p>Hand-knotted macramé wall hanging.</p>",
+                            HasVariants = false,
+                            IsActive = true,
+                            IsDemoData = true,
+                            LowStockThreshold = 4,
+                            Name = "Macramé Wall Hanging",
+                            ShowStockQuantity = true,
+                            Slug = "macrame-wall-hanging",
+                            StockQuantity = 12
+                        },
+                        new
+                        {
+                            Id = 110,
+                            BasePrice = 34.99m,
+                            Brand = "Makani",
+                            CategoryId = 22,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DescriptionHtml = "<p>Decorative boho wall frame.</p>",
+                            HasVariants = false,
+                            IsActive = true,
+                            IsDemoData = true,
+                            LowStockThreshold = 5,
+                            Name = "Boho Wall Frame",
+                            ShowStockQuantity = true,
+                            Slug = "boho-wall-frame",
+                            StockQuantity = 4
                         },
                         new
                         {
@@ -1049,10 +1288,14 @@ namespace Shop.DAL.Migrations
                             CategoryId = 32,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DescriptionHtml = "<p>Durable woven runner for hallways.</p>",
+                            HasVariants = false,
                             IsActive = true,
                             IsDemoData = true,
+                            LowStockThreshold = 5,
                             Name = "Woven Floor Runner",
-                            Slug = "woven-floor-runner"
+                            ShowStockQuantity = true,
+                            Slug = "woven-floor-runner",
+                            StockQuantity = 28
                         },
                         new
                         {
@@ -1062,10 +1305,14 @@ namespace Shop.DAL.Migrations
                             CategoryId = 41,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DescriptionHtml = "<p>New-season throw in autumn hues.</p>",
+                            HasVariants = false,
                             IsActive = true,
                             IsDemoData = true,
+                            LowStockThreshold = 5,
                             Name = "Autumn Collection Throw",
-                            Slug = "autumn-collection-throw"
+                            ShowStockQuantity = true,
+                            Slug = "autumn-collection-throw",
+                            StockQuantity = 33
                         });
                 });
 
@@ -1228,20 +1475,24 @@ namespace Shop.DAL.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal?>("CompareAtPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                    b.Property<int?>("ColorId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ImageUrls")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsDemoData")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("OptionName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("OptionValue")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("LowStockThreshold")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("Price")
                         .HasPrecision(18, 2)
@@ -1250,14 +1501,23 @@ namespace Shop.DAL.Migrations
                     b.Property<int>("ProductId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("SizeId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Sku")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<int>("StockQuantity")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("ColorId");
+
                     b.HasIndex("ProductId");
+
+                    b.HasIndex("SizeId");
 
                     b.ToTable("ProductVariants");
 
@@ -1265,124 +1525,148 @@ namespace Shop.DAL.Migrations
                         new
                         {
                             Id = 1001,
+                            ColorId = 1,
+                            ImageUrls = "[]",
+                            IsActive = true,
                             IsDemoData = true,
-                            OptionName = "Size",
-                            OptionValue = "2-Seater",
+                            LowStockThreshold = 3,
                             Price = 59.99m,
                             ProductId = 101,
-                            Sku = "COVER-2S"
+                            SizeId = 1,
+                            Sku = "COVER-S-BEIGE",
+                            StockQuantity = 10
                         },
                         new
                         {
                             Id = 1002,
+                            ColorId = 1,
+                            ImageUrls = "[]",
+                            IsActive = true,
                             IsDemoData = true,
-                            OptionName = "Size",
-                            OptionValue = "3-Seater",
+                            LowStockThreshold = 3,
                             Price = 69.99m,
                             ProductId = 101,
-                            Sku = "COVER-3S"
+                            SizeId = 2,
+                            Sku = "COVER-L-BEIGE",
+                            StockQuantity = 5
                         },
                         new
                         {
                             Id = 1003,
+                            ColorId = 2,
+                            ImageUrls = "[]",
+                            IsActive = true,
                             IsDemoData = true,
-                            OptionName = "Size",
-                            OptionValue = "L-Shape",
-                            Price = 89.99m,
+                            LowStockThreshold = 3,
+                            Price = 79.99m,
                             ProductId = 101,
-                            Sku = "COVER-LS"
+                            SizeId = 2,
+                            Sku = "COVER-L-GREY",
+                            StockQuantity = 8
                         },
                         new
                         {
                             Id = 1004,
-                            CompareAtPrice = 84.99m,
+                            ImageUrls = "[]",
+                            IsActive = true,
                             IsDemoData = true,
-                            OptionName = "Size",
-                            OptionValue = "2-Seater",
+                            LowStockThreshold = 5,
                             Price = 74.99m,
                             ProductId = 102,
-                            Sku = "SLIP-2S"
+                            SizeId = 1,
+                            Sku = "SLIP-S",
+                            StockQuantity = 22
                         },
                         new
                         {
                             Id = 1005,
-                            CompareAtPrice = 94.99m,
+                            ImageUrls = "[]",
+                            IsActive = true,
                             IsDemoData = true,
-                            OptionName = "Size",
-                            OptionValue = "3-Seater",
+                            LowStockThreshold = 5,
                             Price = 84.99m,
                             ProductId = 102,
-                            Sku = "SLIP-3S"
+                            SizeId = 2,
+                            Sku = "SLIP-L",
+                            StockQuantity = 2
                         },
                         new
                         {
                             Id = 1006,
+                            ColorId = 1,
+                            ImageUrls = "[]",
+                            IsActive = true,
                             IsDemoData = true,
-                            OptionName = "Colour",
-                            OptionValue = "Beige",
+                            LowStockThreshold = 4,
                             Price = 69.99m,
                             ProductId = 105,
-                            Sku = "CUSH-BEIGE"
+                            Sku = "CUSH-BEIGE",
+                            StockQuantity = 14
                         },
                         new
                         {
                             Id = 1007,
+                            ColorId = 2,
+                            ImageUrls = "[]",
+                            IsActive = true,
                             IsDemoData = true,
-                            OptionName = "Colour",
-                            OptionValue = "Clay",
+                            LowStockThreshold = 4,
                             Price = 69.99m,
                             ProductId = 105,
-                            Sku = "CUSH-CLAY"
+                            Sku = "CUSH-GREY",
+                            StockQuantity = 4
                         },
                         new
                         {
                             Id = 1008,
+                            ColorId = 1,
+                            ImageUrls = "[]",
+                            IsActive = true,
                             IsDemoData = true,
-                            OptionName = "Pattern",
-                            OptionValue = "Floral",
+                            LowStockThreshold = 5,
                             Price = 54.99m,
                             ProductId = 107,
-                            Sku = "PRNT-FLORAL"
+                            Sku = "PRNT-BEIGE",
+                            StockQuantity = 26
                         },
                         new
                         {
                             Id = 1009,
+                            ColorId = 2,
+                            ImageUrls = "[]",
+                            IsActive = true,
                             IsDemoData = true,
-                            OptionName = "Pattern",
-                            OptionValue = "Geometric",
+                            LowStockThreshold = 5,
                             Price = 54.99m,
                             ProductId = 107,
-                            Sku = "PRNT-GEO"
+                            Sku = "PRNT-GREY",
+                            StockQuantity = 20
                         },
                         new
                         {
                             Id = 1010,
+                            ImageUrls = "[]",
+                            IsActive = true,
                             IsDemoData = true,
-                            OptionName = "Size",
-                            OptionValue = "120x170",
+                            LowStockThreshold = 4,
                             Price = 119.99m,
                             ProductId = 111,
-                            Sku = "RUG-120"
+                            SizeId = 1,
+                            Sku = "RUG-S",
+                            StockQuantity = 15
                         },
                         new
                         {
                             Id = 1011,
+                            ImageUrls = "[]",
+                            IsActive = true,
                             IsDemoData = true,
-                            OptionName = "Size",
-                            OptionValue = "160x230",
+                            LowStockThreshold = 4,
                             Price = 159.99m,
                             ProductId = 111,
-                            Sku = "RUG-160"
-                        },
-                        new
-                        {
-                            Id = 1012,
-                            IsDemoData = true,
-                            OptionName = "Size",
-                            OptionValue = "200x290",
-                            Price = 199.99m,
-                            ProductId = 111,
-                            Sku = "RUG-200"
+                            SizeId = 2,
+                            Sku = "RUG-L",
+                            StockQuantity = 9
                         });
                 });
 
@@ -1476,6 +1760,89 @@ namespace Shop.DAL.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Shop.DAL.Models.Size", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDemoData")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Sizes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            IsDemoData = true,
+                            Name = "Small"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            IsDemoData = true,
+                            Name = "Large"
+                        });
+                });
+
+            modelBuilder.Entity("Shop.DAL.Models.StoreSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("CurrencySymbol")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<bool>("IsDemoData")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("StoreSettings");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CurrencyCode = "EGP",
+                            CurrencySymbol = "E£",
+                            IsDemoData = true
+                        });
+                });
+
             modelBuilder.Entity("Shop.DAL.Models.AdminUser", b =>
                 {
                     b.HasOne("Shop.DAL.Models.Role", "Role")
@@ -1523,22 +1890,15 @@ namespace Shop.DAL.Migrations
                     b.Navigation("ParentCategory");
                 });
 
-            modelBuilder.Entity("Shop.DAL.Models.InventoryItem", b =>
+            modelBuilder.Entity("Shop.DAL.Models.DeliveryArea", b =>
                 {
-                    b.HasOne("Shop.DAL.Models.Product", "Product")
-                        .WithMany("InventoryItems")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("Shop.DAL.Models.Governorate", "Governorate")
+                        .WithMany()
+                        .HasForeignKey("GovernorateId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Shop.DAL.Models.ProductVariant", "Variant")
-                        .WithMany()
-                        .HasForeignKey("VariantId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Product");
-
-                    b.Navigation("Variant");
+                    b.Navigation("Governorate");
                 });
 
             modelBuilder.Entity("Shop.DAL.Models.Order", b =>
@@ -1548,7 +1908,19 @@ namespace Shop.DAL.Migrations
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("Shop.DAL.Models.DeliveryArea", null)
+                        .WithMany()
+                        .HasForeignKey("DeliveryAreaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Shop.DAL.Models.OrderStatusDefinition", "StatusDefinition")
+                        .WithMany()
+                        .HasForeignKey("StatusDefinitionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Customer");
+
+                    b.Navigation("StatusDefinition");
                 });
 
             modelBuilder.Entity("Shop.DAL.Models.OrderItem", b =>
@@ -1601,13 +1973,27 @@ namespace Shop.DAL.Migrations
 
             modelBuilder.Entity("Shop.DAL.Models.ProductVariant", b =>
                 {
+                    b.HasOne("Shop.DAL.Models.Color", "Color")
+                        .WithMany("Variants")
+                        .HasForeignKey("ColorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Shop.DAL.Models.Product", "Product")
                         .WithMany("Variants")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Shop.DAL.Models.Size", "Size")
+                        .WithMany("Variants")
+                        .HasForeignKey("SizeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Color");
+
                     b.Navigation("Product");
+
+                    b.Navigation("Size");
                 });
 
             modelBuilder.Entity("Shop.DAL.Models.Review", b =>
@@ -1648,6 +2034,11 @@ namespace Shop.DAL.Migrations
                     b.Navigation("Products");
                 });
 
+            modelBuilder.Entity("Shop.DAL.Models.Color", b =>
+                {
+                    b.Navigation("Variants");
+                });
+
             modelBuilder.Entity("Shop.DAL.Models.Customer", b =>
                 {
                     b.Navigation("Orders");
@@ -1664,14 +2055,17 @@ namespace Shop.DAL.Migrations
                 {
                     b.Navigation("Images");
 
-                    b.Navigation("InventoryItems");
-
                     b.Navigation("Variants");
                 });
 
             modelBuilder.Entity("Shop.DAL.Models.Role", b =>
                 {
                     b.Navigation("AdminUsers");
+                });
+
+            modelBuilder.Entity("Shop.DAL.Models.Size", b =>
+                {
+                    b.Navigation("Variants");
                 });
 #pragma warning restore 612, 618
         }

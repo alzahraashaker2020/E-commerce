@@ -1,0 +1,44 @@
+<h1 class="merchant-title">{{ 'Orders' | t }}</h1>
+
+<div class="loading" *ngIf="loading">{{ 'Loading…' | t }}</div>
+<div class="alert alert-error" *ngIf="error">{{ (error) | t }}</div>
+
+<div class="card" *ngIf="!loading">
+  <div class="table-scroll" tabindex="0" role="region" [attr.aria-label]="'Data table'|t" *ngIf="orders.length"><table class="data">
+    <thead>
+      <tr>
+        <th>{{ 'Order #' | t }}</th><th>{{ 'Customer' | t }}</th><th>{{ 'Placed' | t }}</th><th>{{ 'Total' | t }}</th>
+        <th>{{ 'Payment' | t }}</th><th>{{ 'Status' | t }}</th><th>{{ 'Update' | t }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <ng-container *ngFor="let o of orders">
+        <tr>
+          <td>{{ o.orderNumber }}</td>
+          <td>{{ o.customerName || o.guestEmail || '—' }}</td>
+          <td>{{ (o.placedAt |localDate: 'short') | t }}</td>
+          <td>{{ o.total | storeCurrency:o.currencyCode }} <span class="muted">({{ o.currencyCode }})</span></td>
+          <td>{{ (o.paymentMethod) | t }} · {{ (o.paymentStatus) | t }}</td>
+          <td><span class="badge" [style.color]="o.statusColor">{{ (o.status) | t }}</span></td>
+          <td>
+            <select [ngModel]="o.statusId" [name]="'status' + o.id" (ngModelChange)="changeStatus(o, $event)">
+              <ng-container *ngFor="let s of statuses"><option *ngIf="s.isActive || s.id === o.statusId" [ngValue]="s.id" [disabled]="!s.isActive">{{ (s.name) | t }}</option></ng-container>
+            </select>
+          </td>
+        </tr>
+        <tr class="detail-row">
+          <td colspan="7">
+            <span class="muted">{{ 'Ship to:' | t }}</span>
+            <span>{{ 'Shipping:' | t }} {{ o.shippingTotal | storeCurrency:o.currencyCode }} · </span>
+            {{ o.addressLine1 }}<ng-container *ngIf="o.addressLine2">, {{ o.addressLine2 }}</ng-container>,
+            {{ o.city }}, {{ o.stateRegion }} {{ o.postalCode }}, {{ o.country }}
+            <ng-container *ngIf="o.contactPhone"> · {{ o.contactPhone }}</ng-container>
+            <p><button type="button" class="btn btn-outline btn-sm" (click)="showTrackingCode(o)">{{ 'Show private tracking code' | t }}</button></p>
+            <p *ngIf="o.trackingToken" style="overflow-wrap:anywhere">{{ 'Share only with the order owner:' | t }} <code>{{ o.trackingToken }}</code></p>
+          </td>
+        </tr>
+      </ng-container>
+    </tbody>
+  </table></div>
+  <p class="muted" *ngIf="!orders.length">{{ 'No orders yet.' | t }}</p>
+</div>

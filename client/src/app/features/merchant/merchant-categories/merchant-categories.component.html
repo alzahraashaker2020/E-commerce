@@ -1,0 +1,55 @@
+<h1 class="merchant-title">{{ 'Categories' | t }}</h1>
+
+<div class="loading" *ngIf="loading">{{ 'Loading…' | t }}</div>
+<div class="alert alert-error" *ngIf="error">{{ (error) | t }}</div>
+
+<!-- Create / edit form -->
+<div class="card form-card">
+  <h3>{{ (editing ? 'Edit category' : 'Create category') | t }}</h3>
+  <div class="form-grid">
+    <div class="field"><label>{{ 'Name' | t }}</label><input name="name" [(ngModel)]="form.name" [attr.placeholder]="'Sofa Styling' | t" /></div>
+    <div class="field">
+      <label>{{ 'Parent' | t }}</label>
+      <select name="parent" [(ngModel)]="form.parentCategoryId">
+        <option [ngValue]="null">{{ '— Top-level —' | t }}</option>
+        <option *ngFor="let p of topLevel" [ngValue]="p.id">{{ (p.name) | t }}</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>{{ 'Image' | t }}</label>
+      <div class="image-picker">
+        <img *ngIf="form.imageUrl" class="preview" [src]="previewUrl(form.imageUrl)" [attr.alt]="'Preview' | t" />
+        <input type="file" accept="image/png,image/jpeg,image/webp" (change)="onImage($event)" />
+        <button type="button" class="btn btn-outline btn-sm" *ngIf="form.imageUrl" (click)="removeImage()">{{ 'Remove' | t }}</button>
+      </div>
+    </div>
+    <div class="field field-wide"><label>{{ 'Description' | t }}</label><input name="description" [(ngModel)]="form.description" /></div>
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-primary" (click)="save()">{{ (editing ? 'Save' : 'Create') | t }}</button>
+    <button class="btn btn-outline" *ngIf="editing" (click)="cancel()">{{ 'Cancel' | t }}</button>
+  </div>
+</div>
+
+<!-- Category table -->
+<div class="card">
+  <div class="table-scroll" tabindex="0" role="region" [attr.aria-label]="'Data table'|t" *ngIf="categories.length"><table class="data">
+    <thead>
+      <tr><th>{{ 'Name' | t }}</th><th>{{ 'Parent' | t }}</th><th>{{ 'Slug' | t }}</th><th>{{ 'Subcategories' | t }}</th><th>{{ 'Products' | t }}</th><th></th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let c of categories">
+        <td><strong>{{ (c.name) | t }}</strong></td>
+        <td>{{ (c.parentName || '—') | t }}</td>
+        <td><span class="muted small">{{ (c.slug) | t }}</span></td>
+        <td>{{ (c.childCount) | t }}</td>
+        <td>{{ (c.productCount) | t }}</td>
+        <td class="row-actions">
+          <button class="btn btn-outline btn-sm" (click)="startEdit(c)">{{ 'Edit' | t }}</button>
+          <button class="btn btn-danger btn-sm" (click)="remove(c)">{{ 'Delete' | t }}</button>
+        </td>
+      </tr>
+    </tbody>
+  </table></div>
+  <p class="muted" *ngIf="!categories.length && !loading">{{ 'No categories.' | t }}</p>
+</div>

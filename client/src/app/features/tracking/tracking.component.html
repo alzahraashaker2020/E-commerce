@@ -1,80 +1,62 @@
-<h1 class="page-title">Track your order</h1>
+<h1 class="page-title">{{ 'Track your order' | t }}</h1>
 
 <p class="muted small">
-  Track with your order number or the email you used at checkout.
+  {{ 'Sign in to the account that placed the order, or enter its number and private tracking code.' | t }}
 </p>
 
-<div class="track-mode">
-  <button
-    type="button"
-    class="chip"
-    [class.active]="mode === 'number'"
-    (click)="setMode('number')"
-  >
-    By order number
-  </button>
-  <button
-    type="button"
-    class="chip"
-    [class.active]="mode === 'email'"
-    (click)="setMode('email')"
-  >
-    By email
-  </button>
-</div>
-
-<form class="track-form" (ngSubmit)="submit()">
+<form class="track-form" (ngSubmit)="lookup()">
   <input
-    *ngIf="mode === 'number'"
     name="orderNumber"
     [(ngModel)]="orderNumber"
-    placeholder="Enter your order number (e.g. ORD-20240210-A1B2C3)"
-    aria-label="Order number"
+    [attr.placeholder]="'Enter your order number (e.g. ORD-20240210-A1B2C3)' | t"
+    [attr.aria-label]="'Order number' | t"
   />
   <input
-    *ngIf="mode === 'email'"
-    name="email"
-    type="email"
-    [(ngModel)]="email"
-    placeholder="Enter the email used at checkout"
-    aria-label="Order email"
+    name="accessCode"
+    type="password"
+    [(ngModel)]="accessCode"
+    [attr.placeholder]="'Private tracking code (guests)' | t"
+    [attr.aria-label]="'Private tracking code' | t"
+    autocomplete="off"
+    maxlength="100"
   />
   <button class="btn btn-primary" type="submit" [disabled]="loading">
-    {{ loading ? 'Searching…' : 'Track' }}
+    {{ (loading ? 'Searching…' : 'Track') | t }}
   </button>
 </form>
 
-<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+<div class="alert alert-error" *ngIf="error">{{ (error) | t }}</div>
 
 <!-- Result -->
 <div class="track-result card" *ngIf="order">
   <div class="spread">
     <div>
-      <span class="muted small">Order</span>
+      <span class="muted small">{{ 'Order' | t }}</span>
       <h2 class="order-no">{{ order.orderNumber }}</h2>
     </div>
-    <span class="badge" [ngClass]="statusClass(order.status)">{{ order.status }}</span>
+    <span class="badge" [ngClass]="statusClass(order.status)">{{ (order.status) | t }}</span>
   </div>
 
-  <p class="muted small">Placed on {{ order.placedAt | date: 'medium' }}</p>
+  <p class="muted small">{{ 'Placed on' | t }} {{ (order.placedAt |localDate: 'medium') | t }}</p>
 
   <table class="data">
     <thead>
-      <tr><th>Item</th><th>Unit</th><th>Qty</th><th class="right">Total</th></tr>
+      <tr><th>{{ 'Item' | t }}</th><th>{{ 'Unit' | t }}</th><th>{{ 'Qty' | t }}</th><th class="right">{{ 'Total' | t }}</th></tr>
     </thead>
     <tbody>
       <tr *ngFor="let item of order.items">
-        <td>{{ item.productNameSnapshot }}</td>
+        <td>{{ (item.productNameSnapshot) | t }}</td>
         <td>{{ item.unitPrice | storeCurrency:order.currencyCode }}</td>
-        <td>{{ item.quantity }}</td>
+        <td>{{ (item.quantity) | t }}</td>
         <td class="right">{{ item.lineTotal | storeCurrency:order.currencyCode }}</td>
       </tr>
     </tbody>
   </table>
 
+  <app-order-returns [orderNumber]="order.orderNumber" [trackingCode]="accessCode"></app-order-returns>
   <div class="spread grand-total">
-    <span>Shipping: {{ order.shippingTotal | storeCurrency:order.currencyCode }} · </span>
-    <span>Total</span>
+    <span>{{ 'Shipping:' | t }} {{ order.shippingTotal | storeCurrency:order.currencyCode }} · </span>
+    <span>{{ 'Total' | t }}</span>
     <span class="price">{{ order.total | storeCurrency:order.currencyCode }}</span>
   </div>
 </div>

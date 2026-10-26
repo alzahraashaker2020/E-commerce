@@ -1,3 +1,5 @@
+import { RuntimeService } from '../../core/services/runtime.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +9,7 @@ import { CheckoutService } from '../../core/services/checkout.service';
 import { Cart, PlaceOrderRequest } from '../../core/models/api.models';
 import { StoreCurrencyPipe } from '../../core/pipes/store-currency.pipe';
 import { ApiService } from '../../core/services/api.service';
+import { AccountService } from '../../core/services/account.service';
 
 /**
  * Guest checkout page. Collects the guest's name/email and an optional discount
@@ -16,7 +19,7 @@ import { ApiService } from '../../core/services/api.service';
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, StoreCurrencyPipe],
+  imports: [TranslatePipe,CommonModule, FormsModule, RouterLink, StoreCurrencyPipe],
   templateUrl: './checkout.component.html',
   styleUrl: './checkout.component.css'
 })
@@ -46,17 +49,25 @@ export class CheckoutComponent implements OnInit {
   quoteMessage = '';
   quote: any = null;
   private quoteVersion = 0;
+  pendingRequest: PlaceOrderRequest | null = null;
 
   constructor(
     private cartService: CartService,
     private checkout: CheckoutService,
     private router: Router,
-    private api: ApiService
+    private api: ApiService,
+    private account: AccountService,
+    public runtime:RuntimeService
   ) {}
 
   ngOnInit(): void {
+    this.pendingRequest = this.checkout.pendingRequest();
+    if (this.account.isLoggedIn()) this.account.getProfile().subscribe({next: profile => {
+      this.guestName = profile.fullName; this.guestEmail = profile.email;
+      this.contactPhone = profile.phone || '';
+    }, error: () => {}});
     // Price the cart for display; redirect to the cart page when empty.
-    if (this.cartService.isEmpty()) {
+    if (this.cartService.isEmpty() && !this.pendingRequest) {
       this.router.navigate(['/cart']);
       return;
     }
@@ -101,7 +112,7 @@ export class CheckoutComponent implements OnInit {
   }
 
   get canSubmit(): boolean {
-    return !!this.cart && !!this.quote && !this.loadingQuote && this.missingFields.length === 0 && this.emailIsValid && !this.submitting;
+    return !this.pendingRequest && !!this.cart && !!this.quote && !this.loadingQuote && this.missingFields.length === 0 && this.emailIsValid && !this.submitting;
   }
 
   get emailIsValid(): boolean {
@@ -119,7 +130,7 @@ export class CheckoutComponent implements OnInit {
     if (this.postalCode.trim().length === 0) missing.push('Postal code');
     if (this.country.trim().length === 0) missing.push('Country');
     if (this.contactPhone.trim().length === 0) missing.push('Contact phone');
-    if (this.paymentMethod !== 'Cash' && this.paymentMethod !== 'Card') missing.push('Payment method');
+    if (this.paymentMethod !== 'Cash') missing.push('Payment method');
     return missing;
   }
 
@@ -150,13 +161,23 @@ export class CheckoutComponent implements OnInit {
       paymentMethod: this.paymentMethod
     };
 
+    this.submitRequest(request);
+  }
+
+  retryPending(): void {
+    if (this.submitting || !this.pendingRequest) return;
+    this.submitting = true; this.error = null;
+    this.submitRequest(this.pendingRequest);
+  }
+
+  private submitRequest(request: PlaceOrderRequest): void {
     this.checkout.placeOrder(request).subscribe({
       next: res => {
         this.submitting = false;
         if (res.data?.orderNumber) {
           // Clear the cart and go to the confirmation page; pass the full
           // confirmation payload so that page can show address/payment/currency.
-          this.cartService.clear();
+          if (JSON.stringify(this.cartService.getLines()) === JSON.stringify(request.lines)) this.cartService.clear();
           this.router.navigate(['/confirmation', res.data.orderNumber], {
             state: { message: res.message, confirmation: res.data }
           });
@@ -166,6 +187,7 @@ export class CheckoutComponent implements OnInit {
       },
       error: (err) => {
         this.submitting = false;
+        this.pendingRequest = this.checkout.pendingRequest();
         this.error = err?.error?.message ?? 'Order could not be placed. Please try again.';
         this.refreshQuote();
       }

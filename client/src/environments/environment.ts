@@ -8,5 +8,5 @@
 export const environment = {
   production: false,
   // Base URL of the Shop.Api backend. Override in environment.prod.ts for prod.
-  apiBaseUrl: 'http://localhost:5000/api'
+  apiBaseUrl: `http://${window.location.hostname}:5000/api`
 };

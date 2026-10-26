@@ -1,3 +1,4 @@
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -13,7 +14,7 @@ import { StoreCurrencyPipe } from '../../core/pipes/store-currency.pipe';
 @Component({
   selector: 'app-confirmation',
   standalone: true,
-  imports: [CommonModule, RouterLink, StoreCurrencyPipe],
+  imports: [TranslatePipe,CommonModule, RouterLink, StoreCurrencyPipe],
   templateUrl: './confirmation.component.html',
   styleUrl: './confirmation.component.css'
 })

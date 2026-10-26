@@ -1,27 +1,30 @@
-<div class="loading" *ngIf="loading">Loading…</div>
-<div class="alert alert-error" *ngIf="error">{{ error }}</div>
-<div class="alert alert-info" *ngIf="saved">Profile saved.</div>
+<div class="loading" *ngIf="loading">{{ 'Loading…' | t }}</div>
+<div class="alert alert-error" *ngIf="error">{{ (error) | t }}</div>
+<div class="alert alert-info" *ngIf="saved">{{ 'Profile saved.' | t }}</div>
 
 <form class="card profile-form" *ngIf="profile" (ngSubmit)="save()">
   <div class="field">
-    <label for="fullName">Full name</label>
+    <label for="fullName">{{ 'Full name' | t }}</label>
     <input id="fullName" name="fullName" [(ngModel)]="profile.fullName" required />
   </div>
   <div class="field">
-    <label for="email">Email</label>
+    <label for="email">{{ 'Email' | t }}</label>
     <input id="email" name="email" [value]="profile.email" disabled />
-    <span class="muted small">Email can't be changed in this demo.</span>
+    <span class="muted small">{{ 'Email can\'t be changed in this demo.' | t }}</span>
+    <p>{{ (emailVerified?'Email verified':'Email not verified yet') | t }}</p>
+    <button type="button" class="btn btn-outline" *ngIf="!emailVerified" (click)="resendVerification()">{{ 'Send verification email' | t }}</button>
+    <p role="status" *ngIf="verificationMessage">{{ (verificationMessage) | t }}</p>
   </div>
   <div class="field">
-    <label for="phone">Phone</label>
+    <label for="phone">{{ 'Phone' | t }}</label>
     <input id="phone" name="phone" [(ngModel)]="profile.phone" />
   </div>
   <label class="consent">
     <input type="checkbox" name="consent" [(ngModel)]="profile.marketingConsent" />
-    <span>Receive occasional offers and news</span>
+    <span>{{ 'Receive occasional offers and news' | t }}</span>
   </label>
 
   <button class="btn btn-primary" type="submit" [disabled]="saving">
-    {{ saving ? 'Saving…' : 'Save changes' }}
+    {{ (saving ? 'Saving…' : 'Save changes') | t }}
   </button>
 </form>

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import { Cart, CartLineRequest } from '../models/api.models';
+import { RuntimeService } from './runtime.service';
 
 /**
  * Client-side cart. The cart contents (product/variant/quantity) live in
@@ -12,7 +13,7 @@ import { Cart, CartLineRequest } from '../models/api.models';
  */
 @Injectable({ providedIn: 'root' })
 export class CartService {
-  private static readonly STORAGE_KEY = 'shop_demo_cart';
+  private static readonly STORAGE_KEY = 'shop_demo_cart:' + window.location.hostname;
 
   private lines: CartLineRequest[] = this.load();
   private readonly countSubject = new BehaviorSubject<number>(this.totalQuantity());
@@ -20,7 +21,7 @@ export class CartService {
   /** Observable total quantity for the header cart badge. */
   readonly count$: Observable<number> = this.countSubject.asObservable();
 
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService, private runtime: RuntimeService) {}
 
   /** Returns a copy of the current raw cart lines. */
   getLines(): CartLineRequest[] {
@@ -29,6 +30,7 @@ export class CartService {
 
   /** Adds a line (or increments the quantity of a matching product+variant). */
   add(productId: number, quantity: number, variantId?: number | null): void {
+    if(!this.runtime.commerceEnabled)return;
     const existing = this.lines.find(l => l.productId === productId && (l.variantId ?? null) === (variantId ?? null));
     if (existing) {
       existing.quantity = Math.min(100, existing.quantity + quantity);

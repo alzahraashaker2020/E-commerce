@@ -1,34 +1,35 @@
-<div class="loading" *ngIf="loading">Loading…</div>
-<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+<div class="loading" *ngIf="loading">{{ 'Loading…' | t }}</div>
+<div class="alert alert-error" *ngIf="error">{{ (error) | t }}</div>
 
 <div *ngIf="!loading && !error">
   <div class="empty card" *ngIf="!orders.length">
-    <p class="muted">You haven't placed any orders yet.</p>
-    <a class="btn btn-primary" routerLink="/catalog">Start shopping</a>
+    <p class="muted">{{ 'You haven\'t placed any orders yet.' | t }}</p>
+    <a class="btn btn-primary" routerLink="/catalog">{{ 'Start shopping' | t }}</a>
   </div>
 
   <div class="order card" *ngFor="let o of orders">
     <div class="order-head spread">
       <div>
         <strong class="order-no">{{ o.orderNumber }}</strong>
-        <span class="muted small">Placed {{ o.placedAt | date: 'mediumDate' }}</span>
+        <span class="muted small">{{ 'Placed' | t }} {{ (o.placedAt |localDate: 'mediumDate') | t }}</span>
       </div>
-      <span class="badge" [ngClass]="statusClass(o.status)">{{ o.status }}</span>
+      <span class="badge" [ngClass]="statusClass(o.status)">{{ (o.status) | t }}</span>
     </div>
 
     <table class="data">
       <tbody>
         <tr *ngFor="let item of o.items">
-          <td>{{ item.productNameSnapshot }}</td>
-          <td class="muted">×{{ item.quantity }}</td>
+          <td>{{ (item.productNameSnapshot) | t }}</td>
+          <td class="muted">×{{ (item.quantity) | t }}</td>
           <td class="right">{{ item.lineTotal | storeCurrency:o.currencyCode }}</td>
         </tr>
       </tbody>
     </table>
 
+    <app-order-returns [orderNumber]="o.orderNumber"></app-order-returns>
     <div class="spread order-total">
-      <span>Shipping: {{ o.shippingTotal | storeCurrency:o.currencyCode }}</span>
-      <span>Total</span>
+      <span>{{ 'Shipping:' | t }} {{ o.shippingTotal | storeCurrency:o.currencyCode }}</span>
+      <span>{{ 'Total' | t }}</span>
       <span class="price">{{ o.total | storeCurrency:o.currencyCode }}</span>
     </div>
   </div>

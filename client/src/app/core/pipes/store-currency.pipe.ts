@@ -1,3 +1,5 @@
+import { LanguageService } from '../i18n/language.service';
+import '../i18n/format.pipe';
 import { CurrencyPipe } from '@angular/common';
 import { Pipe, PipeTransform } from '@angular/core';
 import { SettingsService } from '../services/settings.service';
@@ -5,7 +7,7 @@ import { SettingsService } from '../services/settings.service';
 /**
  * Formats a number as a price using the store-configured currency
  * (GET api/settings via SettingsService), falling back to USD. Replaces the
- * built-in `| currency` pipe across the storefront and admin templates so a
+ * built-in `| currency` pipe across the storefront and merchant templates so a
  * single currency setting drives every displayed price.
  */
 @Pipe({
@@ -14,13 +16,12 @@ import { SettingsService } from '../services/settings.service';
   pure: false
 })
 export class StoreCurrencyPipe implements PipeTransform {
-  private readonly currencyPipe = new CurrencyPipe('en-US');
 
   /**
    * SettingsService is injected in the constructor (never as a field
    * initializer — TS2729) so the service is available before use.
    */
-  constructor(private settings: SettingsService) {}
+  constructor(private settings: SettingsService,private language:LanguageService) {}
 
   /**
    * Formats the supplied value with the store currency code.
@@ -35,6 +36,6 @@ export class StoreCurrencyPipe implements PipeTransform {
   ): string | null {
     const code = currencyCode || this.settings.currencyCode() || 'USD';
     const display = code === this.settings.currencyCode() ? this.settings.currencySymbol() : 'symbol';
-    return this.currencyPipe.transform(value, code, display, digits);
+    return new CurrencyPipe(this.language.locale).transform(value, code, String(this.language.text(display)), digits);
   }
 }

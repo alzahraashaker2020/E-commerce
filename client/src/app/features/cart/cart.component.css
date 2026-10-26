@@ -25,7 +25,7 @@
 }
 .line-info { display: flex; flex-direction: column; gap: 0.2rem; }
 .line-name { font-weight: 600; }
-.line-total { min-width: 80px; text-align: right; }
+.line-total { min-width: 80px; text-align: end; }
 
 .qty { display: flex; align-items: center; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .qty button {

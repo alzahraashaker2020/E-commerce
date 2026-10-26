@@ -8,6 +8,9 @@ namespace Shop.DAL.ViewModels;
 /// </summary>
 public class PlaceOrderRequest
 {
+    /// <summary>Unique checkout attempt; reuse unchanged when retrying a submission.</summary>
+    [Required]
+    public Guid? IdempotencyKey { get; set; }
     /// <summary>Selected delivery area; fee and location names are resolved server-side.</summary>
     [Range(1, int.MaxValue)]
     public int AreaId { get; set; }
@@ -78,6 +81,8 @@ public class PlaceOrderRequest
 /// </summary>
 public class OrderConfirmationResponse
 {
+    /// <summary>Secret tracking access proof; never include it in query strings.</summary>
+    public string TrackingToken { get; set; } = "";
     /// <summary>Product subtotal.</summary>
     public decimal Subtotal { get; set; }
     /// <summary>Discount charged.</summary>

@@ -8,8 +8,22 @@ namespace Shop.BLL.Email;
 /// </summary>
 public class EmailOptions
 {
+    /// <summary>Language of the request composing the message; durable retries retain its original text.</summary>
+    public string Language { get; set; } = "en";
+    /// <summary>Store-owned Arabic translations for product and status names.</summary>
+    public Dictionary<string,string> Translations { get; set; } = new();
     /// <summary>When true and <see cref="SmtpHost"/> is set, send via SMTP.</summary>
     public bool Enabled { get; set; }
+    /// <summary>Allow local message files in development only.</summary>
+    public bool AllowDevelopmentSink { get; set; }
+    /// <summary>Merchant notification destination, independent of the SMTP account.</summary>
+    public string MerchantEmail { get; set; } = "";
+    /// <summary>Send customer order confirmations.</summary>
+    public bool CustomerOrdersEnabled { get; set; } = true;
+    /// <summary>Send customer fulfillment updates.</summary>
+    public bool CustomerStatusEnabled { get; set; } = true;
+    /// <summary>Notify the merchant of new orders.</summary>
+    public bool MerchantOrdersEnabled { get; set; } = true;
 
     /// <summary>SMTP server host name.</summary>
     public string SmtpHost { get; set; } = string.Empty;

@@ -4,23 +4,23 @@
      absent, so the page looks intentional before the real wallpaper is added. -->
 <section class="hero">
   <div class="hero-overlay">
-    <p class="hero-eyebrow">Home Revive</p>
-    <h1 class="hero-title">Elegant comfort<br />for every room</h1>
-    <p class="hero-sub">Finally, a place you can truly call your own.</p>
-    <button class="btn btn-primary hero-cta" (click)="scrollToGrid()">Shop Now</button>
+    <p class="hero-eyebrow">{{ 'Home Revive' | t }}</p>
+    <h1 class="hero-title">{{ 'Elegant comfort' | t }}<br />{{ 'for every room' | t }}</h1>
+    <p class="hero-sub">{{ 'Finally, a place you can truly call your own.' | t }}</p>
+    <button class="btn btn-primary hero-cta" (click)="scrollToGrid()">{{ 'Shop Now' | t }}</button>
   </div>
 </section>
 
 <!-- Top-level category cards. Each links to that category's subcategory
      drill-down page (e.g. "Sofa Styling" → its four subcategories). -->
 <section class="category-cards" *ngIf="topCategories.length">
-  <h2 class="section-title">Shop by Room</h2>
+  <h2 class="section-title">{{ 'Shop by Room' | t }}</h2>
   <div class="cards-grid">
     <a class="cat-card" *ngFor="let c of topCategories" [routerLink]="['/category', c.slug]">
       <div class="cat-media">
-        <img *ngIf="c.imageUrl" [src]="c.imageUrl | imageUrl" [alt]="c.name" loading="lazy" />
+        <img *ngIf="c.imageUrl" [src]="c.imageUrl | imageUrl" [alt]="(c.name) | t" loading="lazy" />
       </div>
-      <div class="cat-label">{{ c.name }}</div>
+      <div class="cat-label">{{ (c.name) | t }}</div>
     </a>
   </div>
 </section>
@@ -28,26 +28,26 @@
 <!-- Category filter + product grid -->
 <section class="filters" id="catalog-grid">
   <div class="filter-head spread">
-    <h2 class="section-title">Shop All</h2>
-    <span class="muted" *ngIf="result">{{ result.totalCount }} products</span>
+    <h2 class="section-title">{{ 'Shop All' | t }}</h2>
+    <span class="muted" *ngIf="result">{{ (result.totalCount) | t }} {{ 'products' | t }}</span>
   </div>
 
   <div class="chips">
-    <button class="chip" [class.active]="categoryId === null" (click)="selectCategory(null)">All</button>
+    <button class="chip" [class.active]="categoryId === null" (click)="selectCategory(null)">{{ 'All' | t }}</button>
     <button
       class="chip"
       *ngFor="let c of categories"
       [class.active]="categoryId === c.id"
       (click)="selectCategory(c.id)"
     >
-      {{ c.name }}
+      {{ (c.name) | t }}
     </button>
   </div>
 </section>
 
 <!-- States -->
-<div class="loading" *ngIf="loading">Loading products…</div>
-<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+<div class="loading" *ngIf="loading">{{ 'Loading products…' | t }}</div>
+<div class="alert alert-error" *ngIf="error">{{ (error) | t }}</div>
 
 <!-- Product grid -->
 <section class="grid" *ngIf="result && !loading">
@@ -56,38 +56,38 @@
       <img
         *ngIf="p.primaryImageUrl"
         [src]="p.primaryImageUrl | imageUrl"
-        [alt]="p.name"
+        [alt]="(p.name) | t"
         loading="lazy"
       />
       <div class="product-media-placeholder" *ngIf="!p.primaryImageUrl">
-        <span>{{ p.name.charAt(0) }}</span>
+        <span>{{ (p.name.charAt(0)) | t }}</span>
       </div>
     </div>
     <div class="product-body">
-      <span class="product-cat">{{ p.categoryName }}</span>
-      <h3 class="product-name">{{ p.name }}</h3>
+      <span class="product-cat">{{ (p.categoryName) | t }}</span>
+      <h3 class="product-name">{{ (p.name) | t }}</h3>
       <div class="spread">
-        <span class="price">{{ p.basePrice | storeCurrency }}</span>
-        <button class="btn btn-secondary btn-sm" (click)="quickAdd(p, $event)">Add</button>
+        <span class="price">{{ (p.basePrice | storeCurrency) | t }}</span>
+        <button *ngIf="runtime.commerceEnabled" class="btn btn-secondary btn-sm" (click)="quickAdd(p, $event)">{{ 'Add' | t }}</button>
       </div>
     </div>
   </article>
 
   <div class="empty" *ngIf="result.items.length === 0">
-    No products found in this category.
+    {{ 'No products found in this category.' | t }}
   </div>
 </section>
 
 <!-- Pagination -->
-<nav class="pager" *ngIf="result && totalPages > 1 && !loading" aria-label="Pagination">
-  <button class="btn btn-outline btn-sm" [disabled]="page <= 1" (click)="goToPage(page - 1)">Prev</button>
+<nav class="pager" *ngIf="result && totalPages > 1 && !loading" [attr.aria-label]="'Pagination' | t">
+  <button class="btn btn-outline btn-sm" [disabled]="page <= 1" (click)="goToPage(page - 1)">{{ 'Prev' | t }}</button>
   <button
     class="page-num"
     *ngFor="let n of pageNumbers"
     [class.active]="n === page"
     (click)="goToPage(n)"
   >
-    {{ n }}
+    {{ (n) | t }}
   </button>
-  <button class="btn btn-outline btn-sm" [disabled]="page >= totalPages" (click)="goToPage(page + 1)">Next</button>
+  <button class="btn btn-outline btn-sm" [disabled]="page >= totalPages" (click)="goToPage(page + 1)">{{ 'Next' | t }}</button>
 </nav>

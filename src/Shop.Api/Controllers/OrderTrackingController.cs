@@ -4,6 +4,8 @@ using Shop.BLL.IRepositories;
 using Shop.BLL.Response_VM;
 using Shop.DAL.Models;
 using Shop.DAL.ViewModels;
+using System.Security.Claims;
+using Shop.Api.Tenancy;
 
 namespace Shop.Api.Controllers;
 
@@ -12,6 +14,7 @@ namespace Shop.Api.Controllers;
 /// human-readable order number.
 /// </summary>
 [ApiController]
+[Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("Tracking")]
 [Route("api/[controller]")]
 public class OrderTrackingController : ControllerBase
 {
@@ -37,10 +40,16 @@ public class OrderTrackingController : ControllerBase
     [HttpGet("{orderNumber}")]
     public async Task<ActionResult<ApiResponse<OrderTrackingVM>>> Track(string orderNumber)
     {
+        Response.Headers.CacheControl = "no-store";
+        Response.Headers["Referrer-Policy"] = "no-referrer";
+        var access = HttpContext.RequestServices.GetRequiredService<OrderTrackingAccess>();
+        bool proof = access.Verify(orderNumber, Request.Headers["X-Order-Tracking-Token"].FirstOrDefault());
+        int? customerId = User.IsInRole("Customer") && int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int id) ? id : null;
+        if (!proof && customerId is null) return NotFound(ApiResponse<OrderTrackingVM>.Fail("Order not found or access unavailable",404));
         Order? order = await _repo._Order.GetByOrderNumberAsync(orderNumber);
-        if (order is null)
+        if (order is null || (!proof && order.CustomerId != customerId))
         {
-            return NotFound(ApiResponse<OrderTrackingVM>.Fail("Order not found", 404));
+            return NotFound(ApiResponse<OrderTrackingVM>.Fail("Order not found or access unavailable", 404));
         }
 
         return Ok(ApiResponse<OrderTrackingVM>.Ok(_mapper.Map<OrderTrackingVM>(order)));
@@ -52,14 +61,9 @@ public class OrderTrackingController : ControllerBase
     /// </summary>
     /// <param name="email">The guest email used at checkout.</param>
     [HttpGet("by-email")]
-    public async Task<ActionResult<ApiResponse<OrderTrackingVM>>> TrackByEmail([FromQuery] string email)
+    public ActionResult<ApiResponse<OrderTrackingVM>> TrackByEmail()
     {
-        Order? order = await _repo._Order.GetMostRecentByGuestEmailAsync(email);
-        if (order is null)
-        {
-            return NotFound(ApiResponse<OrderTrackingVM>.Fail("No order found for that email", 404));
-        }
-
-        return Ok(ApiResponse<OrderTrackingVM>.Ok(_mapper.Map<OrderTrackingVM>(order)));
+        Response.Headers.CacheControl = "no-store";
+        return NotFound(ApiResponse<OrderTrackingVM>.Fail("Track using your account or order number and private tracking code.", 404));
     }
 }

@@ -6,21 +6,24 @@ using Shop.BLL.Response_VM;
 using Shop.DAL.Models;
 using Shop.DAL.Data;
 using Shop.DAL.ViewModels;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Shop.Api.Controllers;
 
 /// <summary>
-/// Public guest checkout endpoint. Totals are computed server-side from trusted
-/// prices; the order number is generated and retried on the rare unique-index
-/// collision. An unknown/inactive/expired discount code never fails the order —
+/// Customer and guest checkout with durable, owner-bound retry receipts.
+/// Totals are computed server-side from trusted prices.
+/// An unknown/inactive/expired discount code never fails the order —
 /// it is placed without the discount and the response explains why.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class CheckoutController : ControllerBase
 {
-    private const int OrderNumberMaxAttempts = 3;
-
     private readonly IRepoWrapper _repo;
     private readonly ShopContext _db;
     private readonly IEmailService _emailService;
@@ -45,7 +48,7 @@ public class CheckoutController : ControllerBase
     }
 
     /// <summary>
-    /// Places a guest order from the supplied request. Resolves every line
+    /// Places or replays a customer/guest order. Resolves every line
     /// price server-side, applies a valid discount code (silently skips an
     /// invalid one), computes the totals, and persists the order with a unique
     /// order number.
@@ -54,6 +57,81 @@ public class CheckoutController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ApiResponse<OrderConfirmationResponse>>> PlaceOrder(
         [FromBody] PlaceOrderRequest request)
+    {
+        if (request.PaymentMethod != PaymentMethod.Cash)
+            return BadRequest(ApiResponse<OrderConfirmationResponse>.Fail("Card payments are unavailable until the store connects a payment provider. Please use cash on delivery.", 400));
+        if (!request.IdempotencyKey.HasValue || request.IdempotencyKey == Guid.Empty)
+            return BadRequest(ApiResponse<OrderConfirmationResponse>.Fail("A unique checkout attempt key is required.", 400));
+        if (Request.Headers.ContainsKey("Authorization") && User.Identity?.IsAuthenticated != true)
+            return Unauthorized(ApiResponse<OrderConfirmationResponse>.Fail("Your session expired. Sign in again before placing the order.", 401));
+        if (User.Identity?.IsAuthenticated == true && !User.IsInRole("Customer"))
+            return StatusCode(403, ApiResponse<OrderConfirmationResponse>.Fail("Use a customer account or guest checkout.", 403));
+        Customer? customer = null;
+        if (User.IsInRole("Customer"))
+        {
+            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int id) || (customer = await _db.Customers.FindAsync(id)) is null)
+                return Unauthorized(ApiResponse<OrderConfirmationResponse>.Fail("Customer account is unavailable.", 401));
+        }
+        string key = request.IdempotencyKey.Value.ToString("N");
+        string owner = customer is null ? "guest" : "customer:" + customer.Id;
+        string hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(request))));
+        await _db.Database.OpenConnectionAsync();
+        try
+        {
+            var replay = await ReadReceipt(key, owner, hash);
+            if (replay is not null) return replay;
+            await using var transaction = await _db.Database.BeginTransactionAsync();
+            replay = await ReadReceipt(key, owner, hash);
+            if (replay is not null) return replay;
+            try
+            {
+                var result = await PlaceCore(request, customer);
+                if (result.Result is not OkObjectResult ok)
+                {
+                    Response.Headers["X-Checkout-Outcome"] = "NotCreated";
+                    return result;
+                }
+                string json = JsonSerializer.Serialize(ok.Value, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+                await _db.Database.ExecuteSqlRawAsync("INSERT INTO \"CheckoutReceipts\" (\"Key\",\"Owner\",\"RequestHash\",\"ResponseJson\") VALUES ({0},{1},{2},{3})", key, owner, hash, json);
+                // The order, receipt and queued notifications commit together.
+                var confirmation = ((ApiResponse<OrderConfirmationResponse>)ok.Value!).Data!;
+                    var order = await _db.Orders.Include(o => o.Items).FirstAsync(o => o.OrderNumber == confirmation.OrderNumber);
+                    var settings = await _db.StoreSettings.FirstAsync();
+                    await _emailService.SendOrderSummaryAsync(order, settings);
+                await transaction.CommitAsync();
+                return result;
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is Npgsql.PostgresException { SqlState: "23505" })
+            {
+                await transaction.RollbackAsync(); _db.ChangeTracker.Clear();
+                return await ReadReceipt(key, owner, hash) ?? Conflict(ApiResponse<OrderConfirmationResponse>.Fail("Checkout is being processed. Retry the same submission.", 409));
+            }
+            catch (Npgsql.PostgresException ex) when (ex.SqlState == "23505")
+            {
+                await transaction.RollbackAsync(); _db.ChangeTracker.Clear();
+                return await ReadReceipt(key, owner, hash) ?? Conflict(ApiResponse<OrderConfirmationResponse>.Fail("Checkout is being processed. Retry the same submission.", 409));
+            }
+        }
+        finally { await _db.Database.CloseConnectionAsync(); }
+    }
+
+    private async Task<ActionResult<ApiResponse<OrderConfirmationResponse>>?> ReadReceipt(string key, string owner, string hash)
+    {
+        using var command = _db.Database.GetDbConnection().CreateCommand();
+        command.Transaction = _db.Database.CurrentTransaction?.GetDbTransaction();
+        command.CommandText = "SELECT \"Owner\",\"RequestHash\",\"ResponseJson\" FROM \"CheckoutReceipts\" WHERE \"Key\"=@key";
+        var parameter = command.CreateParameter(); parameter.ParameterName = "key"; parameter.Value = key; command.Parameters.Add(parameter);
+        using var reader = await command.ExecuteReaderAsync();
+        if (!await reader.ReadAsync()) return null;
+        if (reader.GetString(0) != owner || reader.GetString(1) != hash)
+            return Conflict(ApiResponse<OrderConfirmationResponse>.Fail("This checkout attempt was already used with different details. Start a new checkout attempt.", 409));
+        var saved = JsonSerializer.Deserialize<ApiResponse<OrderConfirmationResponse>>(reader.GetString(2), new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
+        if (saved.Data is not null)
+            saved.Data.TrackingToken = HttpContext.RequestServices.GetRequiredService<Shop.Api.Tenancy.OrderTrackingAccess>().Create(saved.Data.OrderNumber);
+        return Ok(saved);
+    }
+
+    private async Task<ActionResult<ApiResponse<OrderConfirmationResponse>>> PlaceCore(PlaceOrderRequest request, Customer? customer)
     {
         if (request.Lines is null || request.Lines.Count == 0)
         {
@@ -169,9 +247,9 @@ public class CheckoutController : ControllerBase
         var initialStatus = await _db.OrderStatusDefinitions.FirstAsync(s => s.IsDefault && s.IsActive);
         var order = new Order
         {
-            CustomerId = null,
-            GuestName = request.GuestName,
-            GuestEmail = request.GuestEmail,
+            CustomerId = customer?.Id,
+            GuestName = customer?.FullName ?? request.GuestName,
+            GuestEmail = customer?.Email ?? request.GuestEmail,
             Status = OrderStatus.Pending,
             StatusDefinitionId = initialStatus.Id,
             StatusDefinition = initialStatus,
@@ -183,10 +261,7 @@ public class CheckoutController : ControllerBase
             Total = total,
             CurrencyCode = settings.CurrencyCode,
             PaymentMethod = request.PaymentMethod,
-            // Card payments are treated as captured; cash is collected on delivery.
-            PaymentStatus = request.PaymentMethod == PaymentMethod.Card
-                ? PaymentStatus.Paid
-                : PaymentStatus.CashOnDelivery,
+            PaymentStatus = PaymentStatus.CashOnDelivery,
             AddressLine1 = request.AddressLine1,
             AddressLine2 = request.AddressLine2,
             City = area.Name,
@@ -199,47 +274,13 @@ public class CheckoutController : ControllerBase
             Items = items
         };
 
-        // Generate a unique order number, retrying on the rare unique-index
-        // collision (the index is the real guarantee; this is the safety net).
-        for (int attempt = 1; attempt <= OrderNumberMaxAttempts; attempt++)
-        {
-            order.OrderNumber = OrderNumberGenerator.Generate(now);
-            try
-            {
-                _repo._Order.Add(order);
-                _repo.Save();
-
-                // Best-effort order-summary email. A failure here must never fail
-                // the checkout or change the 200 response.
-                try
-                {
-                    await _emailService.SendOrderSummaryAsync(order, settings);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex,
-                        "Failed to send order-summary email for order {OrderNumber}", order.OrderNumber);
-                }
-
-                break;
-            }
-            catch (DbUpdateException) when (attempt < OrderNumberMaxAttempts)
-            {
-                // Likely an OrderNumber unique-violation: detach the attempt and
-                // regenerate on the next pass.
-                _repo._Order.Delete(order);
-                order.Id = 0;
-            }
-            catch (DbUpdateException)
-            {
-                // Exhausted retries or a different persistence failure.
-                return StatusCode(500,
-                    ApiResponse<OrderConfirmationResponse>.Fail("Could not place order", 500));
-            }
-        }
+        order.OrderNumber = OrderNumberGenerator.Generate(now);
+        _db.Orders.Add(order);
+        await _db.SaveChangesAsync();
 
         var confirmation = new OrderConfirmationResponse
         {
+            TrackingToken = HttpContext.RequestServices.GetRequiredService<Shop.Api.Tenancy.OrderTrackingAccess>().Create(order.OrderNumber),
             OrderNumber = order.OrderNumber,
             Subtotal = order.Subtotal,
             DiscountTotal = order.DiscountTotal,
@@ -302,6 +343,8 @@ public class CheckoutController : ControllerBase
     /// <param name="subtotal">The order subtotal the discount applies to.</param>
     private async Task<(decimal DiscountTotal, string? Message)> ResolveDiscountAsync(string code, decimal subtotal)
     {
+        if(!Shop.Api.Tenancy.PlanFeatures.Allows(HttpContext.RequestServices.GetRequiredService<Shop.Api.Tenancy.DeploymentProfile>(),
+            HttpContext.RequestServices.GetRequiredService<Shop.Api.Tenancy.StoreScope>(),"Discounts"))return (0m,"Discount codes are unavailable at this store.");
         Discount? discount = await _repo._Discount.GetByCodeAsync(code);
         if (discount is null)
         {

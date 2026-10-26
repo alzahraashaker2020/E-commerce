@@ -1,0 +1,35 @@
+<h1>{{ (currencies ? 'Currencies' : 'Order statuses') | t }}</h1>
+<div class="alert alert-error" *ngIf="error" role="alert">{{ (error) | t }}</div>
+<div class="alert alert-info" *ngIf="notice" role="status">{{ (notice) | t }}</div>
+<section class="card" *ngIf="currencies">
+  <h3>{{ 'Store currency' | t }}</h3>
+  <p>{{ 'Select the currency used for new purchases. Changing it does not convert product prices or previous orders.' | t }}</p>
+  <label for="store-currency">{{ 'Currency' | t }}</label>
+  <select id="store-currency" [(ngModel)]="storeCode" [disabled]="busy">
+    <ng-container *ngFor="let row of rows"><option *ngIf="row.isActive" [value]="row.code">{{ (row.name) | t }} ({{ row.code }})</option></ng-container>
+  </select>
+  <button class="btn btn-primary" [disabled]="busy" (click)="setStoreCurrency()">{{ 'Apply to store' | t }}</button>
+</section>
+<form class="card" (ngSubmit)="save()" #configForm="ngForm">
+  <h3>{{ (editing ? 'Edit' : 'Add') | t }} {{ (currencies ? 'currency' : 'status') | t }}</h3>
+  <div class="form-grid">
+    <div class="field"><label for="config-name">{{ 'Name' | t }}</label><input id="config-name" name="name" [(ngModel)]="form.name" required maxlength="100" /></div>
+    <ng-container *ngIf="currencies">
+      <div class="field"><label for="currency-code">{{ 'Currency code' | t }}</label><input id="currency-code" name="code" [(ngModel)]="form.code" required pattern="[A-Za-z]{3}" maxlength="3" [readonly]="!!editing" [attr.placeholder]="'EGP' | t" /></div>
+      <div class="field"><label for="currency-symbol">{{ 'Symbol' | t }}</label><input id="currency-symbol" name="symbol" [(ngModel)]="form.symbol" required maxlength="8" /></div>
+    </ng-container>
+    <ng-container *ngIf="!currencies">
+      <div class="field"><label for="status-color">{{ 'Badge color' | t }}</label><input id="status-color" name="color" type="color" [(ngModel)]="form.color" /></div>
+      <div class="field"><label for="status-order">{{ 'Display order' | t }}</label><input id="status-order" name="displayOrder" type="number" min="0" max="10000" [(ngModel)]="form.displayOrder" required /></div>
+      <div class="field"><label for="status-behavior">{{ 'Order behavior' | t }}</label><select id="status-behavior" name="behavior" [(ngModel)]="form.behavior"><option *ngFor="let value of behaviors" [value]="value">{{ (value) | t }}</option></select></div>
+    </ng-container>
+    <div class="field"><label for="config-active">{{ 'Available for new selections' | t }}</label><select id="config-active" name="isActive" [(ngModel)]="form.isActive"><option [ngValue]="true">{{ 'Yes' | t }}</option><option [ngValue]="false">{{ 'No' | t }}</option></select></div>
+  </div>
+  <p *ngIf="!currencies" class="muted">{{ 'Choose how the order should behave: confirmation and fulfillment deduct stock once; cancellation before shipping restores it. Changing a name or badge does not change stock. The initial status must stay available.' | t }}</p>
+  <div class="actions"><button type="submit" class="btn btn-primary" [disabled]="busy || configForm.invalid">{{ (busy ? 'Saving…' : 'Save') | t }}</button><button type="button" class="btn btn-outline" [disabled]="busy" (click)="reset()">{{ 'Clear form' | t }}</button></div>
+</form>
+<div class="card table-wrap">
+  <table class="data"><thead><tr><th>{{ 'Name' | t }}</th><th>{{ currencies ? 'Code / symbol' : 'Behavior' }}</th><th>{{ 'Active' | t }}</th><th>{{ 'Actions' | t }}</th></tr></thead>
+    <tbody><tr *ngFor="let row of rows"><td><span *ngIf="!currencies" [style.color]="row.color">● </span>{{ (row.name) | t }} <small *ngIf="row.isDefault">{{ '(initial)' | t }}</small></td><td>{{ currencies ? row.code + ' / ' + row.symbol : row.behavior }}</td><td>{{ (row.isActive ? 'Yes' : 'No') | t }}</td><td class="actions"><button class="btn btn-outline btn-sm" [disabled]="busy" (click)="edit(row)">{{ 'Edit' | t }}</button><button class="btn btn-danger btn-sm" [disabled]="busy || row.isDefault" (click)="remove(row)">{{ 'Delete' | t }}</button></td></tr></tbody>
+  </table>
+</div>

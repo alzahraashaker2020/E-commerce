@@ -1,100 +1,105 @@
-<h1 class="page-title">Checkout</h1>
+<h1 class="page-title">{{ 'Checkout' | t }}</h1>
 
-<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+<div class="alert alert-error" *ngIf="error">{{ (error) | t }}</div>
+<div class="alert alert-info" *ngIf="pendingRequest">
+  {{ 'A previous order submission needs confirmation. Retry it to recover the same order without creating another.' | t }}
+  <p>{{ pendingRequest.guestName }} · {{ pendingRequest.addressLine1 }}</p>
+  <button type="button" class="btn btn-primary" [disabled]="submitting" (click)="retryPending()">{{ (submitting ? 'Checking order…' : 'Retry previous submission') | t }}</button>
+</div>
 
 <div class="checkout-layout" *ngIf="cart">
   <!-- Guest details -->
   <form class="checkout-form card" (ngSubmit)="placeOrder()" novalidate>
-    <h3>Guest details</h3>
-    <p class="muted small">No account needed — check out as a guest.</p>
+    <h3>{{ 'Contact details' | t }}</h3>
+    <p class="muted small">{{ 'Signed-in customers can find this order in their account. Guest checkout is also available.' | t }}</p>
 
     <div class="field">
-      <label for="name">Full name</label>
-      <input id="name" name="name" [(ngModel)]="guestName" required placeholder="Jane Doe" />
+      <label for="name">{{ 'Full name' | t }}</label>
+      <input id="name" name="name" [(ngModel)]="guestName" required [attr.placeholder]="'Jane Doe' | t" />
     </div>
     <div class="field">
-      <label for="email">Email</label>
-      <input id="email" name="email" type="email" [(ngModel)]="guestEmail" required placeholder="jane@example.com" aria-describedby="email-help" />
-      <span id="email-help" class="field-error" *ngIf="(submitted || guestEmail.length > 0) && !emailIsValid">Enter a valid email address, for example jane&#64;example.com.</span>
+      <label for="email">{{ 'Email' | t }}</label>
+      <input id="email" name="email" type="email" [(ngModel)]="guestEmail" required [attr.placeholder]="'jane@example.com' | t" aria-describedby="email-help" />
+      <span id="email-help" class="field-error" *ngIf="(submitted || guestEmail.length > 0) && !emailIsValid">{{ 'Enter a valid email address, for example jane@example.com.' | t }}</span>
     </div>
-    <div class="field">
-      <label for="discount">Discount code (optional)</label>
-      <input id="discount" name="discount" [(ngModel)]="discountCode" (ngModelChange)="refreshQuote()" placeholder="WELCOME10" />
+    <div class="field" *ngIf="runtime.hasFeature('Discounts')">
+      <label for="discount">{{ 'Discount code (optional)' | t }}</label>
+      <input id="discount" name="discount" [(ngModel)]="discountCode" (ngModelChange)="refreshQuote()" [attr.placeholder]="'WELCOME10' | t" />
     </div>
 
-    <h3>Shipping address</h3>
+    <h3>{{ 'Shipping address' | t }}</h3>
     <div class="field">
-      <label for="addressLine1">Address line 1</label>
-      <input id="addressLine1" name="addressLine1" [(ngModel)]="addressLine1" required placeholder="123 Main St" />
+      <label for="addressLine1">{{ 'Address line 1' | t }}</label>
+      <input id="addressLine1" name="addressLine1" [(ngModel)]="addressLine1" required [attr.placeholder]="'123 Main St' | t" />
     </div>
     <div class="field">
-      <label for="addressLine2">Address line 2 (optional)</label>
-      <input id="addressLine2" name="addressLine2" [(ngModel)]="addressLine2" placeholder="Apt, suite, etc." />
+      <label for="addressLine2">{{ 'Address line 2 (optional)' | t }}</label>
+      <input id="addressLine2" name="addressLine2" [(ngModel)]="addressLine2" [attr.placeholder]="'Apt, suite, etc.' | t" />
     </div>
     <div class="field">
-      <label for="governorate">Governorate</label>
+      <label for="governorate">{{ 'Governorate' | t }}</label>
       <select id="governorate" name="governorate" [(ngModel)]="governorateId" (ngModelChange)="selectGovernorate()" required [disabled]="submitting">
-        <option [ngValue]="null">Select governorate</option><option *ngFor="let g of governorates" [ngValue]="g.id">{{ g.name }}</option>
+        <option [ngValue]="null">{{ 'Select governorate' | t }}</option><option *ngFor="let g of governorates" [ngValue]="g.id">{{ (g.name) | t }}</option>
       </select>
     </div>
     <div class="field">
-      <label for="delivery-area">Area / district</label>
+      <label for="delivery-area">{{ 'Area / district' | t }}</label>
       <select id="delivery-area" name="area" [(ngModel)]="areaId" (ngModelChange)="selectArea()" required [disabled]="!governorateId || loadingAreas || submitting">
-        <option [ngValue]="null">{{ loadingAreas ? 'Loading areas…' : 'Select area' }}</option><option *ngFor="let a of areas" [ngValue]="a.id">{{ a.name }} — {{ a.shippingFee | storeCurrency:a.currencyCode }}</option>
+        <option [ngValue]="null">{{ (loadingAreas ? 'Loading areas…' : 'Select area') | t }}</option><option *ngFor="let a of areas" [ngValue]="a.id">{{ (a.name) | t }} — {{ a.shippingFee | storeCurrency:a.currencyCode }}</option>
       </select>
     </div>
     <div class="field">
-      <label for="postalCode">Postal code (required)</label>
+      <label for="postalCode">{{ 'Postal code (required)' | t }}</label>
       <input id="postalCode" name="postalCode" [(ngModel)]="postalCode" required placeholder="e.g. 11511" autocomplete="postal-code" aria-describedby="postal-help" />
-      <span id="postal-help" class="muted small">Enter the postal code for your delivery address. The example is not a filled value.</span>
+      <span id="postal-help" class="muted small">{{ 'Enter the postal code for your delivery address. The example is not a filled value.' | t }}</span>
     </div>
     <div class="field">
-      <label for="country">Country</label>
-      <input id="country" name="country" [(ngModel)]="country" required placeholder="Egypt" />
+      <label for="country">{{ 'Country' | t }}</label>
+      <input id="country" name="country" [(ngModel)]="country" required [attr.placeholder]="'Egypt' | t" />
     </div>
     <div class="field">
-      <label for="contactPhone">Contact phone</label>
+      <label for="contactPhone">{{ 'Contact phone' | t }}</label>
       <input id="contactPhone" name="contactPhone" [(ngModel)]="contactPhone" required placeholder="+20 100 000 0000" />
     </div>
 
     <fieldset class="payment-methods">
-      <legend>Payment method</legend>
+      <legend>{{ 'Payment method' | t }}</legend>
       <label class="payment-option" [class.selected]="paymentMethod === 'Cash'">
         <input type="radio" name="paymentMethod" value="Cash" [(ngModel)]="paymentMethod" />
-        <span><strong>Cash on delivery</strong><span class="payment-description">Pay when your order arrives</span></span>
+        <span><strong>{{ 'Cash on delivery' | t }}</strong><span class="payment-description">{{ 'Pay when your order arrives' | t }}</span></span>
       </label>
       <label class="payment-option" [class.selected]="paymentMethod === 'Card'">
-        <input type="radio" name="paymentMethod" value="Card" [(ngModel)]="paymentMethod" />
-        <span><strong>Card</strong><span class="payment-description">Demo payment — no real charge</span></span>
-        <span class="card-brands" aria-label="Visa and Mastercard">Visa · Mastercard</span>
+        <input type="radio" name="paymentMethod" value="Card" disabled />
+        <span><strong>{{ 'Card — unavailable' | t }}</strong><span class="payment-description">{{ 'Card payments are not connected yet. Please use cash on delivery.' | t }}</span></span>
+        <span class="card-brands" [attr.aria-label]="'Visa and Mastercard' | t">{{ 'Visa · Mastercard' | t }}</span>
       </label>
     </fieldset>
 
     <div id="checkout-validation" class="alert" [class.alert-error]="submitted" [class.alert-info]="!submitted" *ngIf="missingFields.length" aria-live="polite">
-      Required fields still to complete: {{ missingFields.join(', ') }}.
+      {{ 'Required fields still to complete:' | t }} {{ (missingFields.join(', ')) | t }}.
     </div>
 
-    <div class="alert alert-error" *ngIf="deliveryError" role="alert">{{ deliveryError }}</div>
+    <div class="alert alert-error" *ngIf="deliveryError" role="alert">{{ (deliveryError) | t }}</div>
     <button class="btn btn-primary full" type="submit" [disabled]="submitting || loadingQuote">
-      {{ submitting ? 'Placing order…' : 'Place order' }}
+      {{ (submitting ? 'Placing order…' : 'Place order') | t }}
     </button>
   </form>
 
   <!-- Order summary -->
   <aside class="summary card">
-    <h3>Order summary</h3>
+    <h3>{{ 'Order summary' | t }}</h3>
     <div class="sum-line" *ngFor="let line of cart.lines">
-      <span>{{ line.productName }} × {{ line.quantity }}</span>
-      <span class="price">{{ line.lineTotal | storeCurrency }}</span>
+      <span>{{ (line.productName) | t }} × {{ (line.quantity) | t }}</span>
+      <span class="price">{{ (line.lineTotal | storeCurrency) | t }}</span>
     </div>
     <hr />
-    <div class="spread"><span>Subtotal</span><span class="price">{{ (quote?.subtotal ?? cart.subtotal) | storeCurrency:quote?.currencyCode }}</span></div>
+    <div class="spread"><span>{{ 'Subtotal' | t }}</span><span class="price">{{ (quote?.subtotal ?? cart.subtotal) | storeCurrency:quote?.currencyCode }}</span></div>
     <ng-container *ngIf="quote; else chooseDelivery">
-      <div class="spread"><span>Discount</span><span>−{{ quote.discountTotal | storeCurrency:quote.currencyCode }}</span></div>
-      <div class="spread"><span>Shipping</span><span>{{ quote.shippingTotal | storeCurrency:quote.currencyCode }}</span></div>
-      <hr /><div class="spread total"><span>Total</span><span class="price">{{ quote.total | storeCurrency:quote.currencyCode }}</span></div>
+      <div class="spread"><span>{{ 'Discount' | t }}</span><span>−{{ quote.discountTotal | storeCurrency:quote.currencyCode }}</span></div>
+      <div class="spread"><span>{{ 'Shipping' | t }}</span><span>{{ quote.shippingTotal | storeCurrency:quote.currencyCode }}</span></div>
+      <hr /><div class="spread total"><span>{{ 'Total' | t }}</span><span class="price">{{ quote.total | storeCurrency:quote.currencyCode }}</span></div>
     </ng-container>
-    <ng-template #chooseDelivery><p class="muted small">{{ loadingQuote ? 'Calculating total…' : 'Select a delivery area to calculate shipping and final total.' }}</p></ng-template>
-    <p class="muted small" *ngIf="quoteMessage">{{ quoteMessage }}</p>
+    <ng-template #chooseDelivery><p class="muted small">{{ (loadingQuote ? 'Calculating total…' : 'Select a delivery area to calculate shipping and final total.') | t }}</p></ng-template>
+    <p class="muted small" *ngIf="quoteMessage">{{ (quoteMessage) | t }}</p>
   </aside>
 </div>

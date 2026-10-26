@@ -43,6 +43,7 @@ public class CustomerAuthController : ControllerBase
     /// </summary>
     /// <param name="request">The registration payload.</param>
     [HttpPost("register")]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("AccountRegistration")]
     public async Task<ActionResult<ApiResponse<CustomerAuthResponse>>> Register(
         [FromBody] CustomerRegisterRequest request)
     {
@@ -65,6 +66,7 @@ public class CustomerAuthController : ControllerBase
 
         _repo._Customer.Add(customer);
         _repo.Save();
+        await HttpContext.RequestServices.GetRequiredService<Shop.Api.Security.CustomerEmailSecurity>().IssueAsync(customer,"VerifyEmail");
 
         return Ok(ApiResponse<CustomerAuthResponse>.Ok(BuildAuthResponse(customer)));
     }

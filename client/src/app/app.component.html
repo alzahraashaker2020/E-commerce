@@ -1,54 +1,62 @@
+<app-language-switch class="global-language" *ngIf="!useKidsShell&&!isPublicPlatform&&!isManagementPage"></app-language-switch>
+<p *ngIf="runtime.error" class="alert alert-error" role="alert">{{ (runtime.error) | t }}</p>
 <!-- Storefront shell: announcement bar + navigation + routed content.
      Layout and colours mirror the reference site's navbar (terracotta
      announcement bar, blush nav row, centered wordmark), reorganised for
      clarity. -->
-<header class="site-header">
+<app-management-shell *ngIf="isManagementPage" [platform]="isPlatformManagement"><router-outlet></router-outlet></app-management-shell>
+<app-kids-shell *ngIf="useKidsShell"><router-outlet></router-outlet></app-kids-shell>
+<ng-container *ngIf="!useKidsShell && storefront.loaded && !isManagementPage">
+<header class="access-header" *ngIf="isAccessPage"><a [routerLink]="runtime.isPlatformHost?'/platform/home':'/'">◆ {{ runtime.isPlatformHost?('Matjark'|t):storeName }}</a><nav><a routerLink="/register">{{ 'Choose your account'|t }}</a><a routerLink="/platform/home" *ngIf="runtime.saasEnabled">{{ 'About the platform'|t }}</a></nav></header>
+<header class="site-header" *ngIf="!isPlatform&&!isAccessPage">
   <!-- Top announcement strip (terracotta brand colour) -->
-  <div class="announcement">Protect your home without compromising on elegance</div>
+  <div class="announcement">{{ 'Protect your home without compromising on elegance' | t }}</div>
 
   <!-- Main navigation row (blush background) -->
   <div class="nav-bar">
     <div class="container nav-inner">
-      <nav class="main-nav" aria-label="Primary">
-        <a routerLink="/catalog" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">Shop All</a>
-        <a routerLink="/track" routerLinkActive="active">Track order</a>
-        <a routerLink="/admin" routerLinkActive="active">Admin</a>
+      <nav class="main-nav" [attr.aria-label]="'Primary' | t">
+        <a routerLink="/catalog" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">{{ 'Shop All' | t }}</a>
+        <a *ngIf="runtime.commerceEnabled" routerLink="/track" routerLinkActive="active">{{ 'Track order' | t }}</a>
+        <a routerLink="/merchant" routerLinkActive="active">{{ 'Merchant' | t }}</a>
       </nav>
 
-      <a class="brand" routerLink="/catalog" aria-label="MakaniShop home">
-        <span class="brand-mark">◆</span> Makani<span class="brand-accent">Shop</span>
+      <a class="brand" routerLink="/catalog" [attr.aria-label]="(storeName + ' home') | t">
+        <span class="brand-mark">◆</span> {{ (storeName) | t }}
       </a>
 
       <div class="nav-actions">
         <!-- Account: shows "My account" when signed in, else "Sign in". -->
-        <a class="account-link" *ngIf="(loggedIn$ | async); else signIn" routerLink="/account">My account</a>
-        <ng-template #signIn><a class="account-link" routerLink="/login">Sign in</a></ng-template>
+        <a class="account-link" *ngIf="(loggedIn$ | async); else signIn" routerLink="/account">{{ 'My account' | t }}</a>
+        <ng-template #signIn><a class="account-link" routerLink="/login">{{ 'Sign in' | t }}</a></ng-template>
 
-        <a class="cart-link" routerLink="/cart" aria-label="View cart">
+        <a *ngIf="runtime.commerceEnabled" class="cart-link" routerLink="/cart" [attr.aria-label]="'View cart' | t">
           <span class="cart-icon">🛒</span>
-          <span class="cart-badge" *ngIf="(cartCount$ | async) as count">{{ count }}</span>
+          <span class="cart-badge" *ngIf="(cartCount$ | async) as count">{{ (count) | t }}</span>
         </a>
       </div>
     </div>
   </div>
 
-  <div class="demo-banner">Demonstration storefront — sample data, no real transactions</div>
+  <div class="demo-banner">{{ 'Demonstration storefront — sample data, no real transactions' | t }}</div>
 </header>
 
-<main class="container page">
+<main class="container page" [class.access-page]="isAccessPage" [class.platform-page]="isPlatform">
   <router-outlet></router-outlet>
 </main>
 
 <!-- Basic, compact footer (deliberately minimal — not the full multi-column
      version from the reference site), using the terracotta brand color. -->
-<footer class="site-footer">
+<footer class="site-footer" *ngIf="!isPlatform&&!isAccessPage">
   <div class="container footer-inner">
-    <span class="footer-brand">◆ MakaniShop</span>
+    <span class="footer-brand">◆ {{ (storeName) | t }}</span>
     <nav class="footer-links">
-      <a routerLink="/catalog">Shop</a>
-      <a routerLink="/track">Track order</a>
-      <a routerLink="/admin">Admin</a>
+      <a routerLink="/catalog">{{ 'Shop' | t }}</a>
+      <a *ngIf="runtime.commerceEnabled" routerLink="/track">{{ 'Track order' | t }}</a>
+      <a routerLink="/merchant">{{ 'Merchant' | t }}</a>
+      <a *ngIf="runtime.saasEnabled" routerLink="/platform">{{ 'Platform' | t }}</a>
     </nav>
-    <span class="footer-note">Demo · Angular · ASP.NET Core · PostgreSQL</span>
+    <span class="footer-note">{{ 'Demo · Angular · ASP.NET Core · PostgreSQL' | t }}</span>
   </div>
 </footer>
+</ng-container>

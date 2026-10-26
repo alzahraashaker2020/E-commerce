@@ -1,0 +1,35 @@
+<h1 class="merchant-title">{{ 'Discounts' | t }}</h1>
+
+<div class="loading" *ngIf="loading">{{ 'Loading…' | t }}</div>
+<div class="alert alert-error" *ngIf="error">{{ (error) | t }}</div>
+
+<!-- Create form -->
+<div class="card form-card">
+  <h3>{{ 'Create discount' | t }}</h3>
+  <div class="form-grid">
+    <div class="field"><label>{{ 'Code' | t }}</label><input name="code" [(ngModel)]="form.code" [attr.placeholder]="'SUMMER20' | t" /></div>
+    <div class="field"><label>{{ 'Type' | t }}</label><select name="type" [(ngModel)]="form.type"><option value="Percentage">{{ 'Percentage' | t }}</option><option value="Fixed">{{ 'Fixed' | t }}</option></select></div>
+    <div class="field"><label>{{ 'Value' | t }}</label><input name="value" type="number" [(ngModel)]="form.value" /></div>
+    <div class="field"><label>{{ 'Active' | t }}</label><select name="active" [(ngModel)]="form.isActive"><option [ngValue]="true">{{ 'Yes' | t }}</option><option [ngValue]="false">{{ 'No' | t }}</option></select></div>
+  </div>
+  <button class="btn btn-primary" (click)="create()">{{ 'Create' | t }}</button>
+</div>
+
+<!-- Discount table -->
+<div class="card">
+  <div class="table-scroll" tabindex="0" role="region" [attr.aria-label]="'Data table'|t" *ngIf="discounts.length"><table class="data">
+    <thead>
+      <tr><th>{{ 'Code' | t }}</th><th>{{ 'Type' | t }}</th><th>{{ 'Value' | t }}</th><th>{{ 'Active' | t }}</th><th></th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let d of discounts">
+        <td><strong>{{ d.code }}</strong></td>
+        <td>{{ (d.type) | t }}</td>
+        <td>{{ (d.type === 'Percentage' ? d.value + '%' : (d.value | storeCurrency)) | t }}</td>
+        <td><span class="badge" [class.badge-ok]="d.isActive" [class.badge-muted]="!d.isActive">{{ (d.isActive ? 'Yes' : 'No') | t }}</span></td>
+        <td><button class="btn btn-danger btn-sm" (click)="remove(d)">{{ 'Delete' | t }}</button></td>
+      </tr>
+    </tbody>
+  </table></div>
+  <p class="muted" *ngIf="!discounts.length && !loading">{{ 'No discounts.' | t }}</p>
+</div>

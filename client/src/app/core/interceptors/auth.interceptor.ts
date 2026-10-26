@@ -1,11 +1,12 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { AuthService } from '../services/auth.service';
+import { MerchantAuthService } from '../services/merchant-auth.service';
 import { AccountService } from '../services/account.service';
+import { environment } from '../../../environments/environment';
 
 /**
  * Functional HTTP interceptor that attaches the right JWT as a Bearer token:
- * - the ADMIN token for `api/admin/*` requests, and
+ * - the MERCHANT token for `api/merchant/*` requests, and
  * - the CUSTOMER token for the protected customer endpoints (account profile/
  *   orders/reviews and creating a review).
  *
@@ -14,15 +15,20 @@ import { AccountService } from '../services/account.service';
  * so they work for anonymous visitors.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const auth = inject(AuthService);
+  const auth = inject(MerchantAuthService);
   const account = inject(AccountService);
 
   const url = req.url;
+  if (!url.startsWith(environment.apiBaseUrl + '/')) return next(req);
+  if (url.includes('/platform/')) {
+    const token = localStorage.getItem('shop_platform_token');
+    return next(token && !url.endsWith('/auth/login') ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req);
+  }
 
-  // Admin endpoints use the admin token.
-  if (url.includes('/admin/')) {
+  // Merchant endpoints use the merchant token.
+  if (url.includes('/merchant/')) {
     const token = auth.getToken();
-    if (token) {
+    if (token && !url.endsWith('/auth/login')) {
       return next(req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }));
     }
     return next(req);
@@ -36,9 +42,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     url.includes('/account/profile') ||
     url.includes('/account/orders') ||
     url.includes('/account/reviews');
+  const isAccountSecurity = url.endsWith('/account/email-status') || url.endsWith('/account/resend-verification');
   const isCreateReview = url.endsWith('/reviews') && req.method === 'POST';
 
-  if (isProtectedAccount || isCreateReview) {
+  if (isProtectedAccount || isAccountSecurity || isCreateReview || url.includes('/ordertracking/') || url.includes('/returns/') || url === environment.apiBaseUrl + '/checkout') {
     const token = account.getToken();
     if (token) {
       return next(req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }));

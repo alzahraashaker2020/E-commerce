@@ -1,0 +1,45 @@
+<h1 class="merchant-title">{{ 'Sizes' | t }}</h1>
+
+<div class="loading" *ngIf="loading">{{ 'Loading…' | t }}</div>
+<div class="alert alert-error" *ngIf="error">{{ (error) | t }}</div>
+
+<!-- Create / edit form -->
+<div class="card form-card">
+  <h3>{{ (editing ? 'Edit size' : 'Create size') | t }}</h3>
+  <div class="form-grid">
+    <div class="field"><label>{{ 'Name' | t }}</label><input name="name" [(ngModel)]="form.name" [attr.placeholder]="'Small' | t" /></div>
+    <div class="field"><label>{{ 'Display order' | t }}</label><input name="displayOrder" type="number" [(ngModel)]="form.displayOrder" /></div>
+    <div class="field">
+      <label>{{ 'Active' | t }}</label>
+      <select name="active" [(ngModel)]="form.isActive">
+        <option [ngValue]="true">{{ 'Yes' | t }}</option>
+        <option [ngValue]="false">{{ 'No' | t }}</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-primary" (click)="save()">{{ (editing ? 'Save' : 'Create') | t }}</button>
+    <button class="btn btn-outline" *ngIf="editing" (click)="cancel()">{{ 'Cancel' | t }}</button>
+  </div>
+</div>
+
+<!-- Size table -->
+<div class="card">
+  <div class="table-scroll" tabindex="0" role="region" [attr.aria-label]="'Data table'|t" *ngIf="sizes.length"><table class="data">
+    <thead>
+      <tr><th>{{ 'Name' | t }}</th><th>{{ 'Order' | t }}</th><th>{{ 'Active' | t }}</th><th></th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let s of sizes">
+        <td><strong>{{ (s.name) | t }}</strong></td>
+        <td>{{ (s.displayOrder) | t }}</td>
+        <td><span class="badge" [class.badge-ok]="s.isActive" [class.badge-muted]="!s.isActive">{{ (s.isActive ? 'Yes' : 'No') | t }}</span></td>
+        <td class="row-actions">
+          <button class="btn btn-outline btn-sm" (click)="startEdit(s)">{{ 'Edit' | t }}</button>
+          <button class="btn btn-danger btn-sm" (click)="remove(s)">{{ 'Delete' | t }}</button>
+        </td>
+      </tr>
+    </tbody>
+  </table></div>
+  <p class="muted" *ngIf="!sizes.length && !loading">{{ 'No sizes.' | t }}</p>
+</div>

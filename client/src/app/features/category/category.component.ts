@@ -1,3 +1,4 @@
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -15,7 +16,7 @@ import { ImageUrlPipe } from '../../core/pipes/image-url.pipe';
 @Component({
   selector: 'app-category',
   standalone: true,
-  imports: [CommonModule, RouterLink, ImageUrlPipe],
+  imports: [TranslatePipe,CommonModule, RouterLink, ImageUrlPipe],
   templateUrl: './category.component.html',
   styleUrl: './category.component.css'
 })

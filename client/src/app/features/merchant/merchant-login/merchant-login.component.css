@@ -1,0 +1,11 @@
+/* Merchant login styling. */
+.login-wrap {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.login-card { width: 100%; max-width: 380px; padding: 2rem; }
+.login-card h1 { font-size: 1.4rem; margin-bottom: 0.3rem; }
+.login-card .small { font-size: 0.8rem; margin-bottom: 1.2rem; }
+.full { width: 100%; text-align: center; margin-top: 0.6rem; }

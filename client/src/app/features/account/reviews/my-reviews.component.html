@@ -1,18 +1,18 @@
-<div class="loading" *ngIf="loading">Loading…</div>
-<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+<div class="loading" *ngIf="loading">{{ 'Loading…' | t }}</div>
+<div class="alert alert-error" *ngIf="error">{{ (error) | t }}</div>
 
 <div *ngIf="!loading && !error">
   <div class="empty card" *ngIf="!reviews.length">
-    <p class="muted">You haven't written any reviews yet. Review a product you've purchased from its page.</p>
-    <a class="btn btn-primary" routerLink="/catalog">Browse products</a>
+    <p class="muted">{{ 'You haven\'t written any reviews yet. Review a product you\'ve purchased from its page.' | t }}</p>
+    <a class="btn btn-primary" routerLink="/catalog">{{ 'Browse products' | t }}</a>
   </div>
 
   <div class="review card" *ngFor="let r of reviews">
     <div class="spread">
-      <strong>{{ r.productName }}</strong>
-      <span class="stars" [attr.aria-label]="r.rating + ' out of 5'">{{ stars(r.rating) }}</span>
+      <strong>{{ (r.productName) | t }}</strong>
+      <span class="stars" [attr.aria-label]="(r.rating + ' out of 5') | t">{{ (stars(r.rating)) | t }}</span>
     </div>
     <p class="comment" *ngIf="r.comment">{{ r.comment }}</p>
-    <span class="muted small">{{ r.createdAt | date: 'mediumDate' }}</span>
+    <span class="muted small">{{ (r.createdAt |localDate: 'mediumDate') | t }}</span>
   </div>
 </div>

@@ -1,0 +1,54 @@
+<h1 class="merchant-title">{{ 'Sales Overview' | t }}</h1>
+<nav class="card" [attr.aria-label]="'Store management' | t" style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+  <a routerLink="/merchant/colors">{{ 'Manage colors' | t }}</a>
+  <a routerLink="/merchant/sizes">{{ 'Manage sizes' | t }}</a>
+  <a routerLink="/merchant/currencies">{{ 'Manage currencies' | t }}</a>
+  <a routerLink="/merchant/order-statuses">{{ 'Manage order statuses' | t }}</a>
+  <a routerLink="/merchant/delivery">{{ 'Manage delivery and shipping' | t }}</a>
+</nav>
+
+<div class="loading" *ngIf="loading">{{ 'Loading…' | t }}</div>
+<div class="alert alert-error" *ngIf="error">{{ (error) | t }}</div>
+
+<div *ngIf="overview && !loading">
+  <p class="muted">{{ 'Sales totals below include orders in' | t }} {{ overview.currencyCode }} {{ 'only. Different currencies are not added together.' | t }}</p>
+  <!-- KPI cards -->
+  <div class="kpi-grid">
+    <div class="kpi card"><span class="kpi-label">{{ 'Product sales after discounts' | t }}</span><span class="kpi-value">{{ overview.productRevenue | storeCurrency:overview.currencyCode }}</span></div>
+    <div class="kpi card"><span class="kpi-label">{{ 'Shipping collected' | t }}</span><span class="kpi-value">{{ overview.shippingRevenue | storeCurrency:overview.currencyCode }}</span></div>
+    <div class="kpi card">
+      <span class="kpi-label">{{ 'Total revenue' | t }}</span>
+      <span class="kpi-value">{{ (overview.totalRevenue | storeCurrency) | t }}</span>
+    </div>
+    <div class="kpi card">
+      <span class="kpi-label">{{ 'Orders' | t }}</span>
+      <span class="kpi-value">{{ (overview.orderCount) | t }}</span>
+    </div>
+    <div class="kpi card">
+      <span class="kpi-label">{{ 'Avg order value' | t }}</span>
+      <span class="kpi-value">{{ (overview.averageOrderValue | storeCurrency) | t }}</span>
+    </div>
+    <div class="kpi card">
+      <span class="kpi-label">{{ 'Low-stock items' | t }}</span>
+      <span class="kpi-value" [class.warn]="overview.lowStockCount > 0">{{ (overview.lowStockCount) | t }}</span>
+    </div>
+  </div>
+
+  <!-- Top products -->
+  <div class="card">
+    <h3>{{ 'Top products by units sold' | t }}</h3>
+    <div class="table-scroll" tabindex="0" role="region" [attr.aria-label]="'Data table'|t" *ngIf="overview.topProducts?.length"><table class="data">
+      <thead>
+        <tr><th>{{ 'Product' | t }}</th><th>{{ 'Units sold' | t }}</th><th class="right">{{ 'Revenue' | t }}</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of overview.topProducts">
+          <td>{{ (p.productName) | t }}</td>
+          <td>{{ (p.quantitySold) | t }}</td>
+          <td class="right">{{ (p.revenue | storeCurrency) | t }}</td>
+        </tr>
+      </tbody>
+    </table></div>
+    <p class="muted" *ngIf="!overview.topProducts?.length">{{ 'No sales in this period.' | t }}</p>
+  </div>
+</div>

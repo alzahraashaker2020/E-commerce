@@ -1,3 +1,4 @@
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -10,7 +11,7 @@ import { AccountService } from '../../../core/services/account.service';
 @Component({
   selector: 'app-account-shell',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [TranslatePipe,CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './account-shell.component.html',
   styleUrl: './account-shell.component.css'
 })

@@ -1,25 +1,25 @@
-<div class="loading" *ngIf="loading">Loading…</div>
-<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+<div class="loading" *ngIf="loading">{{ 'Loading…' | t }}</div>
+<div class="alert alert-error" *ngIf="error">{{ (error) | t }}</div>
 
 <article class="pdp" *ngIf="product && !loading">
   <nav class="breadcrumb">
-    <a routerLink="/catalog">Home</a>
+    <a routerLink="/catalog">{{ 'Home' | t }}</a>
     <span>›</span>
-    <span>{{ product.categoryName }}</span>
+    <span>{{ (product.categoryName) | t }}</span>
     <span>›</span>
-    <span>{{ product.name }}</span>
+    <span>{{ (product.name) | t }}</span>
   </nav>
 
   <div class="pdp-grid">
     <!-- Media -->
     <div class="pdp-gallery">
       <div class="pdp-media">
-      <img *ngIf="currentImage" [src]="currentImage | imageUrl" [alt]="product.name" />
-      <div class="pdp-media-placeholder" *ngIf="!currentImage">{{ product.name.charAt(0) }}</div>
+      <img *ngIf="currentImage" [src]="currentImage | imageUrl" [alt]="(product.name) | t" />
+      <div class="pdp-media-placeholder" *ngIf="!currentImage">{{ (product.name.charAt(0)) | t }}</div>
       </div>
-      <div class="gallery-thumbnails" *ngIf="gallery.length > 1" aria-label="Product images">
+      <div class="gallery-thumbnails" *ngIf="gallery.length > 1" [attr.aria-label]="'Product images' | t">
         <button type="button" *ngFor="let image of gallery; let i = index" (click)="imageIndex = i"
-          [class.active]="imageIndex === i" [attr.aria-pressed]="imageIndex === i" [attr.aria-label]="'View image ' + (i + 1)">
+          [class.active]="imageIndex === i" [attr.aria-pressed]="imageIndex === i" [attr.aria-label]="('View image ' + (i + 1)) | t">
           <img [src]="image | imageUrl" alt="" />
         </button>
       </div>
@@ -27,23 +27,23 @@
 
     <!-- Info -->
     <div class="pdp-info">
-      <span class="pdp-brand" *ngIf="product.brand">{{ product.brand }}</span>
-      <h1 class="pdp-name">{{ product.name }}</h1>
-      <div class="pdp-price">{{ currentPrice | storeCurrency }}</div>
+      <span class="pdp-brand" *ngIf="product.brand">{{ (product.brand) | t }}</span>
+      <h1 class="pdp-name">{{ (product.name) | t }}</h1>
+      <div class="pdp-price">{{ (currentPrice | storeCurrency) | t }}</div>
 
       <div class="pdp-stock">
         <span class="badge" [class.badge-ok]="inStock" [class.badge-warn]="!inStock">
-          {{ inStock ? 'In stock' : 'Out of stock' }}
+          {{ (inStock ? 'In stock' : 'Out of stock') | t }}
         </span>
-        <span class="muted" *ngIf="product.showStockQuantity && !product.hasVariants">{{ product.stockQuantity }} available</span>
-        <span class="muted" *ngIf="product.showStockQuantity && product.hasVariants && selectedVariant">{{ selectedVariant.stockQuantity }} available</span>
+        <span class="muted" *ngIf="product.showStockQuantity && !product.hasVariants">{{ (product.stockQuantity) | t }} {{ 'available' | t }}</span>
+        <span class="muted" *ngIf="product.showStockQuantity && product.hasVariants && selectedVariant">{{ (selectedVariant.stockQuantity) | t }} {{ 'available' | t }}</span>
       </div>
 
-      <div class="pdp-desc" *ngIf="product.descriptionHtml" [innerHTML]="product.descriptionHtml"></div>
+      <div class="pdp-desc" *ngIf="product.descriptionHtml" [innerHTML]="(product.descriptionHtml) | t"></div>
 
       <!-- Variant selector (FEAT-004 owns the full size/color resolve UX). -->
       <div class="pdp-variants" *ngIf="product.variants.length">
-        <label>Variant</label>
+        <label>{{ 'Variant' | t }}</label>
         <div class="variant-options">
           <button
             class="variant-btn"
@@ -52,36 +52,38 @@
             [disabled]="!v.isActive || v.stockQuantity === 0"
             (click)="selectVariant(v)"
           >
-            {{ v.sizeName || '' }}{{ v.sizeName && v.colorName ? ' / ' : '' }}{{ v.colorName || '' }}
+            {{ (v.sizeName || '') | t }}{{ (v.sizeName && v.colorName ? ' / ' : '') | t }}{{ (v.colorName || '') | t }}
           </button>
         </div>
       </div>
 
       <!-- Quantity + add -->
-      <div class="pdp-actions">
+      <div class="pdp-actions" *ngIf="runtime.commerceEnabled">
         <div class="qty">
           <button (click)="quantity = quantity > 1 ? quantity - 1 : 1">−</button>
-          <span>{{ quantity }}</span>
+          <span>{{ (quantity) | t }}</span>
           <button (click)="quantity = quantity + 1" [disabled]="quantity >= availableQuantity">+</button>
         </div>
-        <button class="btn btn-primary" [disabled]="!inStock || quantity > availableQuantity" (click)="addToCart()">Add to cart</button>
+        <button class="btn btn-primary" [disabled]="!inStock || quantity > availableQuantity" (click)="addToCart()">{{ 'Add to cart' | t }}</button>
       </div>
 
+      <p *ngIf="!runtime.commerceEnabled">{{ 'Display catalog · Online purchasing is unavailable.' | t }}</p>
+
       <div class="alert alert-info" *ngIf="added">
-        Added to cart. <a (click)="goToCart()" class="link">View cart →</a>
+        {{ 'Added to cart.' | t }} <a (click)="goToCart()" class="link">{{ 'View cart →' | t }}</a>
       </div>
     </div>
   </div>
 
   <!-- Reviews -->
   <section class="reviews">
-    <h2>Customer reviews</h2>
+    <h2>{{ 'Customer reviews' | t }}</h2>
 
     <div class="review-summary" *ngIf="reviews">
       <div class="avg">
-        <span class="avg-num">{{ (reviews.averageRating || 0) | number: '1.1-1' }}</span>
-        <span class="stars">{{ stars(roundedAverage) }}</span>
-        <span class="muted">{{ reviews.reviewCount }} review(s)</span>
+        <span class="avg-num">{{ ((reviews.averageRating || 0) |localNumber: '1.1-1') | t }}</span>
+        <span class="stars">{{ (stars(roundedAverage)) | t }}</span>
+        <span class="muted">{{ (reviews.reviewCount) | t }} {{ 'review(s)' | t }}</span>
       </div>
     </div>
 
@@ -89,25 +91,25 @@
     <div class="review-list" *ngIf="reviews && reviews.reviews.length">
       <div class="review-item" *ngFor="let r of reviews.reviews">
         <div class="spread">
-          <strong>{{ r.authorName }}</strong>
-          <span class="stars">{{ stars(r.rating) }}</span>
+          <strong>{{ (r.authorName) | t }}</strong>
+          <span class="stars">{{ (stars(r.rating)) | t }}</span>
         </div>
         <p *ngIf="r.comment">{{ r.comment }}</p>
-        <span class="muted small">{{ r.createdAt | date: 'mediumDate' }}</span>
+        <span class="muted small">{{ (r.createdAt |localDate: 'mediumDate') | t }}</span>
       </div>
     </div>
-    <p class="muted" *ngIf="reviews && !reviews.reviews.length">No reviews yet. Be the first to review this product.</p>
+    <p class="muted" *ngIf="reviews && !reviews.reviews.length">{{ 'No reviews yet. Be the first to review this product.' | t }}</p>
 
     <!-- Review form (signed-in customers; server enforces purchase gating) -->
     <div class="review-form card" *ngIf="isLoggedIn">
-      <h3>Write a review</h3>
-      <p class="muted small">You can review products you've purchased.</p>
+      <h3>{{ 'Write a review' | t }}</h3>
+      <p class="muted small">{{ 'You can review products you\'ve purchased.' | t }}</p>
 
-      <div class="alert alert-error" *ngIf="reviewError">{{ reviewError }}</div>
-      <div class="alert alert-info" *ngIf="reviewSuccess">Thanks! Your review has been posted.</div>
+      <div class="alert alert-error" *ngIf="reviewError">{{ (reviewError) | t }}</div>
+      <div class="alert alert-info" *ngIf="reviewSuccess">{{ 'Thanks! Your review has been posted.' | t }}</div>
 
       <div class="field">
-        <label for="rating">Rating</label>
+        <label for="rating">{{ 'Rating' | t }}</label>
         <select id="rating" name="rating" [(ngModel)]="newRating">
           <option [ngValue]="5">★★★★★ (5)</option>
           <option [ngValue]="4">★★★★☆ (4)</option>
@@ -117,16 +119,16 @@
         </select>
       </div>
       <div class="field">
-        <label for="comment">Comment</label>
-        <textarea id="comment" name="comment" rows="3" [(ngModel)]="newComment" placeholder="Share your thoughts…"></textarea>
+        <label for="comment">{{ 'Comment' | t }}</label>
+        <textarea id="comment" name="comment" rows="3" [(ngModel)]="newComment" [attr.placeholder]="'Share your thoughts…' | t"></textarea>
       </div>
       <button class="btn btn-primary" (click)="submitReview()" [disabled]="reviewSubmitting">
-        {{ reviewSubmitting ? 'Posting…' : 'Post review' }}
+        {{ (reviewSubmitting ? 'Posting…' : 'Post review') | t }}
       </button>
     </div>
 
     <div class="alert alert-info signin-cta" *ngIf="!isLoggedIn">
-      <a routerLink="/login">Sign in</a> to write a review.
+      <a routerLink="/login">{{ 'Sign in' | t }}</a> {{ 'to write a review.' | t }}
     </div>
   </section>
 </article>

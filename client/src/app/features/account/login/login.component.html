@@ -1,28 +1,30 @@
 <div class="auth-wrap">
   <div class="auth-card card">
-    <h1>Sign in</h1>
-    <p class="muted small">Demo account: <strong>jordan&#64;demo.local</strong> / <strong>Admin&#64;12345</strong></p>
+    <h1>{{ 'Customer sign in' | t }}</h1>
+    <p><a routerLink="/account/forgot-password">{{ 'Forgot your password?' | t }}</a></p>
+    <p class="muted small">{{ 'Sign in to your account at this store.' | t }}</p>
 
-    <div class="alert alert-error" *ngIf="error">{{ error }}</div>
+    <div class="alert alert-error" *ngIf="error">{{ (error) | t }}</div>
 
     <form (ngSubmit)="login()">
       <div class="field">
-        <label for="email">Email</label>
+        <label for="email">{{ 'Email' | t }}</label>
         <input id="email" name="email" type="email" [(ngModel)]="email" required autocomplete="username" />
       </div>
       <div class="field">
-        <label for="password">Password</label>
+        <label for="password">{{ 'Password' | t }}</label>
         <input id="password" name="password" type="password" [(ngModel)]="password" required autocomplete="current-password" />
       </div>
       <button class="btn btn-primary full" type="submit" [disabled]="submitting">
-        {{ submitting ? 'Signing in…' : 'Sign in' }}
+        {{ (submitting ? 'Signing in…' : 'Sign in') | t }}
       </button>
     </form>
 
-    <p class="muted small">Google and Facebook sign-in are currently unavailable. Please use email and password.</p>
+    <p class="muted small">{{ 'Google and Facebook sign-in are currently unavailable. Please use email and password.' | t }}</p>
 
     <p class="auth-foot muted small">
-      New here? <a routerLink="/register">Create an account</a>
+      {{ 'New here?' | t }} <a routerLink="/register/customer">{{ 'Create an account' | t }}</a>
     </p>
+    <p class="auth-foot"><a routerLink="/merchant/login">{{ 'Merchant sign in' | t }}</a></p>
   </div>
 </div>

@@ -131,3 +131,5 @@
 }
 .footer-links a:hover { opacity: 1; text-decoration: underline; }
 .footer-note { color: rgba(255, 255, 255, 0.75); font-size: 0.78rem; }
+
+.access-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;max-width:1160px;margin:0 auto;padding:1.5rem;color:#162e40}.access-header>a{font-size:1.5rem;font-weight:800;text-decoration:none}.access-header nav{display:flex;gap:1rem;font-size:.85rem}.page.access-page{padding:1rem;max-width:720px}.page.platform-page{max-width:none;padding:0;width:100%}

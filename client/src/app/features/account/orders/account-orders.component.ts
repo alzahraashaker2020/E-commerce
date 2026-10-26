@@ -1,9 +1,12 @@
+import { LocalDatePipe } from '../../../core/i18n/format.pipe';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AccountService } from '../../../core/services/account.service';
 import { OrderTracking } from '../../../core/models/api.models';
 import { StoreCurrencyPipe } from '../../../core/pipes/store-currency.pipe';
+import { OrderReturnsComponent } from '../../returns/order-returns.component';
 
 /**
  * The signed-in customer's order history: past and current orders (newest
@@ -12,7 +15,7 @@ import { StoreCurrencyPipe } from '../../../core/pipes/store-currency.pipe';
 @Component({
   selector: 'app-account-orders',
   standalone: true,
-  imports: [CommonModule, RouterLink, StoreCurrencyPipe],
+  imports: [LocalDatePipe,TranslatePipe,CommonModule, RouterLink, StoreCurrencyPipe, OrderReturnsComponent],
   templateUrl: './account-orders.component.html',
   styleUrl: './account-orders.component.css'
 })

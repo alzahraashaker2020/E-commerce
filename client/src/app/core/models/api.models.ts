@@ -71,7 +71,7 @@ export interface ProductVariant {
   imageUrl?: string | null;
 }
 
-/** An admin-managed size dimension. */
+/** An merchant-managed size dimension. */
 export interface Size {
   id: number;
   name: string;
@@ -79,7 +79,7 @@ export interface Size {
   isActive: boolean;
 }
 
-/** An admin-managed color dimension. */
+/** An merchant-managed color dimension. */
 export interface Color {
   id: number;
   name: string;
@@ -129,6 +129,7 @@ export interface CartLine {
 
 /** Guest checkout request payload. */
 export interface PlaceOrderRequest {
+  idempotencyKey?: string;
   areaId: number;
   expectedTotal?: number;
   expectedCurrencyCode?: string;
@@ -148,6 +149,7 @@ export interface PlaceOrderRequest {
 
 /** Order confirmation returned after a successful checkout. */
 export interface OrderConfirmation {
+  trackingToken?: string;
   subtotal: number;
   discountTotal: number;
   shippingTotal: number;

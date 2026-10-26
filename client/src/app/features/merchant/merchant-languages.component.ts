@@ -1,0 +1,22 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
+import { ApiService } from '../../core/services/api.service';
+import { StorefrontService } from '../../core/services/storefront.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+@Component({standalone:true,imports:[CommonModule,FormsModule,TranslatePipe],template:`
+<h1>{{'Languages & translations'|t}}</h1><p>{{'Keep the English content under Products and Storefront & design. Add its Arabic translation here. Missing translations show the original text. Identical source phrases share one translation.'|t}}</p>
+<p role="alert" *ngIf="error">{{error|t}}</p><p role="status" *ngIf="saved">{{'Translations saved.'|t}}</p>
+<div class="filters"><label>{{'Filter content'|t}}<input [(ngModel)]="query" [placeholder]="'Search'|t"></label><label><input type="checkbox" [(ngModel)]="missingOnly">{{'Missing translations only'|t}}</label><button type="button" (click)="load()">{{'Reload content'|t}}</button></div>
+<p>{{sources.length}} {{'source phrases'|t}} · {{completed}} {{'translated'|t}}</p>
+<form *ngIf="document" (ngSubmit)="save()"><article *ngFor="let item of filtered"><span class="context">{{item.context|t}}</span><div class="columns"><div><strong>English</strong><div class="source" lang="en" dir="ltr"><div *ngIf="item.context==='Product description';else plainSource" [innerHTML]="item.source"></div><ng-template #plainSource>{{item.source}}</ng-template></div></div><label><strong>العربية</strong><textarea lang="ar" dir="rtl" [name]="'translation-'+item.index" [(ngModel)]="document.translations[item.source]" maxlength="64000" rows="3"></textarea></label></div></article><div class="save"><button class="btn btn-primary" [disabled]="saving">{{(saving?'Saving…':'Save translations')|t}}</button></div></form>
+`,styles:[`.filters{display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin:20px 0}.filters label:first-child{flex:1}.filters input:not([type=checkbox]){display:block;width:100%;padding:10px;margin-top:5px;border:1px solid #d6dce5;border-radius:8px}article{padding:20px;background:white;border:1px solid #e0e5ed;border-radius:12px;margin:16px 0}.columns{display:grid;grid-template-columns:1fr 1fr;gap:24px}.context{display:block;color:#7c8798;font-size:12px;margin-bottom:12px}.source{white-space:pre-wrap;word-break:break-word;max-height:160px;overflow:auto;background:#f6f8fb;padding:12px;border-radius:8px;margin-top:8px;font-size:14px}textarea{display:block;width:100%;margin-top:8px;padding:12px;border:1px solid #d6dce5;border-radius:8px;font-size:16px}.save{position:sticky;bottom:0;padding:15px;background:white;border:1px solid #e0e5ed;border-radius:10px}[role=alert]{color:#b22}@media(max-width:650px){.columns{grid-template-columns:1fr;gap:16px}}`]})
+export class MerchantLanguagesComponent{
+ document:any;sources:any[]=[];query='';missingOnly=false;saving=false;saved=false;error='';
+ constructor(private api:ApiService,private storefront:StorefrontService){this.load();}
+ get completed():number{return this.sources.filter(s=>!!this.document?.translations[s.source]?.trim()).length;}
+ get filtered():any[]{const q=this.query.trim().toLocaleLowerCase();return this.sources.filter(s=>(!this.missingOnly||!this.document?.translations[s.source]?.trim())&&(!q||s.source.toLocaleLowerCase().includes(q)||s.context.toLocaleLowerCase().includes(q)||this.document?.translations[s.source]?.includes(q)));}
+ load():void{this.error='';this.saved=false;forkJoin({document:this.api.get<any>('merchant/storefront'),sources:this.api.get<any[]>('merchant/storefront/translation-sources')}).subscribe({next:r=>{this.document=r.document;this.document.translations=this.document.translations||{};this.sources=r.sources.map((s,index)=>({...s,index}));},error:()=>this.error='Could not load translations.'});}
+ save():void{if(this.saving)return;this.saving=true;this.error='';this.saved=false;const copy={...this.document,translations:Object.fromEntries(Object.entries(this.document.translations).filter(([,value])=>typeof value==='string'&&value.trim()))};this.api.put<any>('merchant/storefront',copy).subscribe({next:r=>{this.document=r;this.saving=false;this.saved=true;this.storefront.reload();},error:e=>{this.error=e.error?.message||'Unable to save translations.';this.saving=false;}});}
+}

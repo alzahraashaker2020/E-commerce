@@ -1,0 +1,24 @@
+<h1>{{ 'Delivery and shipping fees' | t }}</h1>
+<div class="alert alert-error" *ngIf="error" role="alert">{{ (error) | t }}</div>
+<div class="alert alert-info" *ngIf="notice" role="status">{{ (notice) | t }}</div>
+<p>{{ 'Define governorates, then areas and their shipping fees. Only active areas priced in the store currency (' | t }}{{ (storeCode) | t }}{{ ') are offered at checkout. Updating a rate does not change existing orders.' | t }}</p>
+<form class="card" (ngSubmit)="save('governorates')" #govForm="ngForm">
+  <h3>{{ (governorate.id ? 'Edit' : 'Add') | t }} {{ 'governorate' | t }}</h3>
+  <div class="form-grid"><div class="field"><label for="gov-name">{{ 'Name' | t }}</label><input id="gov-name" name="name" [(ngModel)]="governorate.name" required maxlength="100" /></div>
+    <div class="field"><label for="gov-active">{{ 'Delivery available' | t }}</label><select id="gov-active" name="active" [(ngModel)]="governorate.isActive"><option [ngValue]="true">{{ 'Yes' | t }}</option><option [ngValue]="false">{{ 'No' | t }}</option></select></div></div>
+  <button class="btn btn-primary" [disabled]="busy || govForm.invalid">{{ 'Save governorate' | t }}</button>
+  <button type="button" class="btn btn-outline" [disabled]="busy" (click)="governorate = { name: '', isActive: true }">{{ 'Clear' | t }}</button>
+</form>
+<div class="card table-wrap"><table class="data"><thead><tr><th>{{ 'Governorate' | t }}</th><th>{{ 'Delivery' | t }}</th><th>{{ 'Actions' | t }}</th></tr></thead><tbody><tr *ngFor="let g of governorates"><td>{{ (g.name) | t }}</td><td>{{ (g.isActive ? 'Available' : 'Unavailable') | t }}</td><td class="actions"><button class="btn btn-outline btn-sm" [disabled]="busy" (click)="editGovernorate(g)">{{ 'Edit' | t }}</button><button class="btn btn-danger btn-sm" [disabled]="busy" (click)="remove('governorates', g.id)">{{ 'Delete' | t }}</button></td></tr></tbody></table></div>
+<form class="card" (ngSubmit)="save('areas')" #areaForm="ngForm">
+  <h3>{{ (area.id ? 'Edit' : 'Add') | t }} {{ 'area' | t }}</h3>
+  <div class="form-grid">
+    <div class="field"><label for="area-governorate">{{ 'Governorate' | t }}</label><select id="area-governorate" name="governorateId" [(ngModel)]="area.governorateId" required><option [ngValue]="null">{{ 'Select governorate' | t }}</option><option *ngFor="let g of governorates" [ngValue]="g.id">{{ (g.name) | t }}</option></select></div>
+    <div class="field"><label for="area-name">{{ 'Area name' | t }}</label><input id="area-name" name="name" [(ngModel)]="area.name" required maxlength="100" /></div>
+    <div class="field"><label for="area-fee">{{ 'Shipping fee (0 = free)' | t }}</label><input id="area-fee" name="shippingFee" type="number" min="0" max="1000000" step="0.01" [(ngModel)]="area.shippingFee" required /></div>
+    <div class="field"><label for="area-currency">{{ 'Rate currency' | t }}</label><select id="area-currency" name="currencyCode" [(ngModel)]="area.currencyCode" required><option *ngFor="let c of currencies" [value]="c.code">{{ (c.name) | t }} ({{ c.code }})</option></select></div>
+    <div class="field"><label for="area-active">{{ 'Delivery available' | t }}</label><select id="area-active" name="active" [(ngModel)]="area.isActive"><option [ngValue]="true">{{ 'Yes' | t }}</option><option [ngValue]="false">{{ 'No' | t }}</option></select></div>
+  </div>
+  <button class="btn btn-primary" [disabled]="busy || areaForm.invalid">{{ 'Save area' | t }}</button><button type="button" class="btn btn-outline" [disabled]="busy" (click)="resetArea()">{{ 'Clear' | t }}</button>
+</form>
+<div class="card table-wrap"><table class="data"><thead><tr><th>{{ 'Governorate' | t }}</th><th>{{ 'Area' | t }}</th><th>{{ 'Shipping' | t }}</th><th>{{ 'Delivery' | t }}</th><th>{{ 'Actions' | t }}</th></tr></thead><tbody><tr *ngFor="let a of areas"><td>{{ (a.governorate?.name) | t }}</td><td>{{ (a.name) | t }}</td><td>{{ (a.shippingFee |localNumber:'1.2-2') | t }} {{ a.currencyCode }}</td><td>{{ (a.isActive && a.governorate?.isActive ? 'Available' : 'Unavailable') | t }}</td><td class="actions"><button class="btn btn-outline btn-sm" [disabled]="busy" (click)="editArea(a)">{{ 'Edit' | t }}</button><button class="btn btn-danger btn-sm" [disabled]="busy" (click)="remove('areas', a.id)">{{ 'Delete' | t }}</button></td></tr></tbody></table></div>

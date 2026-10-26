@@ -1,3 +1,5 @@
+import { LocalDatePipe } from '../../core/i18n/format.pipe';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -5,6 +7,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TrackingService } from '../../core/services/tracking.service';
 import { OrderTracking } from '../../core/models/api.models';
 import { StoreCurrencyPipe } from '../../core/pipes/store-currency.pipe';
+import { OrderReturnsComponent } from '../returns/order-returns.component';
 
 /**
  * Order tracking page. Looks up an order by its order number and shows the
@@ -14,15 +17,15 @@ import { StoreCurrencyPipe } from '../../core/pipes/store-currency.pipe';
 @Component({
   selector: 'app-tracking',
   standalone: true,
-  imports: [CommonModule, FormsModule, StoreCurrencyPipe],
+  imports: [LocalDatePipe,TranslatePipe,CommonModule, FormsModule, StoreCurrencyPipe, OrderReturnsComponent],
   templateUrl: './tracking.component.html',
   styleUrl: './tracking.component.css'
 })
 export class TrackingComponent implements OnInit {
   orderNumber = '';
-  email = '';
+  accessCode = '';
   /** Which lookup the form is currently using. */
-  mode: 'number' | 'email' = 'number';
+
   order: OrderTracking | null = null;
   searched = false;
   loading = false;
@@ -34,7 +37,8 @@ export class TrackingComponent implements OnInit {
     const prefill = this.route.snapshot.queryParamMap.get('orderNumber');
     if (prefill) {
       this.orderNumber = prefill;
-      this.lookup();
+      this.accessCode = localStorage.getItem('shop_tracking_access:'+window.location.hostname+':'+prefill) || '';
+      if (this.accessCode) this.lookup();
     }
   }
 
@@ -45,58 +49,20 @@ export class TrackingComponent implements OnInit {
       return;
     }
     this.loading = true;
-    this.error = null;
-    this.searched = true;
-    this.tracking.track(num).subscribe({
-      next: o => {
-        this.order = o;
-        this.loading = false;
-      },
-      error: () => {
-        this.order = null;
-        this.error = 'No order found with that number.';
-        this.loading = false;
-      }
-    });
-  }
-
-  /** Looks up the most recent order placed with the entered email. */
-  lookupByEmail(): void {
-    const mail = this.email.trim();
-    if (!mail) {
-      return;
-    }
-    this.loading = true;
-    this.error = null;
-    this.searched = true;
-    this.tracking.trackByEmail(mail).subscribe({
-      next: o => {
-        this.order = o;
-        this.loading = false;
-      },
-      error: () => {
-        this.order = null;
-        this.error = 'No order found for that email.';
-        this.loading = false;
-      }
-    });
-  }
-
-  /** Switches the lookup mode and clears any previous result/error. */
-  setMode(mode: 'number' | 'email'): void {
-    this.mode = mode;
     this.order = null;
     this.error = null;
-    this.searched = false;
-  }
-
-  /** Runs the lookup matching the current mode. */
-  submit(): void {
-    if (this.mode === 'email') {
-      this.lookupByEmail();
-    } else {
-      this.lookup();
-    }
+    this.searched = true;
+    this.tracking.track(num, this.accessCode.trim()).subscribe({
+      next: o => {
+        this.order = o;
+        this.loading = false;
+      },
+      error: err => {
+        this.order = null;
+        this.error = err.status === 429 ? 'Too many tracking attempts. Please wait a minute and try again.' : 'Order unavailable. Sign in to the account that placed it, or enter the private tracking code from your confirmation.';
+        this.loading = false;
+      }
+    });
   }
 
   /** Maps a status to a badge style. */

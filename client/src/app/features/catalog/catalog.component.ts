@@ -1,3 +1,4 @@
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -7,6 +8,7 @@ import { CatalogStateService } from '../../core/services/catalog-state.service';
 import { Category, PagedResult, ProductListItem } from '../../core/models/api.models';
 import { StoreCurrencyPipe } from '../../core/pipes/store-currency.pipe';
 import { ImageUrlPipe } from '../../core/pipes/image-url.pipe';
+import { RuntimeService } from '../../core/services/runtime.service';
 
 /**
  * Storefront home/catalog page.
@@ -24,7 +26,7 @@ import { ImageUrlPipe } from '../../core/pipes/image-url.pipe';
 @Component({
   selector: 'app-catalog',
   standalone: true,
-  imports: [CommonModule, RouterLink, StoreCurrencyPipe, ImageUrlPipe],
+  imports: [TranslatePipe,CommonModule, RouterLink, StoreCurrencyPipe, ImageUrlPipe],
   templateUrl: './catalog.component.html',
   styleUrl: './catalog.component.css'
 })
@@ -46,7 +48,8 @@ export class CatalogComponent implements OnInit {
     private cart: CartService,
     private state: CatalogStateService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    public runtime:RuntimeService
   ) {}
 
   ngOnInit(): void {

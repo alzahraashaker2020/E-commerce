@@ -19,17 +19,19 @@ import { ApiService } from '../../core/services/api.service';
     <p>{{ 'Draft plans are not available for activation. Set the price and limits before enabling a plan.' | t }}</p>
     <table><thead><tr><th>{{ 'Name' | t }}</th><th>{{ 'Price / period' | t }}</th><th>{{ 'Product limit' | t }}</th><th>{{ 'Trial' | t }}</th><th>{{ 'Available' | t }}</th><th></th></tr></thead>
     <tbody><tr *ngFor="let p of plans"><td>{{ (p.name) | t }}</td><td>{{ (p.priceMinor / 100 | currency:p.currency) | t }} / {{ (p.periodMonths) | t }} {{ 'month(s)' | t }}</td><td>{{ (p.maxProducts ?? 'Unlimited') | t }}</td><td>{{ (p.trialDays) | t }} {{ 'days' | t }}</td><td>{{ (p.isActive ? 'Active' : 'Draft / disabled') | t }}</td><td><button (click)="edit(p)">{{ 'Edit' | t }}</button></td></tr></tbody></table>
-    <form (ngSubmit)="save()">
+    <form class="package-editor" (ngSubmit)="save()">
       <h3>{{ (draft.id ? 'Edit plan' : 'Add plan') | t }}</h3>
+      <div class="package-grid">
       <label>{{ 'Name' | t }} <input name="name" [(ngModel)]="draft.name" required maxlength="100"></label>
-      <label>{{ 'Description'|t }} <textarea name="description" [(ngModel)]="draft.description" maxlength="500"></textarea></label>
       <label>{{ 'Arabic plan name (optional)'|t }} <input name="nameAr" [(ngModel)]="draft.nameAr" maxlength="100" dir="rtl"></label>
-      <label>{{ 'Arabic plan description (optional)'|t }} <textarea name="descriptionAr" [(ngModel)]="draft.descriptionAr" maxlength="500" dir="rtl"></textarea></label>
+      <label>{{ 'Description'|t }} <textarea name="description" [(ngModel)]="draft.description" maxlength="500" rows="3"></textarea></label>
+      <label>{{ 'Arabic plan description (optional)'|t }} <textarea name="descriptionAr" [(ngModel)]="draft.descriptionAr" maxlength="500" rows="3" dir="rtl"></textarea></label>
       <label>{{ 'Price' | t }} <input name="price" type="number" [(ngModel)]="price" min="0" max="1000000000" step="0.01" required></label>
       <label>{{ 'Currency' | t }} <select name="currency" [(ngModel)]="draft.currency"><option *ngFor="let code of currencies">{{ code }}</option></select></label>
       <label>{{ 'Billing period (months)' | t }} <input name="period" type="number" [(ngModel)]="draft.periodMonths" min="1" max="36" required></label>
       <label>{{ 'Trial (days)' | t }} <input name="trial" type="number" [(ngModel)]="draft.trialDays" min="0" max="90" required></label>
       <label>{{ 'Maximum products (blank = unlimited)' | t }} <input name="limit" type="number" [(ngModel)]="draft.maxProducts" min="1" max="10000000"></label>
+      </div>
       <label><input name="active" type="checkbox" [(ngModel)]="draft.isActive"> {{ 'Available for new activations and renewals' | t }}</label>
       <label><input name="publicTrial" type="checkbox" [(ngModel)]="draft.allowMerchantApplications"> {{ 'Publish this plan on the website and registration' | t }}</label>
       <p>{{ 'Published active plans appear on the website. Paid plans require manual activation until online payments are connected.' | t }}</p>

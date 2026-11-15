@@ -1,3 +1,4 @@
+using Shop.Api.Contracts.Merchant;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,13 +16,13 @@ public class MerchantDeliveryController : ControllerBase
     public MerchantDeliveryController(ShopContext db) => _db = db;
     private IActionResult Fail(string message, int status = 400) => StatusCode(status, ApiResponse<bool>.Fail(message, status));
     [HttpGet("governorates")]
-    public async Task<IActionResult> Governorates() => Ok(ApiResponse<List<Governorate>>.Ok(await _db.Governorates.OrderBy(g => g.Name).ToListAsync()));
+    public async Task<IActionResult> Governorates() => Ok(ApiResponse<List<GovernorateResponse>>.Ok((await _db.Governorates.OrderBy(g => g.Name).ToListAsync()).Select(GovernorateResponse.From).ToList()));
     [HttpPost("governorates")]
     public async Task<IActionResult> CreateGovernorate(GovernorateRequest request)
     {
         if (await _db.Governorates.AnyAsync(g => g.Name == request.Name.Trim())) return Fail("Governorate already exists.", 409);
         var item = new Governorate { Name = request.Name.Trim(), IsActive = request.IsActive };
-        _db.Governorates.Add(item); await _db.SaveChangesAsync(); return Ok(ApiResponse<Governorate>.Ok(item));
+        _db.Governorates.Add(item); await _db.SaveChangesAsync(); return Ok(ApiResponse<GovernorateResponse>.Ok(GovernorateResponse.From(item)));
     }
     [HttpPut("governorates/{id:int}")]
     public async Task<IActionResult> UpdateGovernorate(int id, GovernorateRequest request)
@@ -29,7 +30,7 @@ public class MerchantDeliveryController : ControllerBase
         var item = await _db.Governorates.FindAsync(id); if (item is null) return NotFound();
         if (await _db.Governorates.AnyAsync(g => g.Id != id && g.Name == request.Name.Trim())) return Fail("Governorate already exists.", 409);
         item.Name = request.Name.Trim(); item.IsActive = request.IsActive;
-        await _db.SaveChangesAsync(); return Ok(ApiResponse<Governorate>.Ok(item));
+        await _db.SaveChangesAsync(); return Ok(ApiResponse<GovernorateResponse>.Ok(GovernorateResponse.From(item)));
     }
     [HttpDelete("governorates/{id:int}")]
     public async Task<IActionResult> DeleteGovernorate(int id)
@@ -39,7 +40,7 @@ public class MerchantDeliveryController : ControllerBase
         _db.Governorates.Remove(item); await _db.SaveChangesAsync(); return Ok(ApiResponse<bool>.Ok(true));
     }
     [HttpGet("areas")]
-    public async Task<IActionResult> Areas() => Ok(ApiResponse<List<DeliveryArea>>.Ok(await _db.DeliveryAreas.Include(a => a.Governorate).OrderBy(a => a.Name).ToListAsync()));
+    public async Task<IActionResult> Areas() => Ok(ApiResponse<List<DeliveryAreaResponse>>.Ok((await _db.DeliveryAreas.Include(a => a.Governorate).OrderBy(a => a.Name).ToListAsync()).Select(DeliveryAreaResponse.From).ToList()));
     private async Task<string?> ValidateArea(DeliveryAreaRequest request, int id = 0)
     {
         if (decimal.Round(request.ShippingFee, 2) != request.ShippingFee) return "Shipping fees support at most two decimal places.";
@@ -53,14 +54,14 @@ public class MerchantDeliveryController : ControllerBase
     {
         var error = await ValidateArea(request); if (error is not null) return Fail(error);
         var item = new DeliveryArea(); Apply(item, request); _db.DeliveryAreas.Add(item);
-        await _db.SaveChangesAsync(); return Ok(ApiResponse<DeliveryArea>.Ok(item));
+        await _db.SaveChangesAsync(); return Ok(ApiResponse<DeliveryAreaResponse>.Ok(DeliveryAreaResponse.From(item)));
     }
     [HttpPut("areas/{id:int}")]
     public async Task<IActionResult> UpdateArea(int id, DeliveryAreaRequest request)
     {
         var item = await _db.DeliveryAreas.FindAsync(id); if (item is null) return NotFound();
         var error = await ValidateArea(request, id); if (error is not null) return Fail(error);
-        Apply(item, request); await _db.SaveChangesAsync(); return Ok(ApiResponse<DeliveryArea>.Ok(item));
+        Apply(item, request); await _db.SaveChangesAsync(); return Ok(ApiResponse<DeliveryAreaResponse>.Ok(DeliveryAreaResponse.From(item)));
     }
     [HttpDelete("areas/{id:int}")]
     public async Task<IActionResult> DeleteArea(int id)

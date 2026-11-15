@@ -13,6 +13,7 @@ public sealed class PlatformContext : DbContext
     public DbSet<SubscriptionEvent> SubscriptionEvents => Set<SubscriptionEvent>();
     protected override void OnModelCreating(ModelBuilder model)
     {
+        if (Database.IsSqlServer()) model.UseCollation("Latin1_General_100_BIN2");
         model.Entity<MerchantApplication>().HasIndex(a => a.Email).IsUnique();
         model.Entity<MerchantApplication>().Property(a => a.Version).IsConcurrencyToken();
         model.Entity<StoreRegistration>().HasIndex(s => s.Host).IsUnique();

@@ -1,3 +1,4 @@
+using Shop.Api.Contracts.Merchant;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,7 @@ public class MerchantOrderStatusesController : ControllerBase
     private readonly ShopContext _db;
     public MerchantOrderStatusesController(ShopContext db) => _db = db;
     [HttpGet]
-    public async Task<IActionResult> List() => Ok(ApiResponse<List<OrderStatusDefinition>>.Ok(await _db.OrderStatusDefinitions.OrderBy(s => s.DisplayOrder).ThenBy(s => s.Id).ToListAsync()));
+    public async Task<IActionResult> List() => Ok(ApiResponse<List<OrderStatusDefinitionResponse>>.Ok((await _db.OrderStatusDefinitions.OrderBy(s => s.DisplayOrder).ThenBy(s => s.Id).ToListAsync()).Select(OrderStatusDefinitionResponse.From).ToList()));
     [HttpGet("behaviors")]
     public IActionResult Behaviors() => Ok(ApiResponse<string[]>.Ok(Enum.GetNames<OrderStatus>()));
     [HttpPost]
@@ -22,7 +23,7 @@ public class MerchantOrderStatusesController : ControllerBase
     {
         if (await _db.OrderStatusDefinitions.AnyAsync(s => s.Name == request.Name.Trim())) return Conflict(ApiResponse<bool>.Fail("Status name already exists.", 409));
         var item = new OrderStatusDefinition(); Apply(item, request);
-        _db.OrderStatusDefinitions.Add(item); await _db.SaveChangesAsync(); return Ok(ApiResponse<OrderStatusDefinition>.Ok(item));
+        _db.OrderStatusDefinitions.Add(item); await _db.SaveChangesAsync(); return Ok(ApiResponse<OrderStatusDefinitionResponse>.Ok(OrderStatusDefinitionResponse.From(item)));
     }
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, StatusDefinitionRequest request)
@@ -32,7 +33,7 @@ public class MerchantOrderStatusesController : ControllerBase
         if (item.IsDefault && (!request.IsActive || request.Behavior != OrderStatus.Pending)) return Conflict(ApiResponse<bool>.Fail("The initial order status must stay active with Pending behavior.", 409));
         if (item.Behavior != request.Behavior && await _db.Orders.AnyAsync(o => o.StatusDefinitionId == id)) return Conflict(ApiResponse<bool>.Fail("The behavior of an in-use status cannot change.", 409));
         if (await _db.OrderStatusDefinitions.AnyAsync(s => s.Id != id && s.Name == request.Name.Trim())) return Conflict(ApiResponse<bool>.Fail("Status name already exists.", 409));
-        Apply(item, request); await _db.SaveChangesAsync(); return Ok(ApiResponse<OrderStatusDefinition>.Ok(item));
+        Apply(item, request); await _db.SaveChangesAsync(); return Ok(ApiResponse<OrderStatusDefinitionResponse>.Ok(OrderStatusDefinitionResponse.From(item)));
     }
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)

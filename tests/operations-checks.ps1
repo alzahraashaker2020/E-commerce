@@ -65,11 +65,11 @@ ExpectEqual @($fresh|Where-Object storeId -EQ 'platform').Count 1 'Scheduled pla
 $null=Ops PUT 'backup-policy' @{enabled=$false;intervalHours=24}
 # Actual replacement runs only in this disposable store, with the API stopped.
 $blocked=Start-Process dotnet -ArgumentList @($dll,'--contentRoot',('"'+$runDir+'"'),'--restore-backup',$backup.id,'--confirm-store','default') -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $runDir 'blocked-recovery.log') -RedirectStandardError (Join-Path $runDir 'blocked-recovery-error.log')
-if(!$blocked.WaitForExit(15000)){throw 'Blocked recovery process did not exit'}
+if(!$blocked.WaitForExit(15000)){Stop-Process -Id $blocked.Id -ErrorAction SilentlyContinue;throw 'Blocked recovery process did not exit'}
 ExpectEqual ($blocked.ExitCode -ne 0) $true 'Actual recovery refuses to run while API holds the instance lock'
 Stop-Process -Id $apiProcess.Id;$apiProcess.WaitForExit()
 $recovery=Start-Process dotnet -ArgumentList @($dll,'--contentRoot',('"'+$runDir+'"'),'--restore-backup',$backup.id,'--confirm-store','default') -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $runDir 'recovery.log') -RedirectStandardError (Join-Path $runDir 'recovery-error.log')
-if(!$recovery.WaitForExit(30000)){throw 'Offline recovery did not finish'}
+if(!$recovery.WaitForExit(30000)){Stop-Process -Id $recovery.Id -ErrorAction SilentlyContinue;throw 'Offline recovery did not finish'}
 if($recovery.ExitCode -ne 0){throw ('Offline recovery failed: '+(Get-Content (Join-Path $runDir 'recovery-error.log') -Raw))}
 $apiProcess=Start-Process dotnet -ArgumentList @($dll,'--contentRoot',('"'+$runDir+'"')) -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $runDir 'recovered-api.log') -RedirectStandardError (Join-Path $runDir 'recovered-api-error.log')
 for($wait=0;$wait -lt 100;$wait++){try{if((Request GET '/api/settings').StatusCode -eq 200){break}}catch{};Start-Sleep -Milliseconds 100}

@@ -30,7 +30,7 @@ public sealed class StorefrontController:ControllerBase
     public async Task<IActionResult> Subscribe(SubscribeBody request,[FromServices]StorefrontContent content,[FromServices]ShopContext db)
     {
         if(!request.Consent||!(await content.ReadAsync()).NewsletterEnabled)return BadRequest(ApiResponse<object>.Fail("Newsletter signup is unavailable or consent is missing.",400));
-        await db.Database.ExecuteSqlRawAsync("INSERT INTO \"StorefrontSubscribers\" VALUES ({0},{1}) ON CONFLICT (\"Email\") DO NOTHING",request.Email.Trim().ToLowerInvariant(),DateTime.UtcNow.ToString("O"));
+        await db.Database.ExecuteSqlRawAsync(SqlServerSupport.InsertMissing(db, "StorefrontSubscribers", "Email,JoinedAtUtc", "{0},{1}", "Email={0}", "INSERT INTO \"StorefrontSubscribers\" VALUES ({0},{1}) ON CONFLICT (\"Email\") DO NOTHING"),request.Email.Trim().ToLowerInvariant(),DateTime.UtcNow.ToString("O"));
         return Ok(ApiResponse<object>.Ok(new{Message="Thanks! Your signup has been recorded."}));
     }
     public sealed class SubscribeBody{[Required,EmailAddress,MaxLength(200)]public string Email{get;set;}="";public bool Consent{get;set;}}

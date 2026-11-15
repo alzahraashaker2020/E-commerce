@@ -19,7 +19,7 @@ public static class OfflineRecovery
         // Restore rehearsal verifies every checksum before any destination is changed.
         var manifest=await backups.VerifyAsync(id);
         if(manifest.StoreId!=storeId||storeId=="platform")throw new InvalidOperationException("Confirm the exact merchant store ID belonging to this backup. Platform registry recovery uses the separate documented procedure.");
-        if(manifest.Provider!="Sqlite")throw new InvalidOperationException("PostgreSQL replacement must be performed by the database operator using the verified dump; this local recovery command supports SQLite stores.");
+        if(manifest.Provider!="Sqlite")throw new InvalidOperationException("SQL Server/PostgreSQL replacement must be performed by the database operator using the verified native backup; this local recovery command supports SQLite stores.");
         await using var scope=services.CreateAsyncScope();var platform=scope.ServiceProvider.GetRequiredService<PlatformContext>();
         var store=await platform.Stores.AsNoTracking().SingleAsync(s=>s.Id==storeId);
         if(store.DatabaseIdentity!=StoreConnections.DatabaseIdentity(config,store.ConnectionKey))throw new InvalidOperationException("Store database reference changed. Review recovery configuration first.");

@@ -1,3 +1,4 @@
+using Shop.Api.Composition;
 using System.Text;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -21,141 +22,65 @@ using System.Threading.RateLimiting;
 // middleware outermost. AddDbContext only configures a provider (no connection
 // opens until a query runs) so the API builds and boots without a live database.
 var builder = WebApplication.CreateBuilder(args);
-builder.Configuration.AddJsonFile("email-secrets.json",optional:true,reloadOnChange:true).AddEnvironmentVariables();
+builder.Configuration.AddJsonFile("sqlserver-local.json", optional: true, reloadOnChange: false);
+builder.Configuration.AddJsonFile("email-secrets.json", optional: true, reloadOnChange: true).AddEnvironmentVariables();
 
 IConfiguration config = builder.Configuration;
+JwtOptions jwt;
+try { jwt = Shop.Api.Configuration.JwtOptionsValidator.ReadValidated(config); }
+catch (Microsoft.Extensions.Options.OptionsValidationException ex)
+{
+    Console.Error.WriteLine(string.Join(Environment.NewLine, ex.Failures));
+    Environment.ExitCode = 1;
+    return;
+}
+builder.Services.AddSingleton<Microsoft.Extensions.Options.IValidateOptions<JwtOptions>, Shop.Api.Configuration.JwtOptionsValidator>();
+builder.Services.AddOptions<JwtOptions>().Configure(options =>
+{
+    options.SecretKey = jwt.SecretKey; options.Issuer = jwt.Issuer;
+    options.Audience = jwt.Audience; options.ExpiryMinutes = jwt.ExpiryMinutes;
+}).ValidateOnStart();
 var deployment = new DeploymentProfile(config);
 builder.Services.AddSingleton(deployment);
 builder.Services.AddScoped<StoreCapabilities>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<Shop.Application.Common.IClock, Shop.Api.Adapters.SystemClock>();
 
 // CORS policy name for the Angular dev origin.
 const string AngularCorsPolicy = "AngularDevPolicy";
 
-// 1. EF Core DbContext. The active provider is chosen by the "Database:Provider"
-//    config setting: "Postgres" (production target) or "Sqlite" (zero-install
-//    local/demo run against a local file). Defaults to Sqlite so the demo runs
-//    without a database server; set it to "Postgres" to use PostgreSQL.
-builder.Services.AddDbContext<PlatformContext>(o => o.UseSqlite(config.GetConnectionString("PlatformConnection")
-    ?? new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder { DataSource = Path.Combine(builder.Environment.ContentRootPath, "shop_platform.db") }.ToString()));
-builder.Services.AddScoped<StoreScope>();
-builder.Services.AddScoped<StorefrontContent>();
-builder.Services.AddSingleton<Shop.Api.Operations.OperationJournal>();
-builder.Services.AddSingleton<Shop.Api.Operations.StoreBackups>();
-builder.Services.AddHostedService<Shop.Api.Operations.BackupScheduler>();
-builder.Services.AddScoped<OrderTrackingAccess>();
-builder.Services.AddScoped<Shop.Api.Security.CustomerEmailSecurity>();
-builder.Services.AddScoped<Shop.Api.Security.OrderReturnsService>();
-builder.Services.AddScoped<Shop.Api.Security.EmailOutbox>();
-builder.Services.AddScoped<IEmailOutbox>(sp=>sp.GetRequiredService<Shop.Api.Security.EmailOutbox>());
-builder.Services.AddHostedService<Shop.Api.Security.EmailOutboxWorker>();
-builder.Services.AddDataProtection().SetApplicationName("ShopEmailOutbox").PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath,"store-data","email-keys")));
-builder.Services.AddScoped<IStoreIdentity>(sp => sp.GetRequiredService<StoreScope>());
-builder.Services.AddDbContext<ShopContext>((sp, o) => StoreConnections.Configure(o, config,
-    sp.GetRequiredService<StoreScope>().Store?.ConnectionKey ?? (EF.IsDesignTime ? "DefaultStore" : throw new InvalidOperationException("Store resolution is required."))));
+builder.Services.AddShopData(config, builder.Environment);
 
-// 2-3a. Repository/unit-of-work + cross-cutting services.
-builder.Services.AddScoped<IRepoWrapper, RepoWrapper>();
-builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
-
-// Email service. Options are bound from the "Email" config section and the
-// host content-root path (used by the demo-mode disk sink) is supplied here.
-builder.Services.AddScoped<EmailService>(sp =>
-{
-    var store = sp.GetRequiredService<StoreScope>();
-    EmailOptions options = config.GetSection(store.Store?.ConnectionKey == "DefaultStore" ? "Email" : "StoreEmail:" + store.StoreId).Get<EmailOptions>() ?? new EmailOptions();
-    options.AllowDevelopmentSink = builder.Environment.IsDevelopment();
-    options.Language=sp.GetRequiredService<IHttpContextAccessor>().HttpContext?.Request.Headers.AcceptLanguage.ToString().Split(',')[0].Split(';')[0].Split('-')[0].Trim().ToLowerInvariant()=="ar"?"ar":"en";
-    options.Translations=sp.GetRequiredService<StorefrontContent>().ReadAsync().GetAwaiter().GetResult().Translations;
-    StoreEmailPreferences.Read(sp.GetRequiredService<ShopContext>(),options);
-    options.ContentRootPath = Path.Combine(builder.Environment.ContentRootPath, "store-data", store.StoreId);
-    return new EmailService(options, sp.GetRequiredService<ILogger<EmailService>>(), sp.GetRequiredService<IEmailOutbox>());
-});
-builder.Services.AddScoped<IEmailService>(sp=>sp.GetRequiredService<EmailService>());
+builder.Services.AddShopEmail(config, builder.Environment);
 
 // 4. AutoMapper — the Type overload comes from the 12.x DI extension package.
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-// 5. JWT bearer authentication validated against the Jwt config section.
-string secretKey = config["Jwt:SecretKey"]!;
-string issuer = config["Jwt:Issuer"]!;
-string audience = config["Jwt:Audience"]!;
-
-builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.Events = new JwtBearerEvents
-        {
-            OnTokenValidated = async context =>
-            {
-                var user = context.Principal!;
-                var platform = context.HttpContext.RequestServices.GetRequiredService<PlatformContext>();
-                if (context.Request.Path.StartsWithSegments("/api/platform"))
-                {
-                    if (!user.IsInRole("PlatformAdmin") || user.HasClaim(c => c.Type == "store_id") ||
-                        !int.TryParse(user.FindFirst("actor_id")?.Value, out var id) ||
-                        !await platform.Operators.AnyAsync(o => o.Id == id)) context.Fail("Invalid platform session");
-                    return;
-                }
-                var scope = context.HttpContext.RequestServices.GetRequiredService<StoreScope>();
-                if (scope.Store is null || user.FindFirst("store_id")?.Value != scope.StoreId || user.IsInRole("PlatformAdmin"))
-                { context.Fail("Session belongs to another store"); return; }
-                if((user.FindFirst("store_security_version")?.Value??"")!=scope.SecurityVersion)
-                {context.Fail("Store session revoked after recovery");return;}
-                if (user.IsInRole("Merchant"))
-                {
-                    var db = context.HttpContext.RequestServices.GetRequiredService<ShopContext>();
-                    if (!int.TryParse(user.FindFirst("actor_id")?.Value, out var id) ||
-                        !await db.AdminUsers.AnyAsync(a => a.Id == id && a.IsActive && (a.Role!.Name == "Merchant" || a.Role.Name == "Admin")))
-                        context.Fail("Merchant access revoked");
-                }
-                else if(user.IsInRole("Customer"))
-                {
-                    var db=context.HttpContext.RequestServices.GetRequiredService<ShopContext>();
-                    if(!int.TryParse(user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,out int customerId)) {context.Fail("Invalid customer");return;}
-                    var customer=await db.Customers.AsNoTracking().FirstOrDefaultAsync(c=>c.Id==customerId);
-                    string stamp=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(customer?.PasswordHash??"")));
-                    if(customer is null || user.FindFirst("session_stamp")?.Value != stamp) context.Fail("Customer session revoked");
-                }
-            }
-        };
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = issuer,
-            ValidAudience = audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
-        };
-    });
+builder.Services.AddShopAuthentication(jwt);
 
 // 6. Authorization.
 builder.Services.AddAuthorization();
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = 429;
-    options.AddPolicy("Marketplace",context=>RateLimitPartition.GetFixedWindowLimiter("marketplace:"+context.Connection.RemoteIpAddress,
-        _=>new FixedWindowRateLimiterOptions{PermitLimit=60,Window=TimeSpan.FromMinutes(1),QueueLimit=0,AutoReplenishment=true}));
-    options.AddPolicy("MerchantRegistration",context=>RateLimitPartition.GetFixedWindowLimiter(
-        "merchant-apply:"+context.Connection.RemoteIpAddress,
-        _=>new FixedWindowRateLimiterOptions{PermitLimit=20,Window=TimeSpan.FromMinutes(10),QueueLimit=0,AutoReplenishment=true}));
-    options.AddPolicy("MerchantApplicationStatus",context=>RateLimitPartition.GetFixedWindowLimiter(
-        "merchant-status:"+context.Connection.RemoteIpAddress,
-        _=>new FixedWindowRateLimiterOptions{PermitLimit=10,Window=TimeSpan.FromMinutes(10),QueueLimit=0,AutoReplenishment=true}));
+    options.AddPolicy("Marketplace", context => RateLimitPartition.GetFixedWindowLimiter("marketplace:" + context.Connection.RemoteIpAddress,
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 60, Window = TimeSpan.FromMinutes(1), QueueLimit = 0, AutoReplenishment = true }));
+    options.AddPolicy("MerchantRegistration", context => RateLimitPartition.GetFixedWindowLimiter(
+        "merchant-apply:" + context.Connection.RemoteIpAddress,
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(10), QueueLimit = 0, AutoReplenishment = true }));
+    options.AddPolicy("MerchantApplicationStatus", context => RateLimitPartition.GetFixedWindowLimiter(
+        "merchant-status:" + context.Connection.RemoteIpAddress,
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(10), QueueLimit = 0, AutoReplenishment = true }));
     options.AddPolicy("Tracking", context => RateLimitPartition.GetFixedWindowLimiter(
         context.Request.Host.Host + ":" + context.Connection.RemoteIpAddress,
-        _ => new FixedWindowRateLimiterOptions { PermitLimit=30, Window=TimeSpan.FromMinutes(1), QueueLimit=0, AutoReplenishment=true }));
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(1), QueueLimit = 0, AutoReplenishment = true }));
     options.AddPolicy("AccountRecovery", context => RateLimitPartition.GetFixedWindowLimiter(
-        context.Request.Host.Host+":"+context.Connection.RemoteIpAddress+":"+context.Request.Path,
-        _=>new FixedWindowRateLimiterOptions {PermitLimit=10,Window=TimeSpan.FromMinutes(10),QueueLimit=0,AutoReplenishment=true}));
-    options.AddPolicy("AccountRegistration",context=>RateLimitPartition.GetFixedWindowLimiter(context.Request.Host.Host+":"+context.Connection.RemoteIpAddress,
-        _=>new FixedWindowRateLimiterOptions{PermitLimit=20,Window=TimeSpan.FromMinutes(10),QueueLimit=0,AutoReplenishment=true}));
+        context.Request.Host.Host + ":" + context.Connection.RemoteIpAddress + ":" + context.Request.Path,
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(10), QueueLimit = 0, AutoReplenishment = true }));
+    options.AddPolicy("AccountRegistration", context => RateLimitPartition.GetFixedWindowLimiter(context.Request.Host.Host + ":" + context.Connection.RemoteIpAddress,
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(10), QueueLimit = 0, AutoReplenishment = true }));
     options.AddPolicy("ImageProcessing", context => RateLimitPartition.GetConcurrencyLimiter(
-        context.Request.Host.Host, _ => new ConcurrencyLimiterOptions { PermitLimit=2, QueueLimit=20, QueueProcessingOrder=QueueProcessingOrder.OldestFirst }));
+        context.Request.Host.Host, _ => new ConcurrencyLimiterOptions { PermitLimit = 2, QueueLimit = 20, QueueProcessingOrder = QueueProcessingOrder.OldestFirst }));
 });
 
 // 7. CORS for the Angular dev server.
@@ -230,27 +155,31 @@ builder.Environment.WebRootPath = webRoot;
 builder.Environment.WebRootFileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(webRoot);
 
 var app = builder.Build();
-using var instanceLock=Shop.Api.Operations.OfflineRecovery.AcquireInstanceLock(builder.Environment.ContentRootPath);
-if(args.Contains("--restore-backup"))
+using var instanceLock = Shop.Api.Operations.OfflineRecovery.AcquireInstanceLock(builder.Environment.ContentRootPath);
+if (args.Contains("--restore-backup"))
 {
-    try{await Shop.Api.Operations.OfflineRecovery.RestoreAsync(app.Services,config,builder.Environment,config["restore-backup"]??"",config["confirm-store"]??"");}
-    catch(Exception ex){Console.Error.WriteLine(ex is InvalidOperationException?ex.Message:"Recovery stopped ("+ex.GetType().Name+"). Verify the backup, confirmed store ID, filesystem access and recovery procedure. No API was started.");Environment.ExitCode=1;}
+    try { await Shop.Api.Operations.OfflineRecovery.RestoreAsync(app.Services, config, builder.Environment, config["restore-backup"] ?? "", config["confirm-store"] ?? ""); }
+    catch (Exception ex) { Console.Error.WriteLine(ex is InvalidOperationException ? ex.Message : "Recovery stopped (" + ex.GetType().Name + "). Verify the backup, confirmed store ID, filesystem access and recovery procedure. No API was started."); Environment.ExitCode = 1; }
     return;
 }
 
 using (var scope = app.Services.CreateScope())
 {
     var platform = scope.ServiceProvider.GetRequiredService<PlatformContext>();
-    platform.Database.EnsureCreated();
+    bool platformCreated = platform.Database.EnsureCreated();
+    if (platform.Database.IsSqlServer()) PlatformDatabase.Initialize(platform, platformCreated);
     SubscriptionSchema.Apply(platform, deployment.SaasEnabled);
     scope.ServiceProvider.GetRequiredService<Shop.Api.Operations.OperationJournal>().InitializeAsync().GetAwaiter().GetResult();
     // Additive registry upgrade for the first local registry version; never recreate it.
+    if (!platform.Database.IsSqlServer())
+    {
     platform.Database.OpenConnection();
     using (var column = platform.Database.GetDbConnection().CreateCommand())
     {
         column.CommandText = "SELECT COUNT(*) FROM pragma_table_info('Stores') WHERE name='DatabaseIdentity'";
         if (Convert.ToInt64(column.ExecuteScalar()) == 0)
             platform.Database.ExecuteSqlRaw("ALTER TABLE Stores ADD COLUMN DatabaseIdentity TEXT NULL");
+    }
     }
     foreach (var registered in deployment.Stores(platform))
     {
@@ -260,15 +189,15 @@ using (var scope = app.Services.CreateScope())
         registered.DatabaseIdentity = identity;
     }
     platform.SaveChanges();
-    platform.Database.ExecuteSqlRaw("CREATE UNIQUE INDEX IF NOT EXISTS IX_Stores_DatabaseIdentity ON Stores(DatabaseIdentity)");
+    if (!platform.Database.IsSqlServer()) platform.Database.ExecuteSqlRaw("CREATE UNIQUE INDEX IF NOT EXISTS IX_Stores_DatabaseIdentity ON Stores(DatabaseIdentity)");
     platform.Database.CloseConnection();
-    if ((deployment.SaasEnabled || deployment.StandaloneStoreId=="default") && !platform.Stores.Any(s => s.ConnectionKey == "DefaultStore"))
+    if ((deployment.SaasEnabled || deployment.StandaloneStoreId == "default") && !platform.Stores.Any(s => s.ConnectionKey == "DefaultStore"))
         platform.Stores.Add(new StoreRegistration { Id = "default", Name = "MakaniShop", Host = (config["Platform:DefaultStoreHost"] ?? "localhost").ToLowerInvariant(), ConnectionKey = "DefaultStore", DatabaseIdentity = StoreConnections.DatabaseIdentity(config, "DefaultStore"), State = "Active" });
     string? operatorName = config["Platform:BootstrapUsername"], operatorPassword = config["Platform:BootstrapPassword"];
     if (deployment.SaasEnabled && !platform.Operators.Any() && !string.IsNullOrWhiteSpace(operatorName) && operatorPassword?.Length >= 12)
         platform.Operators.Add(new PlatformOperator { Username = operatorName.Trim(), PasswordHash = scope.ServiceProvider.GetRequiredService<IPasswordHasherService>().Hash(operatorPassword) });
     platform.SaveChanges();
-    if(deployment.SaasEnabled && platform.Stores.Any(s=>s.Host==(config["Platform:PublicHost"]??"platform.localhost").ToLowerInvariant()))
+    if (deployment.SaasEnabled && platform.Stores.Any(s => s.Host == (config["Platform:PublicHost"] ?? "platform.localhost").ToLowerInvariant()))
         throw new InvalidOperationException("The platform hostname must be separate from every merchant hostname.");
     if (!deployment.SaasEnabled && !deployment.Stores(platform).Any())
         throw new InvalidOperationException("The configured standalone store does not exist. Provision it first and preserve its store ID, database and uploads.");
@@ -284,10 +213,19 @@ using (IServiceScope scope = app.Services.CreateScope())
     var platform = scope.ServiceProvider.GetRequiredService<PlatformContext>();
     var keys = deployment.Stores(platform).AsNoTracking().Where(s => s.State == "Active" || s.State == "Suspended")
         .Select(s => s.ConnectionKey).ToList();
-    if(deployment.SaasEnabled)keys.Add("DefaultStore");
+    if (deployment.SaasEnabled) keys.Add("DefaultStore");
     foreach (string key in keys.Distinct())
     {
         var (provider, connection) = StoreConnections.Read(config, key);
+        if (provider.Equals("SqlServer", StringComparison.OrdinalIgnoreCase))
+        {
+            var sqlOptions = new DbContextOptionsBuilder<ShopContext>();
+            StoreConnections.Configure(sqlOptions, config, key);
+            using var sqlDb = new ShopContext(sqlOptions.Options);
+            if (!sqlDb.Database.CanConnect()) throw new InvalidOperationException("SQL Server store database is missing. Provision or restore it explicitly.");
+            SqlServerSchema.Apply(sqlDb);
+            continue;
+        }
         if (!provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase)) continue;
         if (key != "DefaultStore" && !File.Exists(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder(connection).DataSource))
             throw new InvalidOperationException("A registered store database is missing; restore it instead of recreating demo data.");

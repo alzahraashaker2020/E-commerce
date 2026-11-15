@@ -1,3 +1,4 @@
+using Shop.DAL.Data;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -41,11 +42,14 @@ public sealed class StoreBackups
             await using var scope=_scopes.CreateAsyncScope();var registry=scope.ServiceProvider.GetRequiredService<PlatformContext>();
             var store=storeId=="platform"?null:await registry.Stores.AsNoTracking().SingleOrDefaultAsync(s=>s.Id==storeId,cancellation);
             if(storeId!="platform"&&(store is null||store.State is not ("Active" or "Suspended")))throw new InvalidOperationException("Select a ready store.");
-            var source=store is null?("Sqlite",registry.Database.GetConnectionString()!):StoreConnections.Read(_config,store.ConnectionKey);
+            var source=store is null?(registry.Database.IsSqlServer()?"SqlServer":"Sqlite",registry.Database.GetConnectionString()!):StoreConnections.Read(_config,store.ConnectionKey);
             ProtectOperationsRoot();
             string id=Guid.NewGuid().ToString("N");folder=Folder(id);Directory.CreateDirectory(folder);
-            string databaseFile=source.Item1=="Postgres"?"database.dump":"database.sqlite";
-            if(source.Item1=="Postgres")await PgTool("pg_dump",source.Item2,new[]{"--format=custom","--no-owner","--no-privileges","--file",Path.Combine(folder,databaseFile)},cancellation);
+            bool schemaBackup=source.Item1=="SqlServer" && SqlServerTenantScope.Schema(source.Item2) is not null;
+            string databaseFile=schemaBackup?"database.schema.json":source.Item1=="SqlServer"?"database.bak":source.Item1=="Postgres"?"database.dump":"database.sqlite";
+            if(schemaBackup)await SqlServerSchemaBackups.CreateAsync(source.Item2,Path.Combine(folder,databaseFile),cancellation);
+            else if(source.Item1=="SqlServer")await SqlServerBackups.CreateAsync(source.Item2,Path.Combine(folder,databaseFile),Path.Combine(_environment.ContentRootPath,"store-data","sqlserver-native"),cancellation);
+            else if(source.Item1=="Postgres")await PgTool("pg_dump",source.Item2,new[]{"--format=custom","--no-owner","--no-privileges","--file",Path.Combine(folder,databaseFile)},cancellation);
             else
             {
                 var builder=new SqliteConnectionStringBuilder(source.Item2){Mode=SqliteOpenMode.ReadOnly};
@@ -76,7 +80,7 @@ public sealed class StoreBackups
             string folder=Folder(id);NoLinks(folder);string manifestPath=Path.Combine(folder,"manifest.json");
             if(!File.Exists(manifestPath))throw new InvalidOperationException("Backup not found or incomplete.");
             var manifest=JsonSerializer.Deserialize<Manifest>(File.ReadAllText(manifestPath),_json)??throw new InvalidOperationException("Invalid backup manifest.");
-            if(manifest.Id!=id||manifest.DatabaseFile is not ("database.sqlite" or "database.dump"))throw new InvalidOperationException("Invalid backup identity.");
+            if(manifest.Id!=id||manifest.DatabaseFile is not ("database.sqlite" or "database.dump" or "database.bak" or "database.schema.json"))throw new InvalidOperationException("Invalid backup identity.");
             checking=manifest;
             foreach(var file in manifest.Files)
             {
@@ -98,6 +102,19 @@ public sealed class StoreBackups
             else if(manifest.Provider=="Postgres")
             {
                 await VerifyPostgres(manifest,folder,cancellation);
+                CopyTree(Path.Combine(folder,"uploads"),Path.Combine(check,"uploads"));CopyTree(Path.Combine(folder,"email-keys"),Path.Combine(check,"email-keys"));
+            }
+            else if(manifest.Provider=="SqlServer")
+            {
+                await using var scope=_scopes.CreateAsyncScope();
+                var registry=scope.ServiceProvider.GetRequiredService<PlatformContext>();
+                string connection;
+                if(manifest.StoreId=="platform") connection=registry.Database.GetConnectionString()!;
+                else { var store=await registry.Stores.FindAsync(new object[]{manifest.StoreId},cancellation)??throw new InvalidOperationException("Store registration required."); var source=StoreConnections.Read(_config,store.ConnectionKey); if(source.Provider!="SqlServer")throw new InvalidOperationException("Store provider changed.");connection=source.Connection; }
+                var counts=manifest.DatabaseFile=="database.schema.json"
+                    ? await SqlServerSchemaBackups.VerifyAsync(connection,Path.Combine(folder,manifest.DatabaseFile),cancellation)
+                    : await SqlServerBackups.VerifyAsync(connection,Path.Combine(folder,manifest.DatabaseFile),manifest.StoreId=="platform",Path.Combine(_environment.ContentRootPath,"store-data","sqlserver-native"),cancellation);
+                manifest.Tables=counts.Tables;manifest.Products=counts.Products;manifest.Orders=counts.Orders;
                 CopyTree(Path.Combine(folder,"uploads"),Path.Combine(check,"uploads"));CopyTree(Path.Combine(folder,"email-keys"),Path.Combine(check,"email-keys"));
             }
             else throw new InvalidOperationException("Unsupported backup provider.");

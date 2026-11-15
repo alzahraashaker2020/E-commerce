@@ -1,7 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Shop.DAL.Models;
 using Shop.DAL.ViewModels;
@@ -10,33 +10,33 @@ using Shop.DAL.Data;
 namespace Shop.SL.TokenManager;
 
 /// <summary>
-/// JWT token service. Reads the <c>Jwt</c> configuration section
+/// JWT token service. Uses validated <c>Jwt</c> options
 /// (SecretKey/Issuer/Audience/ExpiryMinutes), builds the admin claim set, and
 /// signs a bearer token with HMAC-SHA256.
 /// </summary>
 public class TokenService : ITokenService
 {
-    private readonly IConfiguration _configuration;
+    private readonly JwtOptions _options;
     private readonly IStoreIdentity _store;
 
     /// <summary>
     /// Creates a new <see cref="TokenService"/>.
     /// </summary>
-    /// <param name="configuration">Application configuration (supplies the Jwt section).</param>
-    public TokenService(IConfiguration configuration, IStoreIdentity store)
+    /// <param name="options">Validated shared signing settings.</param>
+    public TokenService(IOptions<JwtOptions> options, IStoreIdentity store)
     {
-        _configuration = configuration;
+        _options = options.Value;
         _store = store;
     }
 
     /// <inheritdoc />
     public TokenVM GenerateToken(AdminUser user)
     {
-        // Read the JWT settings from the dedicated "Jwt" config section.
-        string secretKey = _configuration["Jwt:SecretKey"]!;
-        string issuer = _configuration["Jwt:Issuer"]!;
-        string audience = _configuration["Jwt:Audience"]!;
-        int expiryMinutes = int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "120");
+        // Use the same startup-validated settings as the bearer validator.
+        string secretKey = _options.SecretKey;
+        string issuer = _options.Issuer;
+        string audience = _options.Audience;
+        int expiryMinutes = _options.ExpiryMinutes;
 
         DateTime expires = DateTime.UtcNow.AddMinutes(expiryMinutes);
 
@@ -78,10 +78,10 @@ public class TokenService : ITokenService
     public TokenVM GenerateCustomerToken(Customer customer)
     {
         // Same signing settings as the admin token; only the claim set differs.
-        string secretKey = _configuration["Jwt:SecretKey"]!;
-        string issuer = _configuration["Jwt:Issuer"]!;
-        string audience = _configuration["Jwt:Audience"]!;
-        int expiryMinutes = int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "120");
+        string secretKey = _options.SecretKey;
+        string issuer = _options.Issuer;
+        string audience = _options.Audience;
+        int expiryMinutes = _options.ExpiryMinutes;
 
         DateTime expires = DateTime.UtcNow.AddMinutes(expiryMinutes);
 
@@ -118,10 +118,10 @@ public class TokenService : ITokenService
     }
     public TokenVM GeneratePlatformToken(int id, string username)
     {
-        var expires = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "120"));
-        var token = new JwtSecurityToken(issuer: _configuration["Jwt:Issuer"], audience: _configuration["Jwt:Audience"],
+        var expires = DateTime.UtcNow.AddMinutes(_options.ExpiryMinutes);
+        var token = new JwtSecurityToken(issuer: _options.Issuer, audience: _options.Audience,
             claims: new[] { new Claim(JwtRegisteredClaimNames.Sub, username), new Claim("actor_id", id.ToString()), new Claim(ClaimTypes.Role, "PlatformAdmin") },
-            expires: expires, signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:SecretKey"]!)), SecurityAlgorithms.HmacSha256));
+            expires: expires, signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey)), SecurityAlgorithms.HmacSha256));
         return new TokenVM { Token = new JwtSecurityTokenHandler().WriteToken(token), Expires = expires };
     }
 }

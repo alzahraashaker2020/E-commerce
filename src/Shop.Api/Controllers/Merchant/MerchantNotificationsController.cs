@@ -41,7 +41,7 @@ public sealed class MerchantNotificationsController:ControllerBase
         try
         {
             using var command=_db.Database.GetDbConnection().CreateCommand();
-            command.CommandText="SELECT \"AttemptedAtUtc\",\"Outcome\" FROM \"EmailAttempts\" WHERE \"MessageId\"=@id ORDER BY \"AttemptedAtUtc\" DESC LIMIT 100";
+            command.CommandText="SELECT \"AttemptedAtUtc\",\"Outcome\" FROM \"EmailAttempts\" WHERE \"MessageId\"=@id ORDER BY \"AttemptedAtUtc\" DESC" + SqlServerSupport.Limit(_db, 100);
             var parameter=command.CreateParameter();parameter.ParameterName="id";parameter.Value=id;command.Parameters.Add(parameter);
             using var reader=await command.ExecuteReaderAsync();var rows=new List<object>();
             while(await reader.ReadAsync())rows.Add(new{AttemptedAtUtc=reader.GetString(0),Outcome=reader.GetString(1)});

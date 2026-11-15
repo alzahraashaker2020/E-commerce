@@ -20,6 +20,6 @@ public sealed class MerchantStorefrontController:ControllerBase
     public async Task<IActionResult> Subscribers([FromServices]ShopContext db)
     {
         Response.Headers["Cache-Control"]="no-store";await db.Database.OpenConnectionAsync();
-        try{using var cmd=db.Database.GetDbConnection().CreateCommand();cmd.CommandText="SELECT \"Email\",\"JoinedAtUtc\" FROM \"StorefrontSubscribers\" ORDER BY \"JoinedAtUtc\" DESC LIMIT 500";using var r=await cmd.ExecuteReaderAsync();var rows=new List<object>();while(await r.ReadAsync())rows.Add(new{Email=r.GetString(0),JoinedAtUtc=r.GetString(1)});return Ok(ApiResponse<object>.Ok(rows));}finally{await db.Database.CloseConnectionAsync();}
+        try{using var cmd=db.Database.GetDbConnection().CreateCommand();cmd.CommandText="SELECT \"Email\",\"JoinedAtUtc\" FROM \"StorefrontSubscribers\" ORDER BY \"JoinedAtUtc\" DESC" + SqlServerSupport.Limit(db, 500);using var r=await cmd.ExecuteReaderAsync();var rows=new List<object>();while(await r.ReadAsync())rows.Add(new{Email=r.GetString(0),JoinedAtUtc=r.GetString(1)});return Ok(ApiResponse<object>.Ok(rows));}finally{await db.Database.CloseConnectionAsync();}
     }
 }

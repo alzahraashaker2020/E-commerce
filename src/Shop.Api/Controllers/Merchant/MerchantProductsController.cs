@@ -21,18 +21,18 @@ public class MerchantProductsController : ControllerBase
 {
     private readonly IRepoWrapper _repo;
     private readonly IMapper _mapper;
-    private readonly ShopContext _db;
+    private readonly Shop.Application.Catalog.ProductManagementService _products;
 
     /// <summary>
     /// Creates a new <see cref="MerchantProductsController"/>.
     /// </summary>
     /// <param name="repo">Unit-of-work repository wrapper.</param>
     /// <param name="mapper">AutoMapper instance.</param>
-    public MerchantProductsController(IRepoWrapper repo, IMapper mapper, ShopContext db)
+    public MerchantProductsController(IRepoWrapper repo, IMapper mapper, Shop.Application.Catalog.ProductManagementService products)
     {
         _repo = repo;
         _mapper = mapper;
-        _db = db;
+        _products = products;
     }
 
     /// <summary>
@@ -82,37 +82,9 @@ public class MerchantProductsController : ControllerBase
     public async Task<ActionResult<ApiResponse<ProductDetailVM>>> Create(
         [FromBody] ProductUpsertRequest request)
     {
-        await using var quotaTransaction = await _db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
-        var subscription = HttpContext.RequestServices.GetRequiredService<Shop.Api.Tenancy.StoreScope>().Subscription;
-        if (subscription?.MaxProducts is int limit && await _db.Products.CountAsync() >= limit)
-            return StatusCode(403, ApiResponse<ProductDetailVM>.Fail("Product limit reached for your subscription plan.", 403));
-        Product product = _mapper.Map<Product>(request);
-        product.Slug = Slugify(string.IsNullOrWhiteSpace(request.Slug) ? request.Name : request.Slug);
-        product.CreatedAt = DateTime.UtcNow;
-        product.IsDemoData = false;
-
-        // Persist the chosen variant rows (only when the product has variants);
-        // they are added as part of the same Save() as the product.
-        product.Variants = BuildVariants(request);
-        SetPrimaryImage(product, request.ImageUrl);
-        SetGallery(product, request.ImageUrls);
-
-        _repo._Product.Add(product);
-        try
-        {
-            _repo.Save();
-            await quotaTransaction.CommitAsync();
-        }
-        catch (DbUpdateException ex) when (ex.InnerException is Npgsql.PostgresException { SqlState: "40001" })
-        {
-            return Conflict(ApiResponse<ProductDetailVM>.Fail("Product capacity changed concurrently. Refresh and try again.", 409));
-        }
-        catch (Npgsql.PostgresException ex) when (ex.SqlState == "40001")
-        {
-            return Conflict(ApiResponse<ProductDetailVM>.Fail("Product capacity changed concurrently. Refresh and try again.", 409));
-        }
-
-        return Ok(ApiResponse<ProductDetailVM>.Ok(await GetDetailVM(product.Id)));
+        var outcome = await _products.CreateAsync(Shop.Api.Adapters.CheckoutBoundary.Copy<Shop.Application.Catalog.ProductInput>(request), HttpContext.RequestServices.GetRequiredService<Shop.Api.Tenancy.StoreScope>().Subscription?.MaxProducts, HttpContext.RequestAborted);
+        if (outcome.Kind != Shop.Application.Catalog.ProductOutcomeKind.Success) return Failure<ProductDetailVM>(outcome);
+        return Ok(ApiResponse<ProductDetailVM>.Ok(await GetDetailVM(outcome.Id)));
     }
 
     /// <summary>
@@ -126,62 +98,9 @@ public class MerchantProductsController : ControllerBase
         int id,
         [FromBody] ProductUpsertRequest request)
     {
-        // Keep existing variant identifiers so saved order/cart references remain valid.
-        Product? product = await _repo._Product.Query()
-            .Include(p => p.Variants)
-            .Include(p => p.Images)
-            .FirstOrDefaultAsync(p => p.Id == id);
-        if (product is null)
-        {
-            return NotFound(ApiResponse<ProductDetailVM>.Fail("Not found", 404));
-        }
-
-        // Map the editable fields onto the tracked entity; server-owned members
-        // are ignored by the write map, so copy them explicitly.
-        _mapper.Map(request, product);
-        product.Slug = Slugify(string.IsNullOrWhiteSpace(request.Slug) ? request.Name : request.Slug);
-
-        var rows = request.HasVariants ? request.Variants : new List<ProductVariantUpsert>();
-        if (rows.Where(v => v.Id.HasValue).GroupBy(v => v.Id).Any(g => g.Count() > 1) ||
-            rows.Any(v => v.Id.HasValue && !product.Variants.Any(old => old.Id == v.Id)))
-            return BadRequest(ApiResponse<ProductDetailVM>.Fail("Invalid or repeated variant identifier.", 400));
-        foreach (var old in product.Variants.ToList())
-        {
-            // Match dimensions for older clients that did not send identifiers.
-            var row = rows.FirstOrDefault(v => v.Id == old.Id ||
-                (!v.Id.HasValue && v.SizeId == old.SizeId && v.ColorId == old.ColorId));
-            if (row is null)
-            {
-                if (await _db.OrderItems.AnyAsync(i => i.VariantId == old.Id) ||
-                    await _db.CartItems.AnyAsync(i => i.VariantId == old.Id))
-                    return Conflict(ApiResponse<ProductDetailVM>.Fail("A used variant cannot be removed. Mark it inactive instead.", 409));
-                product.Variants.Remove(old);
-            }
-            else
-            {
-                if ((old.SizeId != row.SizeId || old.ColorId != row.ColorId) &&
-                    await _db.OrderItems.AnyAsync(i => i.VariantId == old.Id))
-                    return Conflict(ApiResponse<ProductDetailVM>.Fail("The size/color of a sold variant cannot change. Add a new variant instead.", 409));
-                row.Id = old.Id;
-                old.SizeId = row.SizeId; old.ColorId = row.ColorId; old.Sku = row.Sku;
-                old.Price = row.Price; old.StockQuantity = row.StockQuantity;
-                old.LowStockThreshold = row.LowStockThreshold; old.IsActive = row.IsActive; old.ImageUrl = row.ImageUrl;
-                if (row.ImageUrls is not null)
-                {
-                    old.ImageUrls = CleanImages(row.ImageUrls);
-                    old.ImageUrl = old.ImageUrls.FirstOrDefault();
-                }
-            }
-        }
-        foreach (var row in rows.Where(v => !v.Id.HasValue))
-            product.Variants.Add(BuildVariants(new ProductUpsertRequest { HasVariants = true, Variants = new() { row } })[0]);
-        SetPrimaryImage(product, request.ImageUrl);
-        SetGallery(product, request.ImageUrls);
-
-        _repo._Product.Update(product);
-        _repo.Save();
-
-        return Ok(ApiResponse<ProductDetailVM>.Ok(await GetDetailVM(product.Id)));
+        var outcome = await _products.UpdateAsync(id, Shop.Api.Adapters.CheckoutBoundary.Copy<Shop.Application.Catalog.ProductInput>(request), HttpContext.RequestAborted);
+        if (outcome.Kind != Shop.Application.Catalog.ProductOutcomeKind.Success) return Failure<ProductDetailVM>(outcome);
+        return Ok(ApiResponse<ProductDetailVM>.Ok(await GetDetailVM(outcome.Id)));
     }
 
     /// <summary>
@@ -210,16 +129,8 @@ public class MerchantProductsController : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<ActionResult<ApiResponse<bool>>> Delete(int id)
     {
-        Product? product = await _repo._Product.GetByIdAsync(id);
-        if (product is null)
-        {
-            return NotFound(ApiResponse<bool>.Fail("Not found", 404));
-        }
-
-        _repo._Product.Delete(product);
-        _repo.Save();
-
-        return Ok(ApiResponse<bool>.Ok(true));
+        var outcome = await _products.DeleteAsync(id, HttpContext.RequestAborted);
+        return outcome.Kind == Shop.Application.Catalog.ProductOutcomeKind.Success ? Ok(ApiResponse<bool>.Ok(true)) : Failure<bool>(outcome);
     }
 
     /// <summary>
@@ -232,37 +143,8 @@ public class MerchantProductsController : ControllerBase
     public async Task<ActionResult<ApiResponse<int>>> BulkUpdate(
         [FromBody] BulkProductUpdateRequest request)
     {
-        if (request.ProductIds is null || request.ProductIds.Count == 0)
-        {
-            return BadRequest(ApiResponse<int>.Fail("No products specified", 400));
-        }
-
-        // Bulk-load the target products, apply the partial changes in memory,
-        // then commit all of them with a single Save().
-        List<Product> products = await _repo._Product.GetByIdsAsync(request.ProductIds);
-        foreach (Product product in products)
-        {
-            if (request.NewPrice.HasValue)
-            {
-                product.BasePrice = request.NewPrice.Value;
-            }
-
-            if (request.IsActive.HasValue)
-            {
-                product.IsActive = request.IsActive.Value;
-            }
-
-            if (request.CategoryId.HasValue)
-            {
-                product.CategoryId = request.CategoryId.Value;
-            }
-
-            _repo._Product.Update(product);
-        }
-
-        _repo.Save();
-
-        return Ok(ApiResponse<int>.Ok(products.Count));
+        var outcome = await _products.BulkUpdateAsync(Shop.Api.Adapters.CheckoutBoundary.Copy<Shop.Application.Catalog.BulkProductInput>(request), HttpContext.RequestAborted);
+        return outcome.Kind == Shop.Application.Catalog.ProductOutcomeKind.Success ? Ok(ApiResponse<int>.Ok(outcome.Count)) : Failure<int>(outcome);
     }
 
     /// <summary>
@@ -271,76 +153,9 @@ public class MerchantProductsController : ControllerBase
     /// new <see cref="ProductVariant"/> (one chosen size/color combination).
     /// </summary>
     /// <param name="request">The product create/update payload.</param>
-    private static List<ProductVariant> BuildVariants(ProductUpsertRequest request)
+    private static ActionResult<ApiResponse<T>> Failure<T>(Shop.Application.Catalog.ProductOutcome result)
     {
-        if (!request.HasVariants || request.Variants is null)
-        {
-            return new List<ProductVariant>();
-        }
-
-        return request.Variants.Select(v => new ProductVariant
-        {
-            SizeId = v.SizeId,
-            ColorId = v.ColorId,
-            Sku = v.Sku,
-            Price = v.Price,
-            StockQuantity = v.StockQuantity,
-            LowStockThreshold = v.LowStockThreshold,
-            IsActive = v.IsActive,
-            ImageUrl = v.ImageUrls is null ? v.ImageUrl : CleanImages(v.ImageUrls).FirstOrDefault(),
-            ImageUrls = v.ImageUrls is null ? new List<string>() : CleanImages(v.ImageUrls),
-            IsDemoData = false
-        }).ToList();
-    }
-
-    private static void SetPrimaryImage(Product product, string? imageUrl)
-    {
-        if (imageUrl is null) return;
-        var primary = product.Images.OrderBy(i => i.SortOrder).FirstOrDefault();
-        if (string.IsNullOrWhiteSpace(imageUrl))
-        {
-            if (primary is not null) product.Images.Remove(primary);
-        }
-        else if (primary is not null) primary.Url = imageUrl;
-        else product.Images.Add(new ProductImage { Url = imageUrl, AltText = product.Name, SortOrder = 0 });
-    }
-
-    private static List<string> CleanImages(IEnumerable<string> images) =>
-        images.Where(i => !string.IsNullOrWhiteSpace(i)).Select(i => i.Trim()).Distinct().ToList();
-
-    private static void SetGallery(Product product, List<string>? images)
-    {
-        if (images is null) return;
-        product.Images.Clear();
-        int position = 0;
-        foreach (var url in CleanImages(images))
-            product.Images.Add(new ProductImage { Url = url, AltText = product.Name, SortOrder = position++ });
-    }
-
-    /// <summary>
-    /// Produces a simple URL-friendly slug from the supplied text.
-    /// </summary>
-    /// <param name="text">The source text (product name or supplied slug).</param>
-    private static string Slugify(string text)
-    {
-        string lowered = text.Trim().ToLowerInvariant();
-        var builder = new System.Text.StringBuilder(lowered.Length);
-        bool lastDash = false;
-
-        foreach (char c in lowered)
-        {
-            if (char.IsLetterOrDigit(c))
-            {
-                builder.Append(c);
-                lastDash = false;
-            }
-            else if (!lastDash)
-            {
-                builder.Append('-');
-                lastDash = true;
-            }
-        }
-
-        return builder.ToString().Trim('-');
+        int status = result.Kind switch { Shop.Application.Catalog.ProductOutcomeKind.Invalid => 400, Shop.Application.Catalog.ProductOutcomeKind.NotFound => 404, Shop.Application.Catalog.ProductOutcomeKind.Forbidden => 403, _ => 409 };
+        return new ObjectResult(ApiResponse<T>.Fail(result.Message!, status)) { StatusCode = status };
     }
 }

@@ -2,6 +2,30 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Shop.DAL.Data;
 
+// SQL Server variants of the same test-only fault/expiry controls. Require a private fixture
+// inside the isolated temp directory AND a generated test database name; never accept a live DB.
+if (args.Length==3 && args[0] is "--due-test-email" or "--expire-test-account-actions" or "--expire-test-subscription")
+{
+    string path=Path.GetFullPath(args[1]);string directory=Path.GetDirectoryName(path)!;
+    string fixture=Path.Combine(directory,"sqlserver-fixture.json");
+    if(File.Exists(fixture))
+    {
+        if(!path.StartsWith(Path.GetFullPath(Path.GetTempPath()),StringComparison.OrdinalIgnoreCase)||!Path.GetFileName(directory).StartsWith("shop-security-")||Path.GetFileName(path) is not ("test.db" or "platform.db"))throw new InvalidOperationException("Invalid isolated fixture path.");
+        using var document=System.Text.Json.JsonDocument.Parse(File.ReadAllText(fixture));
+        string value=document.RootElement.GetProperty(args[0]=="--expire-test-subscription"?"Platform":"Default").GetString()!;
+        var b=new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(value);
+        if(!System.Text.RegularExpressions.Regex.IsMatch(b.InitialCatalog,"^matjark_test_[a-f0-9]{32}(_(default|platform))?$")||b.DataSource is not ("localhost" or @".\MAXSYSTEM"))throw new InvalidOperationException("Only generated local test databases are allowed.");
+        using var db=new Microsoft.Data.SqlClient.SqlConnection(value);db.Open();
+        if(SqlServerTenantScope.Schema(value) is string schema){using var scoped=db.CreateCommand();scoped.CommandText="EXECUTE AS USER = N'"+SqlServerTenantScope.Principal(schema)+"'";scoped.ExecuteNonQuery();}
+        using var cmd=db.CreateCommand();
+        cmd.CommandText=args[0] switch {
+            "--due-test-email"=>"UPDATE EmailOutbox SET NextAttemptUtc='2000-01-01T00:00:00.0000000Z' WHERE Id=@id AND State='Pending'",
+            "--expire-test-account-actions"=>"UPDATE CustomerActions SET ExpiresAtUtc='2000-01-01T00:00:00.0000000Z' WHERE CustomerId=@id",
+            _=>"UPDATE Subscriptions SET EndsAtUtc='2000-01-01',Version=Version+1 WHERE StoreId=@id"};
+        cmd.Parameters.AddWithValue("@id",args[0]=="--expire-test-account-actions"?(object)int.Parse(args[2]):args[2]);
+        if(cmd.ExecuteNonQuery()==0)throw new InvalidOperationException("Test record not found.");return;
+    }
+}
 if (args.Contains("--postgres")) { PostgresChecks.Run(); return; }
 if(args.Length==3 && args[0]=="--due-test-email")
 {

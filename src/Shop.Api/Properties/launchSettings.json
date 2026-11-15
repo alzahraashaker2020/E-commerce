@@ -17,6 +17,13 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+    },
+    "Shop Full UI": {
+      "commandName": "Executable",
+      "executablePath": "powershell.exe",
+      "commandLineArgs": "-NoProfile -ExecutionPolicy Bypass -File \"../../scripts/start-local.ps1\"",
+      "workingDirectory": "$(ProjectDir)",
+      "launchBrowser": false
     }
   },
   "iisSettings": {

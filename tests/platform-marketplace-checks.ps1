@@ -57,7 +57,7 @@ AssertValue ($market.data.totalCount -eq 0) 'Marketplace visibility is enforced 
 $info=StoreJson 'alpha.localhost' GET '/api/store'
 AssertValue (@($info.features).Count -eq 0) 'Frontend capabilities match enforced entitlements'
 # Configure a fresh database for approved paid applicant and verify activation snapshot.
-foreach($setting in @{StoreConnections__Paid__Provider='Sqlite';StoreConnections__Paid__ConnectionString=('Data Source='+(Join-Path $runDir 'paid.db'))}.GetEnumerator()){
+foreach($setting in @{StoreConnections__Paid__Provider=$(if($SqlServerTests){'SqlServer'}else{'Sqlite'});StoreConnections__Paid__ConnectionString=$(if($SqlServerTests){$fixture.Alpha.Replace('_alpha','_paid')}else{('Data Source='+(Join-Path $runDir 'paid.db'))})}.GetEnumerator()){
  $previous[$setting.Key]=[Environment]::GetEnvironmentVariable($setting.Key,'Process');[Environment]::SetEnvironmentVariable($setting.Key,$setting.Value,'Process')
 }
 Stop-Process -Id $apiProcess.Id

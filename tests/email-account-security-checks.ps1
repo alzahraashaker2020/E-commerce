@@ -2,7 +2,7 @@
 $mailDirectory=Join-Path $runDir 'store-data/default/sent-emails'
 function SecurityToken($email,$purpose){
     $subject=if($purpose -eq 'VerifyEmail'){'Verify your store email'}else{'Reset your store password'}
-    for($attempt=0;$attempt -lt 40;$attempt++){
+    for($attempt=0;$attempt -lt $(if($SharedSqlServerTests){300}else{40});$attempt++){
     foreach($file in (Get-ChildItem $mailDirectory -Filter 'message-*.txt'|Sort-Object LastWriteTime -Descending)){
         $text=[IO.File]::ReadAllText($file.FullName)
         if($text.Contains("To: $email") -and $text.Contains("Subject: $subject")){

@@ -1,0 +1,215 @@
+{
+  "merchant_unauthorized": {
+    "status": 401,
+    "shape": "null",
+    "message": null,
+    "checkoutOutcome": "",
+    "contentType": ""
+  },
+  "customer_forbidden": {
+    "status": 403,
+    "shape": "null",
+    "message": null,
+    "checkoutOutcome": "",
+    "contentType": ""
+  },
+  "missing_currency": {
+    "status": 404,
+    "shape": {
+      "status": "number",
+      "title": "string",
+      "traceId": "string",
+      "type": "string"
+    },
+    "message": null,
+    "checkoutOutcome": "",
+    "contentType": "application/problem+json; charset=utf-8"
+  },
+  "missing_status": {
+    "status": 404,
+    "shape": {
+      "status": "number",
+      "title": "string",
+      "traceId": "string",
+      "type": "string"
+    },
+    "message": null,
+    "checkoutOutcome": "",
+    "contentType": "application/problem+json; charset=utf-8"
+  },
+  "model_validation": {
+    "status": 400,
+    "shape": {
+      "data": "null",
+      "message": "string",
+      "statusCode": "number",
+      "success": "boolean"
+    },
+    "message": "The Name field is required.",
+    "checkoutOutcome": "",
+    "contentType": "application/json; charset=utf-8"
+  },
+  "cash_only": {
+    "status": 400,
+    "shape": {
+      "data": "null",
+      "message": "string",
+      "statusCode": "number",
+      "success": "boolean"
+    },
+    "message": "Card payments are unavailable until the store connects a payment provider. Please use cash on delivery.",
+    "checkoutOutcome": "",
+    "contentType": "application/json; charset=utf-8"
+  },
+  "settings": {
+    "status": 200,
+    "shape": {
+      "data": {
+        "currencyCode": "string",
+        "currencySymbol": "string"
+      },
+      "message": "null",
+      "statusCode": "number",
+      "success": "boolean"
+    },
+    "message": null,
+    "checkoutOutcome": "",
+    "contentType": "application/json; charset=utf-8"
+  },
+  "currencies": {
+    "status": 200,
+    "shape": {
+      "data": [
+        {
+          "code": "string",
+          "id": "number",
+          "isActive": "boolean",
+          "name": "string",
+          "symbol": "string"
+        },
+        {
+          "code": "string",
+          "id": "number",
+          "isActive": "boolean",
+          "name": "string",
+          "symbol": "string"
+        }
+      ],
+      "message": "null",
+      "statusCode": "number",
+      "success": "boolean"
+    },
+    "message": null,
+    "checkoutOutcome": "",
+    "contentType": "application/json; charset=utf-8"
+  },
+  "governorates": {
+    "status": 200,
+    "shape": {
+      "data": [],
+      "message": "null",
+      "statusCode": "number",
+      "success": "boolean"
+    },
+    "message": null,
+    "checkoutOutcome": "",
+    "contentType": "application/json; charset=utf-8"
+  },
+  "areas": {
+    "status": 200,
+    "shape": {
+      "data": [],
+      "message": "null",
+      "statusCode": "number",
+      "success": "boolean"
+    },
+    "message": null,
+    "checkoutOutcome": "",
+    "contentType": "application/json; charset=utf-8"
+  },
+  "statuses": {
+    "status": 200,
+    "shape": {
+      "data": [
+        {
+          "behavior": "string",
+          "color": "string",
+          "displayOrder": "number",
+          "id": "number",
+          "isActive": "boolean",
+          "isDefault": "boolean",
+          "name": "string"
+        },
+        {
+          "behavior": "string",
+          "color": "string",
+          "displayOrder": "number",
+          "id": "number",
+          "isActive": "boolean",
+          "isDefault": "boolean",
+          "name": "string"
+        },
+        {
+          "behavior": "string",
+          "color": "string",
+          "displayOrder": "number",
+          "id": "number",
+          "isActive": "boolean",
+          "isDefault": "boolean",
+          "name": "string"
+        },
+        {
+          "behavior": "string",
+          "color": "string",
+          "displayOrder": "number",
+          "id": "number",
+          "isActive": "boolean",
+          "isDefault": "boolean",
+          "name": "string"
+        },
+        {
+          "behavior": "string",
+          "color": "string",
+          "displayOrder": "number",
+          "id": "number",
+          "isActive": "boolean",
+          "isDefault": "boolean",
+          "name": "string"
+        },
+        {
+          "behavior": "string",
+          "color": "string",
+          "displayOrder": "number",
+          "id": "number",
+          "isActive": "boolean",
+          "isDefault": "boolean",
+          "name": "string"
+        },
+        {
+          "behavior": "string",
+          "color": "string",
+          "displayOrder": "number",
+          "id": "number",
+          "isActive": "boolean",
+          "isDefault": "boolean",
+          "name": "string"
+        },
+        {
+          "behavior": "string",
+          "color": "string",
+          "displayOrder": "number",
+          "id": "number",
+          "isActive": "boolean",
+          "isDefault": "boolean",
+          "name": "string"
+        }
+      ],
+      "message": "null",
+      "statusCode": "number",
+      "success": "boolean"
+    },
+    "message": null,
+    "checkoutOutcome": "",
+    "contentType": "application/json; charset=utf-8"
+  }
+}

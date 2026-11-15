@@ -1,3 +1,4 @@
+using Shop.DAL.Data;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
@@ -25,7 +26,7 @@ public sealed class PlatformWebsiteController:ControllerBase
     public async Task<IActionResult> Save(Website doc)
     {
         int version=doc.Version;doc.Version++;
-        int changed=version==0?await _db.Database.ExecuteSqlRawAsync("INSERT INTO PlatformWebsite(Id,Version,Document) VALUES(1,{0},{1}) ON CONFLICT(Id) DO NOTHING",doc.Version,JsonSerializer.Serialize(doc)):
+        int changed=version==0?await _db.Database.ExecuteSqlRawAsync(SqlServerSupport.InsertMissing(_db, "PlatformWebsite", "Id,Version,Document", "1,{0},{1}", "Id=1", "INSERT INTO PlatformWebsite(Id,Version,Document) VALUES(1,{0},{1}) ON CONFLICT(Id) DO NOTHING"),doc.Version,JsonSerializer.Serialize(doc)):
             await _db.Database.ExecuteSqlRawAsync("UPDATE PlatformWebsite SET Version={0},Document={1} WHERE Id=1 AND Version={2}",doc.Version,JsonSerializer.Serialize(doc),version);
         return changed==1?Ok(ApiResponse<object>.Ok(doc)):Conflict(ApiResponse<object>.Fail("Website content changed. Refresh before saving.",409));
     }

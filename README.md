@@ -273,3 +273,39 @@ Arabic/English UI, merchant-managed Arabic content and responsive kids/merchant 
 Merchant application review and free-trial registration: [workflow and validation](docs/29-merchant-registration.md).
 
 Public Matjark platform, package entitlements and multi-store shopping: [implementation and validation](docs/30-platform-website-marketplace.md).
+
+### JWT configuration for local development
+
+The API now validates JWT settings before creating application files or opening databases. Both committed signing-key examples are placeholders and are rejected in every environment. Provide an existing private signing key via `Jwt__SecretKey` or the ignored `src/Shop.Api/email-secrets.json` before starting the newly built API. Keep your existing real key to preserve sessions; do not generate a replacement on every start.
+
+For a fresh installation only, generate a private value locally once with PowerShell: `[Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))`. Store it outside source control and do not paste it into chat or logs. `Jwt__Issuer` and `Jwt__Audience` must be nonblank; their current configured values remain supported. `Jwt__ExpiryMinutes` accepts a positive 32-bit integer and defaults to 120 if omitted. This change does not rotate keys, rename roles, or alter claims. Invalid configuration exits with code 1 and redacted field-specific diagnostics.
+
+Repeat the isolated refactoring checks with `pwsh -NoProfile -File tests/run-refactoring-baseline.ps1 -ApiDll <isolated-built-dll> -Label after`. JWT startup/claim checks: `pwsh -NoProfile -File tests/jwt-configuration-checks.ps1 -ApiDll <isolated-built-dll>`. These scripts use temporary databases and generated test-only signing keys, not merchant data.
+
+
+### Incremental application boundaries
+
+Complex checkout, fulfillment, catalog, return, recovery and provisioning use cases now live in `Shop.Application`; persistence/queue adapters live in `Shop.Infrastructure`. Existing API routes and database schema are preserved. Conventional tests are included in `Shop.sln`; the original isolated PowerShell checks remain. See [implementation results](docs/33-refactoring-implementation.md) and [persistent decisions/phase history](REFACTORING_CONTEXT.md), including the pre-existing Windows offline-recovery test limitation. No release or migration is implied by these source changes.
+
+## Run the full UI from Visual Studio
+
+Set **Shop.Api** as Startup Project, select **Shop Full UI** beside the green Run button, then use **Ctrl+F5**. The launcher builds/runs the API on 5000 and Angular on 4300, waits for both, and opens http://platform.localhost:4300/platform. The store is http://kids.localhost:4300. Node.js and installed client dependencies (`npm ci` inside client) are required.
+
+The launcher creates a private persistent JWT key in ignored `src/Shop.Api/email-secrets.json` if none exists, preserving other local settings. Never share this file. An existing `Jwt__SecretKey` environment override takes precedence. Logs are under `src/Shop.Api/obj/local-run`. Keep the launcher running while using the site; close it when finished. Stop the current local servers before starting another instance. This profile runs the full site without attaching the .NET debugger; use the **Shop.Api** profile for API debugging after local setup (Angular must be running separately).
+
+Command-line equivalent from the repository root: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-local.ps1`.
+`nTo stop the full local site before another Visual Studio launch: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-local.ps1`.
+
+
+## SQL Server local installation
+
+This checkout now uses an ignored `src/Shop.Api/sqlserver-local.json` override for the migrated SQL Server databases on `localhost` with Windows authentication. **Shop Full UI** in Visual Studio reads it automatically. Existing platform, merchant and customer accounts and uploads are retained. Without the private override, the committed zero-install SQLite defaults still apply. See [SQL Server conversion, verification and rollback](docs/34-sqlserver-migration.md).
+
+## User guide
+
+Arabic step-by-step instructions for customers, guests, merchants and platform administrators: [open the complete user guide](docs/user-guide/MATJARK_USER_GUIDE_AR.html). It includes search, role filtering, mobile navigation and printing to PDF. [Editable text](docs/user-guide/USER_GUIDE_AR.md).
+
+
+## Unified MAXSYSTEM installation
+
+The current private local overlay points the platform and every merchant to one database, **Matjark** on **.\MAXSYSTEM**, using Windows authentication. Tenant data is isolated in separate schemas and SQL principals inside that database, retaining existing IDs and credentials. Visual Studio **Shop Full UI** reads the overlay automatically. See [unified storage, validation and rollback](docs/35-unified-database-maxsystem.md). Original separate databases are retained as pre-consolidation sources.

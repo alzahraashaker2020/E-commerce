@@ -90,6 +90,8 @@ ExpectStatus (StoreRequest 'beta.localhost' GET '/api/merchant/products' $tokens
 ExpectStatus (Request GET '/api/platform/stores' $platformToken) 200 'Platform access restored in SaaS'
 Write-Output 'Deployment profiles, independent catalog mode, standalone owner operations and unchanged SaaS isolation passed.'
 
+# The final fresh-install case intentionally exercises retained zero-install SQLite behavior.
+if($SqlServerTests){[Environment]::SetEnvironmentVariable('Platform__DatabaseProvider','Sqlite','Process');[Environment]::SetEnvironmentVariable('Database__Provider','Sqlite','Process')}
 # A fresh standalone install boots without platform credentials or a subscription.
 [Environment]::SetEnvironmentVariable('ConnectionStrings__PlatformConnection',('Data Source='+(Join-Path $runDir 'fresh-registry.db')),'Process')
 [Environment]::SetEnvironmentVariable('ConnectionStrings__SqliteConnection',('Data Source='+(Join-Path $runDir 'fresh-store.db')),'Process')

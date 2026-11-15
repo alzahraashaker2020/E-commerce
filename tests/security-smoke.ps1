@@ -4,6 +4,8 @@ param(
     [string]$ApiDll,
     [string]$AdditionalChecks,
     [string]$SeedDatabase,
+    [switch]$SqlServerTests,
+    [switch]$SharedSqlServerTests,
     [switch]$PostgresTenants
 )
 $ErrorActionPreference = 'Stop'
@@ -22,6 +24,10 @@ $port = $listener.LocalEndpoint.Port
 $listener.Stop()
 $base = "http://127.0.0.1:$port"
 $envValues = @{
+    'Jwt__SecretKey' = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+    'Jwt__Issuer' = 'OnlineShopping'
+    'Jwt__Audience' = 'OnlineShoppingClient'
+    'Jwt__ExpiryMinutes' = '120'
     'Database__Provider' = 'Sqlite'
     'ConnectionStrings__SqliteConnection' = 'Data Source=' + (Join-Path $runDir 'test.db')
     'ASPNETCORE_URLS' = $base
@@ -37,6 +43,8 @@ $envValues = @{
     'StoreConnections__Alias__Provider' = 'Sqlite'
     'StoreConnections__Alias__ConnectionString' = 'Data Source=' + (Join-Path $runDir 'alpha.db')
     'Email__Enabled' = 'false'
+    # Background scheduler checks poll within 15 seconds; make the test cadence explicit.
+    'Operations__SchedulerPollSeconds' = '1'
 }
 $previous = @{}
 if ($PostgresTenants) {
@@ -49,6 +57,23 @@ if ($PostgresTenants) {
     }
     $envValues.StoreConnections__Alias__Provider = 'Postgres'
     $envValues.StoreConnections__Alias__ConnectionString = $envValues.StoreConnections__Alpha__ConnectionString
+}
+if ($SqlServerTests) {
+    $fixturePath = Join-Path $runDir 'sqlserver-fixture.json'
+    if($SharedSqlServerTests){ & dotnet (Join-Path $repoRoot 'tools/Shop.UnifyDatabase/obj/output/Shop.UnifyDatabase.dll') --test-fixture $fixturePath } else { & dotnet (Join-Path $repoRoot 'tools/Shop.DatabaseTransfer/obj/output/Shop.DatabaseTransfer.dll') --test-fixture $fixturePath }
+    if ($LASTEXITCODE -ne 0) { throw 'SQL Server fixture creation failed.' }
+    $fixture = Get-Content $fixturePath -Raw | ConvertFrom-Json
+    $envValues.Database__Provider='SqlServer'
+    if($SharedSqlServerTests){$envValues.Database__Layout='SharedSchemas'}
+    $envValues.ConnectionStrings__DefaultConnection=$fixture.Default
+    $envValues.Platform__DatabaseProvider='SqlServer'
+    $envValues.ConnectionStrings__PlatformConnection=$fixture.Platform
+    foreach ($key in @('Alpha','Beta')) {
+        $envValues["StoreConnections__${key}__Provider"]='SqlServer'
+        $envValues["StoreConnections__${key}__ConnectionString"]=$fixture.$key
+    }
+    $envValues.StoreConnections__Alias__Provider='SqlServer'
+    $envValues.StoreConnections__Alias__ConnectionString=$fixture.Alpha
 }
 $apiProcess = $null
 $script:checks = 0
@@ -63,7 +88,7 @@ function Request($method, $path, $token = '', $body = $null, $trackingCode = '')
     if ($token) { $headers.Authorization = 'Bearer ' + $token }
     $args = @{
         Uri = $base + $path; Method = $method; Headers = $headers
-        SkipHttpErrorCheck = $true; TimeoutSec = 5
+        SkipHttpErrorCheck = $true; TimeoutSec = $(if ($SqlServerTests) {120} else {5})
     }
     if ($null -ne $body) {
         $args.ContentType = 'application/json'

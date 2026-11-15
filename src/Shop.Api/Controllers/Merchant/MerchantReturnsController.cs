@@ -20,6 +20,7 @@ public sealed class MerchantReturnsController:ControllerBase
     {
         try{return Ok(ApiResponse<object>.Ok(await _returns.ChangeAsync(id,body.Version,body.Action,body.Notes.Trim(),body.Restock,body.RefundAmount,body.RefundReference.Trim(),User.Identity?.Name??"Merchant")));}
         catch(InvalidOperationException ex){return Conflict(ApiResponse<object>.Fail(ex.Message,409));}
+        catch(Exception ex)when(Shop.DAL.Data.SqlServerSupport.Concurrency(ex)){return Conflict(ApiResponse<object>.Fail("Return changed concurrently. Refresh and try again.",409));}
         catch(Npgsql.PostgresException ex)when(ex.SqlState is "40001" or "23505"){return Conflict(ApiResponse<object>.Fail("Return changed concurrently. Refresh and try again.",409));}
         catch(Microsoft.Data.Sqlite.SqliteException ex)when(ex.SqliteErrorCode is 5 or 19){return Conflict(ApiResponse<object>.Fail("Return changed concurrently. Refresh and try again.",409));}
     }

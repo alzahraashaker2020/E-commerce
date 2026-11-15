@@ -31,3 +31,5 @@ src/Shop.Api/email-secrets.json
 # --- OS noise ---
 Thumbs.db
 .DS_Store
+
+src/Shop.Api/sqlserver-local.json

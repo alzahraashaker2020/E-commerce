@@ -40,8 +40,8 @@ $newFree=($edited.Content|ConvertFrom-Json).data
 $bad=@{}+$body;$bad.email='stale-offer@example.invalid'
 ExpectStatus (Request POST '/api/platform/onboarding/applications' '' $bad) 400 'Stale displayed offer must be refreshed before consent'
 # Add a fresh configured reference and restart the isolated API so configuration is visible.
-$key='StoreConnections__Onboard__Provider';$previous[$key]=[Environment]::GetEnvironmentVariable($key,'Process');[Environment]::SetEnvironmentVariable($key,'Sqlite','Process')
-$key='StoreConnections__Onboard__ConnectionString';$previous[$key]=[Environment]::GetEnvironmentVariable($key,'Process');[Environment]::SetEnvironmentVariable($key,('Data Source='+(Join-Path $runDir 'onboard.db')),'Process')
+$key='StoreConnections__Onboard__Provider';$previous[$key]=[Environment]::GetEnvironmentVariable($key,'Process');[Environment]::SetEnvironmentVariable($key,$(if($SqlServerTests){'SqlServer'}else{'Sqlite'}),'Process')
+$key='StoreConnections__Onboard__ConnectionString';$previous[$key]=[Environment]::GetEnvironmentVariable($key,'Process');[Environment]::SetEnvironmentVariable($key,$(if($SqlServerTests){$fixture.Alpha.Replace('_alpha','_onboard')}else{('Data Source='+(Join-Path $runDir 'onboard.db'))}),'Process')
 Stop-Process -Id $apiProcess.Id
 $script:apiProcess=Start-Process dotnet -ArgumentList @($dll,'--contentRoot',('"'+$runDir+'"')) -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $runDir 'onboarding-api.log') -RedirectStandardError (Join-Path $runDir 'onboarding-api-error.log')
 for($i=0;$i -lt 80;$i++){try{$null=Request GET '/api/deployment';break}catch{Start-Sleep -Milliseconds 200}}

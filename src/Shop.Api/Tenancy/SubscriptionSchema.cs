@@ -7,6 +7,22 @@ public static class SubscriptionSchema
 {
     public static void Apply(PlatformContext db, bool seedPlans = true)
     {
+        if (db.Database.IsSqlServer())
+        {
+            if (!seedPlans) return;
+            using var tx = db.Database.BeginTransaction();
+            db.Database.OpenConnection();
+            using var marker = db.Database.GetDbConnection().CreateCommand();
+            marker.Transaction = tx.GetDbTransaction(); marker.CommandText = "SELECT COUNT(*) FROM MerchantOnboardingSetup WHERE Id=1";
+            if (Convert.ToInt32(marker.ExecuteScalar()) == 0)
+            {
+                bool drafts = !db.Plans.Any();
+                if (!db.Plans.Any(p => p.Name == "Free Trial")) db.Plans.Add(new SubscriptionPlan {Name="Free Trial",PriceMinor=0,TrialDays=14,MaxProducts=50,IsActive=true,AllowMerchantApplications=true});
+                if (drafts) db.Plans.AddRange(new SubscriptionPlan {Name="Starter",MaxProducts=100,TrialDays=14,IsActive=false},new SubscriptionPlan {Name="Growth",MaxProducts=1000,TrialDays=14,IsActive=false},new SubscriptionPlan {Name="Pro",TrialDays=14,IsActive=false});
+                db.SaveChanges(); db.Database.ExecuteSqlRaw("INSERT INTO MerchantOnboardingSetup VALUES (1)");
+            }
+            tx.Commit(); return;
+        }
         db.Database.OpenConnection();
         using (var inspect = db.Database.GetDbConnection().CreateCommand())
         {

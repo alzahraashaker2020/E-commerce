@@ -84,6 +84,7 @@ public class ShopContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        if (Database.IsSqlServer()) modelBuilder.UseCollation("Latin1_General_100_BIN2");
         modelBuilder.Entity<Governorate>(e => { e.HasIndex(g => g.Name).IsUnique(); e.Property(g => g.Name).HasMaxLength(100); });
         modelBuilder.Entity<DeliveryArea>(e =>
         {

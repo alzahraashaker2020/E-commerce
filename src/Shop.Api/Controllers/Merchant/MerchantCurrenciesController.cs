@@ -1,3 +1,4 @@
+using Shop.Api.Contracts.Merchant;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,7 @@ public class MerchantCurrenciesController : ControllerBase
     private readonly ShopContext _db;
     public MerchantCurrenciesController(ShopContext db) => _db = db;
     [HttpGet]
-    public async Task<IActionResult> List() => Ok(ApiResponse<List<Currency>>.Ok(await _db.Currencies.OrderBy(c => c.Code).ToListAsync()));
+    public async Task<IActionResult> List() => Ok(ApiResponse<List<CurrencyResponse>>.Ok((await _db.Currencies.OrderBy(c => c.Code).ToListAsync()).Select(CurrencyResponse.From).ToList()));
     [HttpPost]
     public async Task<IActionResult> Create(CurrencyRequest request)
     {
@@ -22,7 +23,7 @@ public class MerchantCurrenciesController : ControllerBase
         if (await _db.Currencies.AnyAsync(c => c.Code == code)) return Conflict(ApiResponse<bool>.Fail("Currency code already exists.", 409));
         var item = new Currency { Code = code, Name = request.Name.Trim(), Symbol = request.Symbol.Trim(), IsActive = request.IsActive };
         _db.Currencies.Add(item); await _db.SaveChangesAsync();
-        return Ok(ApiResponse<Currency>.Ok(item));
+        return Ok(ApiResponse<CurrencyResponse>.Ok(CurrencyResponse.From(item)));
     }
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, CurrencyRequest request)
@@ -34,7 +35,7 @@ public class MerchantCurrenciesController : ControllerBase
         if (!request.IsActive && settings.CurrencyCode == item.Code) return Conflict(ApiResponse<bool>.Fail("Select another store currency before disabling this currency.", 409));
         item.Name = request.Name.Trim(); item.Symbol = request.Symbol.Trim(); item.IsActive = request.IsActive;
         if (settings.CurrencyCode == item.Code) settings.CurrencySymbol = item.Symbol;
-        await _db.SaveChangesAsync(); return Ok(ApiResponse<Currency>.Ok(item));
+        await _db.SaveChangesAsync(); return Ok(ApiResponse<CurrencyResponse>.Ok(CurrencyResponse.From(item)));
     }
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
